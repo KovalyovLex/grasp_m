@@ -1,0 +1,12 @@
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.dex
+
+# Compilled MATLAB files #
+*.asv
+
+# Other garbage #
+*.DS_Store
