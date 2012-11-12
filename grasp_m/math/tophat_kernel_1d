@@ -1,0 +1,32 @@
+function [y,x,dx] = gauss_kernel_1d(x0,sigma,intint,finesse,sigmawidth)
+
+if nargin <5
+    sigmawidth = 3;
+end
+if nargin <4
+    finesse = 100;
+end
+if nargin <3
+    intint = 1;
+end
+if nargin <2
+    sigma = 1;
+end
+if nargin <1
+    x0 = 0;
+end
+
+%Make x coordinates
+low = x0-sigmawidth*sigma;
+high = x0+sigmawidth*sigma;
+dx = (high -low) /(finesse-1);
+x = low:dx:high;
+
+%Generate Gaussian points on the kernel mesh
+intint = 1;
+%sigma = fwhm / (2*sqrt(2*log(2)));
+y  = (intint./(sigma .* sqrt(2*pi))) .* exp( -(x-x0).^2 ./ (2*sigma.^2));
+
+% figure
+% plot(x-x0,y,'.')
+% sum(y.*dx)

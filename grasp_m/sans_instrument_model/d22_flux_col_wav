@@ -1,0 +1,68 @@
+function test
+
+lambda_step = 0.01; 
+lambda_min = 1.1; lambda_max = 50;
+lambda = lambda_min:lambda_step:lambda_max;
+
+%Spectrum 1
+%k =5400000; %Just a scale constant
+%spectrum176 = k* (1./lambda) .* 10.^(-0.17.*lambda);  %spectrum shape D22, 17.6m used in the MC simulations UNDONE for selector 10%
+%This spectrum actually falls off a bit fast at the longest wavelengths
+%compared to measured (beyond about 15angs)
+
+%Spectrum 2
+k = 0.2; %Just a scale constant
+spectrum176 = k .* (1./lambda) .* 10.^(6.46076 + 2.19603.*log10(lambda) -2.90839.*(log10(lambda).^2));   %spectrum shape D22 based on fit to May2008 data, undone for selector 10% 
+%Excellent agreement with May2008 D22 data, as comes from fit to this data
+
+col_ref = 17.6;
+
+
+%Scale for divergence
+col = 2.8; %m
+col_scale = (col_ref/col)^2;
+
+for wav = 4.5:40
+    dwav = 10; %
+    selector_filter = selector_kernel(wav,(wav*dwav/100)/2,lambda,lambda_step); %Triangular integration profile of selector
+    
+    %Scale for source size relative to reference
+    
+    
+    %Guide Critical angle cut-off scaling
+    m_eff = 0.7;
+    m_div = 0.1*m_eff*wav;
+    col_div_x = (180/pi)*(40e-3/2)/col;
+    col_div_y = (180/pi)*(55e-3/2)/col;
+    if m_div < col_div_x; critical_angle_scaling_x = m_div/col_div_x; else critical_angle_scaling_x = 1; end
+    if m_div < col_div_y; critical_angle_scaling_y = m_div/col_div_y; else critical_angle_scaling_y = 1; end
+    
+    %Final flux multiplication
+    mono_flux = spectrum176.*selector_filter.*col_scale*critical_angle_scaling_x*critical_angle_scaling_y; %This is a spectrum
+    flux = sum(mono_flux); %Integrated over selector or chopper band width
+    disp([num2str(wav) char(9) num2str(flux,'%4.2g')])
+
+end
+
+
+
+% %current source size
+% if length(inst_config.source_size) ==1; %Round source aperture
+%     source_area = pi*(inst_config.source_size/2)^2;
+%     col_div_x = (180/pi)*(inst_config.source_size/2)/col;
+%     col_div_y = (180/pi)*(inst_config.source_size/2)/col;
+% else %Rectangular source aperture
+%     source_area = inst_config.source_size(1)*inst_config.source_size(2);
+%     col_div_x = (180/pi)*(inst_config.source_size(1)/2)/col;
+%     col_div_y = (180/pi)*(inst_config.source_size(2)/2)/col;
+% end
+% 
+% %reference source size
+% if length(inst_config.max_flux_source_size) ==1; %Round source aperture
+%     ref_source_area = pi*(inst_config.max_flux_source_size/2)^2;
+% else %Rectangular source aperture
+%     ref_source_area = inst_config.max_flux_source_size(1)*inst_config.max_flux_source_size(2);
+% end
+
+
+

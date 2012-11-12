@@ -1,0 +1,34 @@
+function output = grasp_plot_resolutiont_callbacks(to_do,option)
+
+global status_flags
+global grasp_handles
+global grasp_env
+
+if nargin <2; option = []; end
+
+output = [];
+
+
+switch to_do
+    
+    case 'all_resolution_check'
+        status_flags.resolution_fit.all_check = get(gcbo,'value');
+        
+    case 'divergence_check'
+        status_flags.resolution_fit.divergence_check = get(gcbo,'value');
+        
+    case 'wavelength_check'
+        status_flags.resolution_fit.all_check = get(gcbo,'value');
+        
+    case 'pixelation_check'
+        status_flags.resolution_fit.all_check =get(gcbo,'value');
+        
+    case 'rebinning_check'
+        status_flags.resolution_fit.all_check get(gcbo,'value');
+        
+end
+
+
+
+%Update Resolution window objects
+status_flags.resolution_fit.all_check

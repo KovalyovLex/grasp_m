@@ -1,0 +1,436 @@
+%Parameters avaliable for fitting, autoguess and point & click
+%xy  - column of x&y pixel coordinates of data in zoomed display window
+%z   - column of intensities corresponding to xy coordinates above 
+%
+%fitdata - structure with the following fields:
+%fitdata.xmat      - matrix of all pixel x coordinates in zoomed display
+%fitdata.ymat      - matrix of all pixel y coordinates in zoomed display
+%fitdata.zmat      - matrix of all pixel intensities in zoomed display
+%fitdata.emat      - matrix of all pixel intensity errors in zoomed display
+%fitdata.mask_mak  - matrix of 0's and 1's correspoinding to mask
+%fitdata.xdat      - column of x pixel coordinates (same as in xy above)
+%fitdata.ydat      - column of y pixel coordinates (same as in xy above)
+%fitdata.zdat      - column of intensites (same as in z above)
+%fitdata.edat      - column of intensity errors 
+%
+%fitdata.qxmat     - matrix of all qx coordinates in zoomed display
+%fitdata.qymat     - matrix of all qy coordinates in zoomed display
+%fitdata.modqmat   - matrix of all modq coordinates in zoomed display
+%
+%fitdata.qanglemat - matrix of mod_q angle from vertical (degrees)
+%
+%fitdata.qxdat     - column of qx coordinates
+%fitdata.qydat     - column of qy coordinates
+%fitdata.modqdat   - column of modq coordinates
+%
+%fitdata.qangledat - column of modq angle from vertical (degrees)
+%
+%fitdata.zoom_size - [n,m] size of zoomed window
+%fitdata.lims      - zoomed axis limits [x1,x2,y1,y2]
+%
+%fitdata.cm - structure with the following fields
+%fitdata.cm.cm_pixels  - beam centre coordinates (pixels) for this detector
+%fitdata.cm.cm_translation - detector translation relative to nominal centre
+
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian - Cartesian Pixels
+</FnName>
+
+<Params>
+z0
+i0
+cx
+cy
+fwhm1
+fwhm2
+theta
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Integrated Intensity
+Centre_X
+Centre_Y
+FWHM1
+FWHM2
+Axis Angle
+</ParamNames>
+
+<FnCode>
+xy_new(:,1) = xy(:,1) - cx;
+xy_new(:,2) = xy(:,2) - cy;
+[th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
+th = th - (-theta*2*pi/360);
+[xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
+z = z0 + i0.*(1/(fwhm1*sqrt(pi/2)/(sqrt(log(4)))).*exp(-2*((xy_new(:,1)).^2)/((fwhm1.^2)/log(4)))) .* (1/fwhm2*sqrt(pi/2)/(sqrt(log(4)))).*exp(-2*((xy_new(:,2)).^2)/((fwhm2.^2)/log(4)));
+</FnCode>
+
+<AutoGuessCode>
+%Guess Spot Centre
+[amp i_amp] = max(z); %Peak
+centre_x = xy(i_amp,1); %x Centre Position
+centre_y = xy(i_amp,2); %y Centre Position
+%Sum box intensity to estimate integrated intensity
+xlims = round(get(grasp_handles.displayimage.axis,'xlim')); ylims = round(get(grasp_handles.displayimage.axis,'ylim'));
+int_int_guess = sum(z);
+int_int_guess = abs(int_int_guess); %In case of small signals give negatives
+%Guess gaussian width
+sigma = int_int_guess/(amp*sqrt(2*pi));
+width = sqrt(2*sqrt(2*log(2))*sigma); %The sqrt is because this is a 2D gaussian
+bg = min(z); %Background
+axis_angle = 0; %How to guess this?
+guess_values = [bg int_int_guess centre_x centre_y width width axis_angle];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message('Click on Background');
+[x_min y_min] = ginput(1);
+delete(text_handle);
+bg = fitdata.zmat(round(y_min)-fitdata.lims(3),round(x_min)-fitdata.lims(1)); %Background
+text_handle = grasp_message(['Click on Peak']);
+[centre_x centre_y]=ginput(1); %Spot centre
+delete(text_handle);
+amp = fitdata.zmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+text_handle = grasp_message(['Click on Peak Width1']);
+[wx1 wy1]=ginput(1);
+delete(text_handle);
+text_handle = grasp_message(['Click on Peak Width2']);
+[wx2 wy2]=ginput(1);
+delete(text_handle);
+width1 = sqrt((wx1-centre_x)^2 + (wy1-centre_y)^2);
+width2 = sqrt((wx2-centre_x)^2 + (wy2-centre_y)^2);
+axis_angle = (180/pi)*tan((wy1-centre_y)/(wx1-centre_x));
+int_int = (amp-bg)*width1*sqrt(pi)/(sqrt(2)*sqrt(2*log(2)))*width2*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+guess_values = [bg int_int centre_x centre_y width1 width2 axis_angle];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian - Polar Pixels
+</FnName>
+
+<Params>
+z0
+i0
+rx
+phi
+fwhm_r
+fwhm_phi
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Integrated Intensity
+Spot Radius
+Spot Angle
+FWHM Radial
+FWHM Azimuthal
+</ParamNames>
+
+<FnCode>
+cart_angle = (90 - phi)*pi/180; cart_radius = rx;
+[spot_cx,spot_cy] = pol2cart(cart_angle,cart_radius);
+xy_new(:,1) = xy(:,1) - spot_cx - fitdata.cm.cm_pixels(1); 
+xy_new(:,2) = xy(:,2) - spot_cy - fitdata.cm.cm_pixels(2);
+[th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
+th = th - cart_angle;
+[xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
+az_pixel_FWHM = 2*rx*atan((fwhm_phi*pi/180)/2); %Use this to fit az_width as a delta_Angle.
+z = z0 + i0.*(1/(fwhm_r*sqrt(pi/2)/(sqrt(log(4))))*exp(-2*((xy_new(:,1)).^2)/((fwhm_r.^2)/log(4)))) .* (1/(az_pixel_FWHM*sqrt(pi/2)/(sqrt(log(4))))*exp(-2*((xy_new(:,2)).^2)/((az_pixel_FWHM.^2)/log(4))));
+</FnCode>
+
+<AutoGuessCode>
+%Guess Spot Centre
+[amp i_amp] = max(z); %Peak
+centre_x = xy(i_amp,1); %x Centre Position
+centre_y = xy(i_amp,2); %y Centre Position
+[spot_angle, spot_radius] = cart2pol(centre_x-fitdata.cm.cm_pixels(1),centre_y-fitdata.cm.cm_pixels(2));
+spot_angle = 90 - spot_angle*180/pi;
+%Sum box intensity to estimate integrated intensity
+xlims = round(get(grasp_handles.displayimage.axis,'xlim')); ylims = round(get(grasp_handles.displayimage.axis,'ylim'));
+int_int_guess = sum(z);
+int_int_guess = abs(int_int_guess); %In case of small signals give negatives
+%Guess gaussian width
+sigma = int_int_guess/(amp*sqrt(2*pi));
+pixel_width = sqrt(2*sqrt(2*log(2))*sigma); %The sqrt is because this is a 2D gaussian
+angle_pixel_size = fitdata.qangledat(2)-fitdata.qangledat(1);
+angle_width = pixel_width*angle_pixel_size;
+bg = min(z); %Background
+guess_values = [bg int_int_guess spot_radius spot_angle pixel_width angle_width];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message('Click on Background');
+[x_min y_min] = ginput(1);
+delete(text_handle);
+bg = fitdata.zmat(round(y_min)-fitdata.lims(3),round(x_min)-fitdata.lims(1)); %Background
+text_handle = grasp_message(['Click on Peak']);
+%Guess Spot Centre & angle
+[centre_x centre_y]=ginput(1);
+[spot_angle, spot_radius] = cart2pol(centre_x-fitdata.cm.cm_pixels(1),centre_y-fitdata.cm.cm_pixels(2));
+spot_angle = 90 - spot_angle*180/pi;
+delete(text_handle);
+amp = fitdata.zmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+text_handle = grasp_message(['Click on Radial Width1']);
+[wx1 wy1]=ginput(1);
+delete(text_handle);
+text_handle = grasp_message(['Click on Azimuthal Width2']);
+[wx2 wy2]=ginput(1);
+delete(text_handle);
+radial_width = sqrt((wx1-centre_x)^2 + (wy1-centre_y)^2);
+pixel_width = sqrt((wx2-centre_x)^2 + (wy2-centre_y)^2);
+angle_pixel_size = fitdata.qangledat(2)-fitdata.qangledat(1);
+angle_width = pixel_width*angle_pixel_size;
+int_int = (amp-bg)*radial_width*sqrt(pi)/(sqrt(2)*sqrt(2*log(2)))*pixel_width*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+guess_values = [bg int_int spot_radius spot_angle radial_width angle_width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian - Cartesian Qxy
+</FnName>
+
+<Params>
+z0
+i0
+qx
+qy
+fwhm1
+fwhm2
+theta
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Integrated Intensity
+Q_Centre_X
+Q_Centre_Y
+Q_FWHM1
+Q_FWHM2
+Axis Angle
+</ParamNames>
+
+<FnCode>
+xy_new(:,1) = fitdata.qxdat-qx;
+xy_new(:,2) = fitdata.qydat-qy;
+[th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
+th = th - (-theta*pi/180);
+[xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
+z = z0 + i0.*(1/(fwhm1*sqrt(pi/2)/(sqrt(log(4)))).*exp(-2*((xy_new(:,1)).^2)/((fwhm1.^2)/log(4)))) .* (1/fwhm2*sqrt(pi/2)/(sqrt(log(4)))).*exp(-2*((xy_new(:,2)).^2)/((fwhm2.^2)/log(4)));
+</FnCode>
+
+<AutoGuessCode>
+%Guess Spot Centre
+[amp i_amp] = max(z); %Peak
+centre_x = fitdata.qxdat(i_amp); %qx Centre Position
+centre_y = fitdata.qydat(i_amp); %qy Centre Position
+%Sum box intensity to estimate integrated intensity
+xlims = round(get(grasp_handles.displayimage.axis,'xlim')); ylims = round(get(grasp_handles.displayimage.axis,'ylim'));
+int_int_guess = sum(z);
+int_int_guess = abs(int_int_guess); %In case of small signals give negatives
+%Guess gaussian width
+sigma = int_int_guess/(amp*sqrt(2*pi));
+pixel_width = sqrt(2*sqrt(2*log(2))*sigma); %The sqrt is because this is a 2D gaussian
+pixel_qx_size = fitdata.qxmat(1,2) - fitdata.qxmat(1,1);
+pixel_qy_size = fitdata.qymat(2,1) - fitdata.qymat(1,1);
+width_x = pixel_width*pixel_qx_size;
+width_y = pixel_width*pixel_qy_size;
+int_int_guess = int_int_guess *pixel_qx_size*pixel_qy_size;
+bg = min(z); %Background
+axis_angle = 0; %How to guess this?
+guess_values = [bg int_int_guess centre_x centre_y width_x width_y axis_angle];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message('Click on Background');
+[x_min y_min] = ginput(1);
+delete(text_handle);
+bg = fitdata.zmat(round(y_min)-fitdata.lims(3),round(x_min)-fitdata.lims(1)); %Background
+text_handle = grasp_message(['Click on Peak']);
+[centre_x centre_y]=ginput(1); %Spot centre
+cqx = fitdata.qxmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+cqy = fitdata.qymat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+delete(text_handle);
+amp = fitdata.zmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+text_handle = grasp_message(['Click on Peak Width1']);
+[wx1 wy1]=ginput(1);
+wqx1 = fitdata.qxmat(round(wy1)-fitdata.lims(3), round(wx1)-fitdata.lims(1));
+wqy1 = fitdata.qymat(round(wy1)-fitdata.lims(3), round(wx1)-fitdata.lims(1));
+delete(text_handle);
+text_handle = grasp_message(['Click on Peak Width2']);
+[wx2 wy2]=ginput(1);
+wqx2 = fitdata.qxmat(round(wy2)-fitdata.lims(3), round(wx2)-fitdata.lims(1));
+wqy2 = fitdata.qymat(round(wy2)-fitdata.lims(3), round(wx2)-fitdata.lims(1));
+delete(text_handle);
+width1 = sqrt((wqx1-cqx)^2 + (wqy1-cqy)^2);
+width2 = sqrt((wqx2-cqx)^2 + (wqy2-cqy)^2);
+axis_angle = (180/pi)*tan((wy1-centre_y)/(wx1-centre_x));
+int_int = (amp-bg)*width1*sqrt(pi)/(sqrt(2)*sqrt(2*log(2)))*width2*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+guess_values = [bg int_int cqx cqy width1 width2 axis_angle];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian - Polar |Q| phi
+</FnName>
+
+<Params>
+z0
+i0
+qr
+phi
+fwhm_qr
+fwhm_phi
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Integrated Intensity
+Spot Q_Radius
+Spot Azimuth
+FWHM Q_Radial
+FWHM Azimuthal
+</ParamNames>
+
+<FnCode>
+cart_angle = (90 - phi)*pi/180; cart_radius = qr;
+[spot_cx,spot_cy] = pol2cart(cart_angle,cart_radius);
+xy_new(:,1) = fitdata.qxdat - spot_cx; 
+xy_new(:,2) = fitdata.qydat - spot_cy;
+[th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
+th = th - cart_angle;
+[xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
+az_pixel_FWHM = 2*qr*atan((fwhm_phi*pi/180)/2); %Use this to fit az_width as a delta_Angle.
+z = z0 + i0.*(1/(fwhm_qr*sqrt(pi/2)/(sqrt(log(4))))*exp(-2*((xy_new(:,1)).^2)/((fwhm_qr.^2)/log(4)))) .* (1/(az_pixel_FWHM*sqrt(pi/2)/(sqrt(log(4))))*exp(-2*((xy_new(:,2)).^2)/((az_pixel_FWHM.^2)/log(4))));
+</FnCode>
+
+<AutoGuessCode>
+%Guess Spot Centre
+[amp i_amp] = max(z); %Peak
+centre_x = fitdata.modqdat(i_amp); %qr Centre Position
+centre_y = fitdata.qangledat(i_amp); %phi Centre Position
+%Sum box intensity to estimate integrated intensity
+xlims = round(get(grasp_handles.displayimage.axis,'xlim')); ylims = round(get(grasp_handles.displayimage.axis,'ylim'));
+int_int_guess = sum(z);
+int_int_guess = abs(int_int_guess); %In case of small signals give negatives
+%Guess gaussian width
+sigma = int_int_guess/(amp*sqrt(2*pi));
+pixel_width = sqrt(2*sqrt(2*log(2))*sigma); %The sqrt is because this is a 2D gaussian
+radial_pixel_size = fitdata.modqdat(2)-fitdata.modqdat(1);
+angle_pixel_size = fitdata.qangledat(2)-fitdata.qangledat(1);
+width_qr = pixel_width * radial_pixel_size;
+width_phi = pixel_width * angle_pixel_size;
+int_int_guess = int_int_guess * radial_pixel_size*radial_pixel_size;
+bg = min(z); %Background
+guess_values = [bg int_int_guess centre_x centre_y width_qr width_phi];
+</AutoGuessCode>
+
+
+<PointClickCode>
+text_handle = grasp_message('Click on Background');
+[x_min y_min] = ginput(1);
+delete(text_handle);
+bg = fitdata.zmat(round(y_min)-fitdata.lims(3),round(x_min)-fitdata.lims(1)); %Background
+text_handle = grasp_message(['Click on Peak']);
+%Guess Spot Centre & angle
+[centre_x centre_y]=ginput(1);
+qr = fitdata.modqmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+phi = fitdata.qanglemat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+delete(text_handle);
+amp = fitdata.zmat(round(centre_y)-fitdata.lims(3), round(centre_x)-fitdata.lims(1));
+text_handle = grasp_message(['Click on Radial Width1']);
+[wx1 wy1]=ginput(1);
+delete(text_handle);
+text_handle = grasp_message(['Click on Azimuthal Width2']);
+[wx2 wy2]=ginput(1);
+delete(text_handle);
+radial_pixel_width = sqrt((wx1-centre_x)^2 + (wy1-centre_y)^2);
+radial_pixel_size = fitdata.modqdat(2)-fitdata.modqdat(1);
+radial_width = radial_pixel_width * radial_pixel_size;
+angle_pixel_width = sqrt((wx2-centre_x)^2 + (wy2-centre_y)^2);
+angle_pixel_size = fitdata.qangledat(2)-fitdata.qangledat(1);
+angle_width = angle_pixel_width*angle_pixel_size;
+int_int = (amp-bg)*radial_pixel_width*sqrt(pi)/(sqrt(2)*sqrt(2*log(2)))*angle_pixel_width*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+int_int = int_int * radial_pixel_size*radial_pixel_size;
+guess_values = [bg int_int qr phi radial_width angle_width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
