@@ -2,6 +2,363 @@
 %x  - column of x values in zoomed display window
 %y  - column of intensities corresponding to x coordinate above 
 
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian + Gaussian + Lorentzian
+</FnName>
+
+<Params>
+y0
+i0_G1
+xc_G1
+fwhm_G1
+i0_G2
+xc_G2
+fwhm_G2
+i0_L1
+xc_L1
+fwhm_L1
+</Params>
+
+<StartValues>
+0
+1000
+0.5
+1
+1000
+0.5
+1
+1000
+0.5
+1
+</StartValues>
+
+<ParamNames>
+Background
+G1 Integrated Intensity
+G1 Centre
+G1 FWHM
+G2 Integrated Intensity
+G2 Centre
+G2 FWHM
+L Integrated Intensity
+L Centre
+L FWHM
+</ParamNames>
+
+<FnCode>
+y = y0 + (i0_G1 / (fwhm_G1*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G1).^2) / (fwhm_G1.^2 / log(4))) + (i0_G2 / (fwhm_G2*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G2).^2) / (fwhm_G2.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2));
+</FnCode>
+
+<AutoGuessCode>
+[amp i_amp] = max(y);    %Peak Intensity
+xc_G1 = x(i_amp);         %Centre Position
+xc_G2 = xc_G1;
+y0 = min(y);         %Background
+x_diff = diff(x); %Differences between adjacent x's.
+ytemp = y(1:length(y)-1);
+i0_G1 = abs((sum((ytemp-y0).*x_diff)))/3;
+i0_G2 = i0_G1;
+sigma = i0_G1/(amp*sqrt(2*pi));
+fwhm_G1 = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
+fwhm_G2 = fwhm_G1;
+xc_L1 = x(i_amp); %Centre Position
+i0_L1 = (sum((ytemp-y0).*x_diff))/3;
+sigma_L = i0_L1/(amp*pi);
+fwhm_L1 = 2*sigma_L;
+guess_values = [y0, i0_G1, xc_G1, fwhm_G1, i0_G2, xc_G2, fwhm_G2, i0_L1, xc_L1, fwhm_L1];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
+[fwhm_G y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+fwhm_G=abs(fwhm_G-xc_G);
+amp=amp-y0;
+i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+%Put estimated parameters into the output array.
+guess_values = [y0, i0_G, xc_G, fwhm_G];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian + Gaussian + Lorentzian + Lorentzian
+</FnName>
+
+<Params>
+y0
+i0_G1
+xc_G1
+fwhm_G1
+i0_G2
+xc_G2
+fwhm_G2
+i0_L1
+xc_L1
+fwhm_L1
+i0_L2
+xc_L2
+fwhm_L2
+</Params>
+
+<StartValues>
+0
+1000
+0.5
+1
+1000
+0.5
+1
+1000
+0.5
+1
+1000
+0.5
+1
+</StartValues>
+
+<ParamNames>
+Background
+G1 Integrated Intensity
+G1 Centre
+G1 FWHM
+G2 Integrated Intensity
+G2 Centre
+G2 FWHM
+L1 Integrated Intensity
+L1 Centre
+L1 FWHM
+L2 Integrated Intensity
+L2 Centre
+L2 FWHM
+</ParamNames>
+
+<FnCode>
+y = y0 + (i0_G1 / (fwhm_G1*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G1).^2) / (fwhm_G1.^2 / log(4))) + (i0_G2 / (fwhm_G2*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G2).^2) / (fwhm_G2.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2)) + ((2*i0_L2/pi)*fwhm_L2)./(4*((x-xc_L2).^2)+(fwhm_L2.^2));
+</FnCode>
+
+<AutoGuessCode>
+[amp i_amp] = max(y);    %Peak Intensity
+xc_G1 = x(i_amp);         %Centre Position
+xc_G2 = xc_G1;
+y0 = min(y);         %Background
+x_diff = diff(x); %Differences between adjacent x's.
+ytemp = y(1:length(y)-1);
+i0_G1 = abs((sum((ytemp-y0).*x_diff)))/4;
+i0_G2 = i0_G1;
+sigma = i0_G1/(amp*sqrt(2*pi));
+fwhm_G1 = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
+fwhm_G2 = fwhm_G1;
+xc_L1 = x(i_amp); %Centre Position
+i0_L1 = (sum((ytemp-y0).*x_diff))/4;
+sigma_L = i0_L1/(amp*pi);
+fwhm_L1 = 2*sigma_L;
+xc_L2 = xc_L1; %Centre Position
+i0_L2 = i0_L1;
+fwhm_L2 = fwhm_L1;
+guess_values = [y0, i0_G1, xc_G1, fwhm_G1, i0_G2, xc_G2, fwhm_G2, i0_L1, xc_L1, fwhm_L1, i0_L2, xc_L2, fwhm_L2];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
+[fwhm_G y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+fwhm_G=abs(fwhm_G-xc_G);
+amp=amp-y0;
+i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+%Put estimated parameters into the output array.
+guess_values = [y0, i0_G, xc_G, fwhm_G];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian + Lorentzian + Lorentzian
+</FnName>
+
+<Params>
+y0
+i0_G
+xc_G
+fwhm_G
+i0_L1
+xc_L1
+fwhm_L1
+i0_L2
+xc_L2
+fwhm_L2
+</Params>
+
+<StartValues>
+0
+1000
+0.5
+1
+1000
+0.5
+1
+1000
+0.5
+1
+</StartValues>
+
+<ParamNames>
+Background
+G Integrated Intensity
+G Centre
+G FWHM
+L1 Integrated Intensity
+L1 Centre
+L1 FWHM
+L2 Integrated Intensity
+L2 Centre
+L2 FWHM
+</ParamNames>
+
+<FnCode>
+y = y0 + (i0_G / (fwhm_G*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G).^2) / (fwhm_G.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2)) + ((2*i0_L2/pi)*fwhm_L2)./(4*((x-xc_L2).^2)+(fwhm_L2.^2));
+</FnCode>
+
+<AutoGuessCode>
+[amp i_amp] = max(y);    %Peak Intensity
+xc_G = x(i_amp);         %Centre Position
+y0 = min(y);         %Background
+x_diff = diff(x); %Differences between adjacent x's.
+ytemp = y(1:length(y)-1);
+i0_G = abs((sum((ytemp-y0).*x_diff)))/3;
+sigma = i0_G/(amp*sqrt(2*pi));
+fwhm_G = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
+xc_L1 = x(i_amp); %Centre Position
+i0_L1 = (sum((ytemp-y0).*x_diff))/3;
+sigma_L = i0_L1/(amp*pi);
+fwhm_L1 = 2*sigma_L;
+xc_L2 = xc_L1; %Centre Position
+i0_L2 = i0_L1;
+xc_L2 = xc_L1;
+fwhm_L2 = fwhm_L1;
+guess_values = [y0, i0_G, xc_G, fwhm_G, i0_L1, xc_L1, fwhm_L1, i0_L2, xc_L2, fwhm_L2];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
+[fwhm_G y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+fwhm_G=abs(fwhm_G-xc_G);
+amp=amp-y0;
+i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+%Put estimated parameters into the output array.
+guess_values = [y0, i0_G, xc_G, fwhm_G];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gaussian + Lorentzian
+</FnName>
+
+<Params>
+y0
+i0_G
+xc_G
+fwhm_G
+i0_L
+xc_L
+fwhm_L
+</Params>
+
+<StartValues>
+0
+1000
+0.5
+1
+1000
+0.5
+1
+</StartValues>
+
+<ParamNames>
+Background
+G Integrated Intensity
+G Centre
+G FWHM
+L Integrated Intensity
+L Centre
+L FWHM
+</ParamNames>
+
+<FnCode>
+y = y0 + (i0_G / (fwhm_G*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G).^2) / (fwhm_G.^2 / log(4))) + ((2*i0_L/pi)*fwhm_L)./(4*((x-xc_L).^2)+(fwhm_L.^2));
+</FnCode>
+
+<AutoGuessCode>
+[amp i_amp] = max(y);    %Peak Intensity
+xc_G = x(i_amp);         %Centre Position
+y0 = min(y);         %Background
+x_diff = diff(x); %Differences between adjacent x's.
+ytemp = y(1:length(y)-1);
+i0_G = abs((sum((ytemp-y0).*x_diff)))/2;
+sigma = i0_G/(amp*sqrt(2*pi));
+fwhm_G = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
+xc_L = x(i_amp); %Centre Position
+i0_L = (sum((ytemp-y0).*x_diff))/2;
+sigma_L = i0_L/(amp*pi);
+fwhm_L = 2*sigma_L;
+guess_values = [y0, i0_G, xc_G, fwhm_G, i0_L, xc_L, fwhm_L];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
+[fwhm_G y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+fwhm_G=abs(fwhm_G-xc_G);
+amp=amp-y0;
+i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+%Put estimated parameters into the output array.
+guess_values = [y0, i0_G, xc_G, fwhm_G];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
 
 %********************************************************************************************************
 <Function>

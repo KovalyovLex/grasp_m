@@ -22,7 +22,7 @@ function varargout = fitting_tool(varargin)
 
 % Edit the above text to modify the response to help fitting_tool
 
-% Last Modified by GUIDE v2.5 06-Nov-2012 19:49:20
+% Last Modified by GUIDE v2.5 18-Nov-2012 16:50:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -80,9 +80,13 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-tset = findobj('Tag','radiobutton1');
-treg = findobj('Tag','radiobutton2');
-temp = findobj('Tag','radiobutton3');
+tset    = findobj('Tag','radiobutton1');
+treg    = findobj('Tag','radiobutton2');
+temp    = findobj('Tag','radiobutton3');
+expImg  = findobj('Tag','checkbox1');
+objFrom = findobj('Tag','editFrom');
+objTo   = findobj('Tag','editTo');
+
 h = findobj('Tag','edit1');
 
 tepVal = 0;
@@ -96,7 +100,11 @@ if (get(temp,'Value') == 1)
     tepVal = 3;
 end
 
-auto_fit(get(h,'String'), tepVal);
+exportImage = get(expImg, 'Value') == 1;
+from = str2num(get(objFrom, 'String')) + 1;
+to = str2num(get(objTo, 'String')) + 1;
+
+auto_fit(get(h,'String'), tepVal, exportImage, from, to);
 
 
 function edit1_Callback(hObject, eventdata, handles)
@@ -132,3 +140,74 @@ h = findobj('Tag','edit1');
 [FileName,PathName,FilterIndex] = uigetfile('*.txt');
 
 set(h,'String', [PathName FileName]);
+
+
+% --- Executes on button press in checkbox1.
+function checkbox1_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox1
+
+
+
+function editFrom_Callback(hObject, eventdata, handles)
+% hObject    handle to editFrom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editFrom as text
+%        str2double(get(hObject,'String')) returns contents of editFrom as a double
+global status_flags;
+
+val = str2num(get(hObject, 'String'));
+if ( val >= status_flags.selector.fdpth_max )
+    set(hObject, 'String', num2str(status_flags.selector.fdpth_max - 1));
+end
+if ( val < 1 )
+    set(hObject, 'String', '1');
+end
+
+% --- Executes during object creation, after setting all properties.
+function editFrom_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editFrom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editTo_Callback(hObject, eventdata, handles)
+% hObject    handle to editTo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editTo as text
+%        str2double(get(hObject,'String')) returns contents of editTo as a double
+global status_flags;
+
+val = str2num(get(hObject, 'String'));
+if ( val >= status_flags.selector.fdpth_max )
+    set(hObject, 'String', num2str(status_flags.selector.fdpth_max - 1));
+end
+if ( val < 1 )
+    set(hObject, 'String', '1');
+end
+
+% --- Executes during object creation, after setting all properties.
+function editTo_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editTo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

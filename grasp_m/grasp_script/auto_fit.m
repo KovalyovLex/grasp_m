@@ -1,4 +1,4 @@
-function auto_fit(file, tepVal)
+function auto_fit(file, tepVal, exportImage, from, to)
 
 global status_flags;
 global grasp_handles;
@@ -32,64 +32,134 @@ end
 h = findobj('name', 'Radial Re-grouping: |q|');
 close(h);
 
-for i = 2:status_flags.selector.fdpth_max
-    set(grasp_handles.figure.fore_dpth, 'value', i);
-    status_flags.selector.fd = get(grasp_handles.figure.fore_dpth,'value');
-    main_callbacks('update_depths'); %Done in a different routine so can be called from elsewhere
-    
-    sector_window;
-    % Open Radial Average box
-    status_flags.analysis_modules.radial_average.sector_mask_chk = 1;
-    radial_average_window;
+i = from;
+if (to < from)
+    % reverse cycle
+    while(i >= to)
+        set(grasp_handles.figure.fore_dpth, 'value', i);
+        status_flags.selector.fd = get(grasp_handles.figure.fore_dpth,'value');
+        main_callbacks('update_depths'); %Done in a different routine so can be called from elsewhere
 
-    % Open Avarage window
-	radial_average_callbacks('averaging_control','radial_q');
-    % open grap plot fit window
-	grasp_plot_fit_window;
+        sector_window;
+        % Open Radial Average box
+        status_flags.analysis_modules.radial_average.sector_mask_chk = 1;
+        radial_average_window;
 
-    % Start fitting
-	grasp_plot_fit_callbacks('fit_it');
-    
-    if tepVal == 1
-        fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' ]);
-    end
-    if tepVal == 2
-        fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' ]);
-    end
-    if tepVal == 3
-        fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' ]);
-    end
-    
-    for n = 1:length(status_flags.fitter.function_info_1d.long_names)
-            %TODO
-            %PARAMETER NAME
-            if tepVal == 1
-                fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
-            end
-            if tepVal == 2
-                fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
-            end
-            if tepVal == 3
-                fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
-            end
-            
-            fprintf(fileID,[ num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) ' ' ]);
-    end
-    
-    fprintf(fileID, '\n');
-    
-    h = findobj('name', 'Radial Re-grouping: |q|');
-    figure(h);
-    pause(1);
-        
-    % export tot eps format
-    fname = [filePrefix '_plot_' num2str(i - 2) '.jpg'];
-    if fname ~= 0
-       print(h, '-djpeg100','-noui',fname);
-    end
-    pause(0.1);
+        % Open Avarage window
+        radial_average_callbacks('averaging_control','radial_q');
+        % open grap plot fit window
+        grasp_plot_fit_window;
 
-    close(h);
+        % Start fitting
+        grasp_plot_fit_callbacks('fit_it');
+
+        if tepVal == 1
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.tset)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' ]);
+        end
+        if tepVal == 2
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.treg)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' ]);
+        end
+        if tepVal == 3
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.temp)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' ]);
+        end
+
+        for n = 1:length(status_flags.fitter.function_info_1d.long_names)
+                %TODO
+                %PARAMETER NAME
+                if tepVal == 1
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+                if tepVal == 2
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+                if tepVal == 3
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+
+                fprintf(fileID,[ num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) ' ' ]);
+        end
+
+        fprintf(fileID, '\n');
+
+        h = findobj('name', 'Radial Re-grouping: |q|');
+        figure(h);
+        pause(1);
+
+        % export tot jpg format
+        if (exportImage)
+           print(h, '-djpeg100','-noui',fname);
+        end
+        pause(0.1);
+
+        close(h);
+        i = i - 1;
+    end
+else
+    while(i <= to)
+        set(grasp_handles.figure.fore_dpth, 'value', i);
+        status_flags.selector.fd = get(grasp_handles.figure.fore_dpth,'value');
+        main_callbacks('update_depths'); %Done in a different routine so can be called from elsewhere
+
+        sector_window;
+        % Open Radial Average box
+        status_flags.analysis_modules.radial_average.sector_mask_chk = 1;
+        radial_average_window;
+
+        % Open Avarage window
+        radial_average_callbacks('averaging_control','radial_q');
+        % open grap plot fit window
+        grasp_plot_fit_window;
+
+        % Start fitting
+        grasp_plot_fit_callbacks('fit_it');
+
+        if tepVal == 1
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.tset)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' ]);
+        end
+        if tepVal == 2
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.treg)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' ]);
+        end
+        if tepVal == 3
+            fname = [filePrefix '_plot_' num2str(displayimage.params1(inst_params.vectors.temp)) '.jpg'];
+            fprintf(fileID,[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' ]);
+        end
+
+        for n = 1:length(status_flags.fitter.function_info_1d.long_names)
+                %TODO
+                %PARAMETER NAME
+                if tepVal == 1
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.tset)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+                if tepVal == 2
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.treg)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+                if tepVal == 3
+                    fprintf(fid(n),[ num2str(displayimage.params1(inst_params.vectors.temp)) ' ' num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) '\n']);
+                end
+
+                fprintf(fileID,[ num2str(status_flags.fitter.function_info_1d.values(n)) ' ' num2str(status_flags.fitter.function_info_1d.err_values(n)) ' ' ]);
+        end
+
+        fprintf(fileID, '\n');
+
+        h = findobj('name', 'Radial Re-grouping: |q|');
+        figure(h);
+        pause(1);
+
+        % export tot jpg format
+        if exportImage
+           print(h, '-djpeg100','-noui',fname);
+        end
+        pause(0.1);
+
+        close(h);
+        i = i + 1;
+    end
 end
 
 for n = 1:length(status_flags.fitter.function_info_1d.long_names)
