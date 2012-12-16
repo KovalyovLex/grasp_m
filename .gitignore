@@ -10,3 +10,5 @@
 
 # Other garbage #
 *.DS_Store
+*grasp_m/_*
+*Thumbs.db
