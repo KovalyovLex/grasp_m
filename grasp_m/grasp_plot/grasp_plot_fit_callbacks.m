@@ -134,11 +134,11 @@ switch(to_do)
                 grasp_plot_fit_callbacks('draw_fn',guess_color);
                 
             catch
-                disp(' ')
+                disp(' ');
                 disp(['There was an error in evaluating the AutoGuessCode in your Fit Function']);
                 disp('Reform your Matlab code and Try again.');
                 disp('Make sure that the variable ''guess_values = [    ]'' is defined as a final result of the auto guess procedure');
-                disp(' ')
+                disp(' ');
                 return
             end
             
@@ -354,6 +354,9 @@ switch(to_do)
             %status_flags.fitter.function_info_1d.point_click_code = [status_flags.fitter.function_info_1d.point_click_code, fn.point_click_code];
         end
         
+        % full functions field by variable names
+        status_flags.fitter.function_info_1d.functions = status_flags.fitter.function_info_1d.variable_names;
+        
         %Also allow output of the fit function (e.g. for Ancos2)
         output = status_flags.fitter.function_info_1d;
         
@@ -385,15 +388,40 @@ switch(to_do)
             else
                 visible = 'on';
             end
+            
             %Parameter Value
-            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(status_flags.fitter.function_info_1d.values(n)),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
-            handles_store = [handles_store, handle];
-
+            if ( strcmp(status_flags.fitter.function_info_1d.variable_names{n},status_flags.fitter.function_info_1d.functions{n}) )
+                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(status_flags.fitter.function_info_1d.values(n)),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
+                handles_store = [handles_store, handle];            
+            else
+                % replace parameter for function
+                for line = 1:length(status_flags.fitter.function_info_1d.long_names)
+                    % substitude normal parameters
+                    if ( strcmp(status_flags.fitter.function_info_1d.variable_names{line},status_flags.fitter.function_info_1d.functions{line}) )
+                        eval([status_flags.fitter.function_info_1d.variable_names{line} ' = ' num2str(status_flags.fitter.function_info_1d.values(line)) ';']);
+                    end
+                end
+                for line = 1:length(status_flags.fitter.function_info_1d.long_names)
+                    if ( not ( strcmp(status_flags.fitter.function_info_1d.variable_names{line},status_flags.fitter.function_info_1d.functions{line}) ) )
+                        eval([status_flags.fitter.function_info_1d.variable_names{line} ' = ' status_flags.fitter.function_info_1d.functions{line} ';']);
+                    end
+                end
+                eval(['y = ' status_flags.fitter.function_info_1d.functions{n} ';']);
+                % save our value to global history
+                status_flags.fitter.function_info_1d.values(n) = y;
+                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(y),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
+                handles_store = [handles_store, handle];  
+            end
+            
             if n <= status_flags.fitter.function_info_1d.no_parameters;
                 %Group Check
-                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.81,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Group ' status_flags.fitter.function_info_1d.long_names{n} '`s'],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.group(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_group_check'');');
+                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.64,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Group ' status_flags.fitter.function_info_1d.long_names{n} '`s'],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.group(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_group_check'');');
                 handles_store = [handles_store, handle];
             end
+            
+            %Parameter function
+            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.72,(0.8-(n*0.03)),0.20,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',status_flags.fitter.function_info_1d.functions{n},'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_function_enter'');');
+            handles_store = [handles_store, handle];
         end
         handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.02,0.1,0.96,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','text','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'foregroundcolor','white','string',status_flags.fitter.function_info_1d.math_code);
         handles_store = [handles_store, handle];
@@ -532,10 +560,20 @@ switch(to_do)
         param_number = get(gcbo,'userdata');
         value_str = get(gcbo,'string');
         value = str2num(value_str);
-        if not(isempty(value))
+        if not(isempty(value));
             status_flags.fitter.function_info_1d.values(1,param_number) = value;
         end
         grasp_plot_fit_callbacks('draw_fn',guess_color); %update the function
+        
+    case 'fn_function_enter'
+        param_number = get(gcbo,'userdata');
+        value_str = get(gcbo,'string');
+        if not(isempty(value_str))
+            status_flags.fitter.function_info_1d.functions{param_number} = value_str;
+        end
+        status_flags.fitter.function_info_1d.fix(param_number) = not ( strcmp(status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number}) );
+        grasp_plot_fit_callbacks('draw_fn',guess_color); %update the function
+        grasp_plot_fit_callbacks('update_curve_fit_window');
         
     case 'fn_value_fix_check'
         param_number = get(gcbo,'userdata');

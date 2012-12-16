@@ -57,7 +57,7 @@ fig_position = [grasp_env.screen.grasp_main_actual_position(1)+grasp_env.screen.
     %Parameters - mainly updated in curve_fit_window_mod
     uicontrol('units','normalized','Position',[0.02 0.80 0.3 0.03],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','right','Style','text','String',['Parameters:'],'BackgroundColor', grasp_env.sub_figure_background_color, 'ForegroundColor', [1 1 1]);
     uicontrol('units','normalized','Position',[0.35 0.80 0.55 0.03],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','center','Style','text','BackgroundColor', grasp_env.sub_figure_background_color, 'ForegroundColor', [1 1 1],...
-        'String',['fix       value          err           group']);
+        'String',['fix       value      err        function']);
 
     %Auto Guess Parameters Button
     uicontrol('units','normalized','Position',[0.05 0.02 0.2 0.03],'ToolTip','Automatically Guess Starting Parameters from Zoomed Data','String','Auto_Guess','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','Tag','fit_auto_guess','Visible','on','CallBack','grasp_plot_fit_callbacks(''auto_guess'',''auto_guess'');');

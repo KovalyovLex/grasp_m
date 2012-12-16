@@ -17,9 +17,9 @@ niter=100;
 stol=10e-10;
 
 disp('Fitting: iteration 1');
-disp('')
+disp('');
 disp(sprintf('*Beginning fit (max %d iterations)',niter));
-disp('--------------------------------------')
+disp('--------------------------------------');
 disp('Iteration  Time(s)  Reduced Chi^2');
 
 y=y(:); wt=wt(:); pin=pin(:); dp=dp(:);
@@ -85,7 +85,7 @@ for iter=1:niter,
     
     aprec=abs(pprec.*pbest);      
     if (any(abs(chg) > 0.1*aprec)),
-      p=chg+pprev;
+      p=chg+pprev; % TODO cgh - is beta parameter in wiki http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
       f=feval(func,x,p,extra);
       %set(hfit,'Ydata',f);
       r=wt.*(y-f);

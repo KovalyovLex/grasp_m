@@ -53,11 +53,17 @@ function fitting_tool_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to fitting_tool (see VARARGIN)
 
+global grasp_env;
+
 % Choose default command line output for fitting_tool
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
+
+% find path textbox & set path to data directoty
+h = findobj('Tag','edit1');
+set(h,'String', grasp_env.path.data_dir);
 
 % UIWAIT makes fitting_tool wait for user response (see UIRESUME)
 % uiwait(handles.figure1);

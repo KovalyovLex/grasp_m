@@ -98,10 +98,16 @@ end
 %The above produces a new x-list to run through the function
 x = x_smear; %Replace variable name as all functions expect 'x'
 
+math_Code = {};
 
 %Multiplex control
 param_number = 1;
 for fn_multiplex = 1:status_flags.fitter.number1d;
+    
+    for line = 1:length(status_flags.fitter.function_info_1d.math_code)
+        math_Code{line} = status_flags.fitter.function_info_1d.math_code{line};
+    end
+    
     %Prepare the variables from the parameters
     for variable_loop = 1:status_flags.fitter.function_info_1d.no_parameters
         
@@ -110,11 +116,21 @@ for fn_multiplex = 1:status_flags.fitter.number1d;
             %parameter is grouped - copy the first copy of this parameter to this position
             parameters_in(param_number) = parameters_in(variable_loop);
         end
-        eval([status_flags.fitter.function_info_1d.variable_names{param_number} ' = ' num2str(parameters_in(param_number)) ';']);
+        
+        % TODO Prepare function
+        if ( strcmp(status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number}) )
+            eval([status_flags.fitter.function_info_1d.variable_names{param_number} ' = ' num2str(parameters_in(param_number)) ';']);
+        else
+            % replace parameter for function
+            for line = 1:length(status_flags.fitter.function_info_1d.math_code)
+                math_Code{line} = strrep(math_Code{line},status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number});
+            end
+        end
         param_number = param_number+1;
     end
+    
     for line = 1:length(status_flags.fitter.function_info_1d.math_code)
-        eval(status_flags.fitter.function_info_1d.math_code{line});%this takes 'x' and gives a variable called 'y' as the result
+        eval(math_Code{line});%this takes 'x' and gives a variable called 'y' as the result
     end
     
     if fn_multiplex ==1;
