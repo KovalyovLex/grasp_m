@@ -143,9 +143,13 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 
 h = findobj('Tag','edit1');
 
-[FileName,PathName,FilterIndex] = uigetfile('*.txt');
+temp = fullfile(get(h,'String'),'*.*');
 
-set(h,'String', [PathName FileName]);
+[FileName,PathName,FilterIndex] = uigetfile(temp,'Please select data file for output');
+
+if ( not(FileName == 0) )
+    set(h,'String', [PathName FileName]);
+end
 
 
 % --- Executes on button press in checkbox1.

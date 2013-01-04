@@ -1,4 +1,4 @@
-function [p, std,return_chi_square]=mf_lsqr_grasp(x,y,err,pin,dpin,func,extra)
+function [p, std,return_chi_square]=mf_lsqr_grasp(x,y,err,pin,dpin,func,extra,slow)
 %
 % Version 3.beta
 % Levenberg-Marquardt nonlinear regression of f(x,p) to y(x)
@@ -83,9 +83,16 @@ for iter=1:niter,
       chg(iii)=min(chg(iii),abs(maxstep(iii)*pprev(iii)));
     end;
     
+    %this is my add
+    for(k=1:length(chg))
+       if (slow(k) == 1)
+           chg(k) = chg(k) / 100;
+       end
+    end
+    
     aprec=abs(pprec.*pbest);      
     if (any(abs(chg) > 0.1*aprec)),
-      p=chg+pprev; % TODO cgh - is beta parameter in wiki http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
+      p=chg+pprev; % cgh - is beta parameter in wiki http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
       f=feval(func,x,p,extra);
       %set(hfit,'Ydata',f);
       r=wt.*(y-f);
