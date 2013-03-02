@@ -109,6 +109,9 @@ function processData(i, tepVal, exportImage, fid, filePrefix, fileID)
     % Start fitting
     grasp_plot_fit_callbacks('fit_it');
 
+    % Export Data -> Export Data
+    grasp_plot_menu_callbacks('export_data');
+    
     if tepVal == 1
         % out Tsemp
         tempOut = displayimage.params1(inst_params.vectors.tset);
