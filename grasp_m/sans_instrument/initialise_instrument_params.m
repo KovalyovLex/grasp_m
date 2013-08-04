@@ -56,7 +56,7 @@ param_vectors.pixel_y = [];
 
 
 %List all available instruments:  Menus are built from this declaration
-grasp_env.availaible_instruments = [{[{'ILL_d11'} {'new_d11'} {'old_d11'}]} {[{'ILL_d22'} {'d22'} {'d22_nexus'} {'d22_Jan2004_to_Oct2010'} {'d22_Pre2004'} {'d22_rawdata'} {'d22_BERSANS_Treated_Data'}]} {[{'ILL_d33'} {'D33_Model_Data'} {'D33_Instrument_Comissioning'}]} {'SINQ_sans_I'} {'SINQ_sans_II'} {'NIST_ng3'} {'NIST_ng7'} {[{'ORNL_cg2'} {'old_detector192y'} {'new_detector256y'}]} {'ORNL_cg3'} {'ANSTO_quokka'} {[{'JAEA_sansu'} {'JAEA_sansu'} {'JAEA_sansu_hres'}]} {[{'FRM2_Mira'} {'data128x128'} {'data256x256'}]} {[{'HZB_V4'} {'V4_128'} {'V4_64'}]} {'ISIS_SANS_2D'}];
+grasp_env.availaible_instruments = [{[{'ILL_d11'} {'new_d11'} {'old_d11'}]} {[{'ILL_d22'} {'d22'} {'d22_nexus'} {'d22_Jan2004_to_Oct2010'} {'d22_Pre2004'} {'d22_rawdata'} {'d22_BERSANS_Treated_Data'}]} {[{'ILL_d33'} {'D33'} {'D33_Instrument_Commissioning'} {'D33_Model_Data'}]} {'SINQ_sans_I'} {'SINQ_sans_II'} {'NIST_ng3'} {'NIST_ng7'} {[{'ORNL_cg2'} {'old_detector192y'} {'new_detector256y'}]} {'ORNL_cg3'} {'ANSTO_quokka'} {[{'JAEA_sansu'} {'JAEA_sansu'} {'JAEA_sansu_hres'}]} {[{'FRM2_Mira'} {'data128x128'} {'data256x256'}]} {[{'FRM2_SANS1'} {'SANS1'}]} {[{'HZB_V4'} {'V4_NewDetector2012'} {'V4_128'} {'V4_64'}]} {'ISIS_SANS_2D'}];
 
 
 disp(['Initialising Instrument: ' grasp_env.inst ' Option: ' grasp_env.inst_option]);
@@ -75,12 +75,12 @@ switch grasp_env.inst
         
         %Wavelength dependent attenuators, e.g. ratio(1,:) = [wav, att1, att2, att3 ....]
         %if more than one wavelength entry then interpolate for wavelengths inbetween
-        n_cols =10; n_wavs = 9;
-        cols = [1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
-        wavs = [4; 4.5; 6; 8; 10; 12; 14; 16; 40];
+        
+        
+        %Simple single values for all attenuators.
+        %inst_params.att.ratio = [1, 147, 902, 2874, 112, 28, 7, 3.1];
 
-            inst_params.att.ratio = [1, 147, 902, 2874, 112, 28, 7, 3.1];
-
+        
         
         
         %3D matrix Att# col col col
@@ -88,6 +88,318 @@ switch grasp_env.inst
         %          wav
         %          wav
         %inst_params.att.ratio = [];
+        
+        n_cols =10; n_wavs = 10;
+        cols = [1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        wavs = [4; 4.5; 5; 6; 8; 10; 11.5; 14; 18; 40];
+
+        
+        %Att0 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1) = ones(n_wavs+1,n_cols+1);
+        inst_params.att.ratio(2:n_wavs+1,1) = wavs; inst_params.att.ratio(1,2:n_cols+1) = cols;
+        inst_params.att.ratio(1,1,1) = 0; %Att number
+        
+       
+        %Att1 - rectangular diaphragm (values as of Feb 2013)
+        inst_params.att.ratio(1,:,2) = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        inst_params.att.ratio(2,:,2) = [4, 159.1514939, 159.1514939, 159.3390477, 157.6182694, 153.9380313,	155.8121938, 157.0651778, 160.3481585, 156.3206724, 147];
+        inst_params.att.ratio(3,:,2) = [4.5, 159.1514939, 159.1514939, 159.3390477, 157.6182694, 153.9380313,	155.8121938, 157.0651778, 160.3481585, 156.3206724, 147];
+        inst_params.att.ratio(4,:,2) = [5,  160.3218137, 160.3218137, 161.4059632, 160.4771765, 153.4533819, 155.487212, 154.0559438, 161.4811135, 156.8701091, 147];
+        inst_params.att.ratio(5,:,2) = [6, 161.3897179, 161.3897179, 162.6171902, 160.6163217, 154.0993426, 155.0322022, 152.4939526, 162.7163112, 159.1979444, 147];
+        inst_params.att.ratio(6,:,2) = [8, 165.1694866, 165.1694866, 164.2024295, 161.5682434, 151.090279, 154.6417158, 155.2927849, 158.3023139, 160.147665, 147];
+        inst_params.att.ratio(7,:,2) = [10, 165.255679, 165.255679, 165.7011829, 162.3845829, 151.9563151, 152.6853031, 149.2886807, 157.3985827, 170.1949799, 147];
+        inst_params.att.ratio(8,:,2) = [11.5,  165.9306386, 165.9306386, 164.6183907, 163.0601189, 151.3736442, 147.9941409, 141.9725436, 158.838917, 171.5079975, 147];
+        inst_params.att.ratio(9,:,2) = [14, 165.808165, 165.808165, 166.1321769, 164.5226344, 148.001548, 149.6563563, 141.6800617, 152.5736125, 176.4779411, 147];
+        inst_params.att.ratio(10,:,2) = [18, 161.618621, 161.618621, 164.1944141, 151.51158, 155.0078569, 159.8046583, 149.0982934, 143.7190927, 146.1097335, 147];
+        inst_params.att.ratio(11,:,2) = [40, 161.618621, 161.618621, 164.1944141, 151.51158, 155.0078569, 159.8046583, 149.0982934, 143.7190927, 146.1097335, 147];
+        inst_params.att.ratio(1,1,2) = 1; %Att number
+        
+        %Att2 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,3) = ones(n_wavs+1,n_cols+1)*902 ;
+        inst_params.att.ratio(2:n_wavs+1,1,3) = wavs; inst_params.att.ratio(1,2:n_cols+1,3) = cols;
+        inst_params.att.ratio(1,1,3) = 2; %Att number
+        
+        %Att3 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,4) = ones(n_wavs+1,n_cols+1)*2874;
+        inst_params.att.ratio(2:n_wavs+1,1,4) = wavs; inst_params.att.ratio(1,2:n_cols+1,4) = cols;
+        inst_params.att.ratio(1,1,4) = 3; %Att number
+        
+        %Att4 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,5) = ones(n_wavs+1,n_cols+1)*112;
+        inst_params.att.ratio(2:n_wavs+1,1,5) = wavs; inst_params.att.ratio(1,2:n_cols+1,5) = cols;
+        inst_params.att.ratio(1,1,5) = 4; %Att number
+        
+        %Att5 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,6) = ones(n_wavs+1,n_cols+1)*28;
+        inst_params.att.ratio(2:n_wavs+1,1,6) = wavs; inst_params.att.ratio(1,2:n_cols+1,6) = cols;
+        inst_params.att.ratio(1,1,6) = 5; %Att number
+        
+        %Att6 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,7) = ones(n_wavs+1,n_cols+1)*7;
+        inst_params.att.ratio(2:n_wavs+1,1,7) = wavs; inst_params.att.ratio(1,2:n_cols+1,7) = cols;
+        inst_params.att.ratio(1,1,7) = 6; %Att number
+        
+        %Att7 - rectangular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,8) = ones(n_wavs+1,n_cols+1)*3.1;
+        inst_params.att.ratio(2:n_wavs+1,1,8) = wavs; inst_params.att.ratio(1,2:n_cols+1,8) = cols;
+        inst_params.att.ratio(1,1,8) = 7; %Att number
+        
+        %Dummy worksheet (Att8 - does not exist)
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,9) = ones(n_wavs+1,n_cols+1)*3.1;
+        inst_params.att.ratio(2:n_wavs+1,1,9) = wavs; inst_params.att.ratio(1,2:n_cols+1,9) = cols;
+        inst_params.att.ratio(1,1,9) = 7; %Att number
+        
+        %Dummy worksheet (Att9 - does not exist)
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,10) = ones(n_wavs+1,n_cols+1)*3.1;
+        inst_params.att.ratio(2:n_wavs+1,1,8) = wavs; inst_params.att.ratio(1,2:n_cols+1,10) = cols;
+        inst_params.att.ratio(1,1,10) = 7; %Att number
+        
+        
+        %Att0 - Circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,11) = ones(n_wavs+1,n_cols+1);
+        inst_params.att.ratio(2:n_wavs+1,1,11) = wavs; inst_params.att.ratio(1,2:n_cols+1,11) = cols;
+        inst_params.att.ratio(1,1,11) = 7; %Att number
+        
+        %Att1 - circular diaphragm (values as of Feb 2012 but copied from Rectangular)
+        inst_params.att.ratio(1,:,12) = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        inst_params.att.ratio(2,:,12) = [4, 159.1514939, 159.1514939, 159.3390477, 157.6182694, 153.9380313,	155.8121938, 157.0651778, 160.3481585, 156.3206724, 147];
+        inst_params.att.ratio(3,:,12) = [4.5, 159.1514939, 159.1514939, 159.3390477, 157.6182694, 153.9380313,	155.8121938, 157.0651778, 160.3481585, 156.3206724, 147];
+        inst_params.att.ratio(4,:,12) = [5,  160.3218137, 160.3218137, 161.4059632, 160.4771765, 153.4533819, 155.487212, 154.0559438, 161.4811135, 156.8701091, 147];
+        inst_params.att.ratio(5,:,12) = [6, 161.3897179, 161.3897179, 162.6171902, 160.6163217, 154.0993426, 155.0322022, 152.4939526, 162.7163112, 159.1979444, 147];
+        inst_params.att.ratio(6,:,12) = [8, 165.1694866, 165.1694866, 164.2024295, 161.5682434, 151.090279, 154.6417158, 155.2927849, 158.3023139, 160.147665, 147];
+        inst_params.att.ratio(7,:,12) = [10, 165.255679, 165.255679, 165.7011829, 162.3845829, 151.9563151, 152.6853031, 149.2886807, 157.3985827, 170.1949799, 147];
+        inst_params.att.ratio(8,:,12) = [11.5,  165.9306386, 165.9306386, 164.6183907, 163.0601189, 151.3736442, 147.9941409, 141.9725436, 158.838917, 171.5079975, 147];
+        inst_params.att.ratio(9,:,12) = [14, 165.808165, 165.808165, 166.1321769, 164.5226344, 148.001548, 149.6563563, 141.6800617, 152.5736125, 176.4779411, 147];
+        inst_params.att.ratio(10,:,12) = [18, 161.618621, 161.618621, 164.1944141, 151.51158, 155.0078569, 159.8046583, 149.0982934, 143.7190927, 146.1097335, 147];
+        inst_params.att.ratio(11,:,12) = [40, 161.618621, 161.618621, 164.1944141, 151.51158, 155.0078569, 159.8046583, 149.0982934, 143.7190927, 146.1097335, 147];
+        inst_params.att.ratio(1,1,12) = 1; %Att number
+         
+        %Att2 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,13) = ones(n_wavs+1,n_cols+1)*902 ;
+        inst_params.att.ratio(2:n_wavs+1,1,13) = wavs; inst_params.att.ratio(1,2:n_cols+1,13) = cols;
+        inst_params.att.ratio(1,1,13) = 2; %Att number
+        
+        %Att3 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,14) = ones(n_wavs+1,n_cols+1)*2874;
+        inst_params.att.ratio(2:n_wavs+1,1,14) = wavs; inst_params.att.ratio(1,2:n_cols+1,14) = cols;
+        inst_params.att.ratio(1,1,14) = 3; %Att number
+        
+        %Att4 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,15) = ones(n_wavs+1,n_cols+1)*112;
+        inst_params.att.ratio(2:n_wavs+1,1,15) = wavs; inst_params.att.ratio(1,2:n_cols+1,15) = cols;
+        inst_params.att.ratio(1,1,15) = 4; %Att number
+        
+        %Att5 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,16) = ones(n_wavs+1,n_cols+1)*28;
+        inst_params.att.ratio(2:n_wavs+1,1,16) = wavs; inst_params.att.ratio(1,2:n_cols+1,16) = cols;
+        inst_params.att.ratio(1,1,16) = 5; %Att number
+        
+        %Att6 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,17) = ones(n_wavs+1,n_cols+1)*7;
+        inst_params.att.ratio(2:n_wavs+1,1,17) = wavs; inst_params.att.ratio(1,2:n_cols+1,17) = cols;
+        inst_params.att.ratio(1,1,17) = 6; %Att number
+        
+        %Att7 - circular diaphragm
+        inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,18) = ones(n_wavs+1,n_cols+1)*3.1;
+        inst_params.att.ratio(2:n_wavs+1,1,18) = wavs; inst_params.att.ratio(1,2:n_cols+1,18) = cols;
+        inst_params.att.ratio(1,1,18) = 7; %Att number
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        %3D matrix Att# col col col
+        %          wav
+        %          wav
+        %          wav
+        %inst_params.att.ratio = [];
+        
+        %n_cols =10; n_wavs = 9;
+        %cols = [1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        %wavs = [4; 4.5; 6; 8; 10; 12; 14; 16; 40];
+
+        
+%         %Att0 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1) = ones(n_wavs+1,n_cols+1);
+%         inst_params.att.ratio(2:n_wavs+1,1) = wavs; inst_params.att.ratio(1,2:n_cols+1) = cols;
+%         inst_params.att.ratio(1,1,1) = 0; %Att number
+        
+        %Old values for Att 1 rectangular (before 21 June 2011)
+        %         %Att1 - rectangular diaphragm
+        %         inst_params.att.ratio(1,:,2) = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        %         inst_params.att.ratio(2,:,2) = [4, 142.9, 145.23, 144.67, 145.57, 146.38, 149.43, 156.22, 137.55, 127.32, 147];
+        %         inst_params.att.ratio(3,:,2) = [4.5, 142.9, 145.23, 144.67, 145.57, 146.38, 149.43, 156.22, 137.55, 127.32, 147];
+        %         inst_params.att.ratio(4,:,2) = [6, 144.95, 145.44, 145.31, 140.84, 145.57, 155.61, 167.22, 146.86, 133.60, 147];
+        %         inst_params.att.ratio(5,:,2) = [8, 134.33, 136.76, 135.82, 133.70, 135.56, 155.20, 159.32, 135.61, 135.60, 147];
+        %         inst_params.att.ratio(6,:,2) = [10, 141.26, 143.20, 143.78, 140.88, 143.29, 163.57, 170.58, 150.73, 137.42, 147];
+        %         inst_params.att.ratio(7,:,2) = [12, 145.19, 143.20, 143.78, 140.88, 143.29, 163.57, 170.58, 150.73, 137.42, 147];
+        %         inst_params.att.ratio(8,:,2) = [14, 147.32, 149.41, 149.08, 146.31, 145.57, 155.11, 161.90, 149.22, 137.78, 147];
+        %         inst_params.att.ratio(9,:,2) = [16, 153.44, 156.70, 158.14, 157.76, 150.09, 148.71, 149.75, 149.63, 137.22, 147];
+        %         inst_params.att.ratio(10,:,2) = [40, 153.44, 156.70, 158.14, 157.76, 150.09, 148.71, 149.75, 149.63, 137.22, 147];
+        %         inst_params.att.ratio(1,1,2) = 1; %Att number
+        
+        
+%         %Att1 - rectangular diaphragm (values as of 21/06/2011)
+%         inst_params.att.ratio(1,:,2) = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+%         inst_params.att.ratio(2,:,2) = [4, 220.1, 204.4, 157.33, 143.8, 148.54, 147, 151.42, 143.86, 128.60, 147];
+%         inst_params.att.ratio(3,:,2) = [4.6, 220.1, 204.4, 157.33, 143.8, 148.54, 147, 151.42, 143.86, 128.60, 147];
+%         inst_params.att.ratio(4,:,2) = [6, 196.6, 180.2, 152.0, 143.87, 149.62, 146.25, 149.40, 144.59, 131.00, 147];
+%         inst_params.att.ratio(5,:,2) = [8, 176.2, 165.60, 154.80, 144.42, 151.47, 145.99, 148.23, 144.33, 132.95, 147];
+%         inst_params.att.ratio(6,:,2) = [10, 168.1, 158.5, 153.1, 146.49, 151.74, 148.18, 148.79, 145.62, 136.89, 147];
+%         inst_params.att.ratio(7,:,2) = [12, 169, 155.4, 153.6, 146.27, 149.85, 147.91, 150.00, 145.84, 138.50, 147];
+%         inst_params.att.ratio(8,:,2) = [14, 162.90, 156.00, 156.30, 151.41, 149.79, 151.35, 155.97, 150.97, 141.27, 147];
+%         inst_params.att.ratio(9,:,2) = [16, 153.44, 156.70, 158.14, 157.76, 150.09, 148.71, 149.75, 149.63, 137.22, 147];
+%         inst_params.att.ratio(10,:,2) = [40, 153.44, 156.70, 158.14, 157.76, 150.09, 148.71, 149.75, 149.63, 137.22, 147];
+%         inst_params.att.ratio(1,1,2) = 1; %Att number
+%         
+%         %Att2 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,3) = ones(n_wavs+1,n_cols+1)*902 ;
+%         inst_params.att.ratio(2:n_wavs+1,1,3) = wavs; inst_params.att.ratio(1,2:n_cols+1,3) = cols;
+%         inst_params.att.ratio(1,1,3) = 2; %Att number
+%         
+%         %Att3 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,4) = ones(n_wavs+1,n_cols+1)*2874;
+%         inst_params.att.ratio(2:n_wavs+1,1,4) = wavs; inst_params.att.ratio(1,2:n_cols+1,4) = cols;
+%         inst_params.att.ratio(1,1,4) = 3; %Att number
+%         
+%         %Att4 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,5) = ones(n_wavs+1,n_cols+1)*112;
+%         inst_params.att.ratio(2:n_wavs+1,1,5) = wavs; inst_params.att.ratio(1,2:n_cols+1,5) = cols;
+%         inst_params.att.ratio(1,1,5) = 4; %Att number
+%         
+%         %Att5 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,6) = ones(n_wavs+1,n_cols+1)*28;
+%         inst_params.att.ratio(2:n_wavs+1,1,6) = wavs; inst_params.att.ratio(1,2:n_cols+1,6) = cols;
+%         inst_params.att.ratio(1,1,6) = 5; %Att number
+%         
+%         %Att6 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,7) = ones(n_wavs+1,n_cols+1)*7;
+%         inst_params.att.ratio(2:n_wavs+1,1,7) = wavs; inst_params.att.ratio(1,2:n_cols+1,7) = cols;
+%         inst_params.att.ratio(1,1,7) = 6; %Att number
+%         
+%         %Att7 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,8) = ones(n_wavs+1,n_cols+1)*3.1;
+%         inst_params.att.ratio(2:n_wavs+1,1,8) = wavs; inst_params.att.ratio(1,2:n_cols+1,8) = cols;
+%         inst_params.att.ratio(1,1,8) = 7; %Att number
+%         
+%         %Dummy worksheet (Att8 - does not exist)
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,9) = ones(n_wavs+1,n_cols+1)*3.1;
+%         inst_params.att.ratio(2:n_wavs+1,1,9) = wavs; inst_params.att.ratio(1,2:n_cols+1,9) = cols;
+%         inst_params.att.ratio(1,1,9) = 7; %Att number
+%         
+%         %Dummy worksheet (Att9 - does not exist)
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,10) = ones(n_wavs+1,n_cols+1)*3.1;
+%         inst_params.att.ratio(2:n_wavs+1,1,8) = wavs; inst_params.att.ratio(1,2:n_cols+1,10) = cols;
+%         inst_params.att.ratio(1,1,10) = 7; %Att number
+%         
+%         
+%         %Att0 - rectangular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,11) = ones(n_wavs+1,n_cols+1)*3.1;
+%         inst_params.att.ratio(2:n_wavs+1,1,11) = wavs; inst_params.att.ratio(1,2:n_cols+1,11) = cols;
+%         inst_params.att.ratio(1,1,11) = 7; %Att number
+%         
+%         %Att1 - circular diaphragm (values as of 21/06/2011)
+%         inst_params.att.ratio(1,:,12) = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+%         inst_params.att.ratio(2,:,12) = [4, 209.6, 209.6, 162.4, 153.0, 146.9, 145.3, 139.8, 134.57, 135.30, 147];
+%         inst_params.att.ratio(3,:,12) = [4.6, 209.6, 209.6, 162.4, 153.0, 146.9, 145.3, 139.8, 134.57, 135.30, 147];
+%         inst_params.att.ratio(4,:,12) = [6, 180.5, 180.5, 158.5, 154.5, 148.00, 146.30, 140.6, 135.27, 137.60, 147];
+%         inst_params.att.ratio(5,:,12) = [8, 165.3, 165.3, 160.7, 159.8, 150.4, 150.0, 143.0, 133.92, 139.00, 147];
+%         inst_params.att.ratio(6,:,12) = [10, 161.5, 161.5, 161.5, 160.4, 152, 151, 146, 136.7, 139.1, 147];
+%         inst_params.att.ratio(7,:,12) = [12, 159.0, 159.0, 159.0, 157.0, 152.7, 153.0, 148.3, 138.8, 142.0, 147];
+%         inst_params.att.ratio(8,:,12) = [14, 156.7, 156.7, 156.7, 154.0, 152.2, 154.0, 149.0, 140.59, 141.7, 147];
+%         inst_params.att.ratio(9,:,12) = [16, 156.7, 156.7, 156.7, 154.0, 152.2, 154.0, 149.0, 140.59, 141.7, 147];
+%         inst_params.att.ratio(10,:,12) = [40, 156.7, 156.7, 156.7, 154.0, 152.2, 154.0, 149.0, 140.59, 141.7, 147];
+%         inst_params.att.ratio(1,1,12) = 1; %Att number
+%         
+%         %Att2 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,13) = ones(n_wavs+1,n_cols+1)*902 ;
+%         inst_params.att.ratio(2:n_wavs+1,1,13) = wavs; inst_params.att.ratio(1,2:n_cols+1,13) = cols;
+%         inst_params.att.ratio(1,1,13) = 2; %Att number
+%         
+%         %Att3 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,14) = ones(n_wavs+1,n_cols+1)*2874;
+%         inst_params.att.ratio(2:n_wavs+1,1,14) = wavs; inst_params.att.ratio(1,2:n_cols+1,14) = cols;
+%         inst_params.att.ratio(1,1,14) = 3; %Att number
+%         
+%         %Att4 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,15) = ones(n_wavs+1,n_cols+1)*112;
+%         inst_params.att.ratio(2:n_wavs+1,1,15) = wavs; inst_params.att.ratio(1,2:n_cols+1,15) = cols;
+%         inst_params.att.ratio(1,1,15) = 4; %Att number
+%         
+%         %Att5 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,16) = ones(n_wavs+1,n_cols+1)*28;
+%         inst_params.att.ratio(2:n_wavs+1,1,16) = wavs; inst_params.att.ratio(1,2:n_cols+1,16) = cols;
+%         inst_params.att.ratio(1,1,16) = 5; %Att number
+%         
+%         %Att6 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,17) = ones(n_wavs+1,n_cols+1)*7;
+%         inst_params.att.ratio(2:n_wavs+1,1,17) = wavs; inst_params.att.ratio(1,2:n_cols+1,17) = cols;
+%         inst_params.att.ratio(1,1,17) = 6; %Att number
+%         
+%         %Att7 - circular diaphragm
+%         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1,18) = ones(n_wavs+1,n_cols+1)*3.1;
+%         inst_params.att.ratio(2:n_wavs+1,1,18) = wavs; inst_params.att.ratio(1,2:n_cols+1,18) = cols;
+%         inst_params.att.ratio(1,1,18) = 7; %Att number
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+               
+        
+        %3D matrix Att# col col col
+        %          wav
+        %          wav
+        %          wav
+        %inst_params.att.ratio = [];
+        
+        %n_cols =10; n_wavs = 9;
+        %cols = [1.4, 2, 2.8, 4, 5.6, 8, 11.2, 14.4, 17.6, 19.0];
+        %wavs = [4; 4.5; 6; 8; 10; 12; 14; 16; 40];
+
         
 %         %Att0 - rectangular diaphragm
 %         inst_params.att.ratio(1:n_wavs+1,1:n_cols+1) = ones(n_wavs+1,n_cols+1);
@@ -245,6 +557,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
             inst_params.detector1.dan_rotation_offset = 0.25; %m
             inst_params.detector1.imask = get_mask('ill_d22_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.lead_string = [];
             inst_params.filename.extension_string = [];
             inst_params.filename.data_loader = 'raw_read_ill_sans';
@@ -255,9 +568,11 @@ switch grasp_env.inst
             inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
             inst_params.detector1.dan_rotation_offset = 0.25; %m
             inst_params.detector1.imask = get_mask('ill_d22_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.lead_string = [];
             inst_params.filename.extension_string = '.nxs';
-            inst_params.filename.data_loader = 'raw_read_ill_nexus';
+            %inst_params.filename.data_loader = 'raw_read_ill_nexus';
+            inst_params.filename.data_loader = 'raw_read_ill_nexus_d33';
             
             
         elseif strcmp(grasp_env.inst_option,'d22_Jan2004_to_Oct2010')
@@ -266,6 +581,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
             inst_params.detector1.dan_rotation_offset = 0.25; %m
             inst_params.detector1.imask = get_mask('ill_d22_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.lead_string = [];
             inst_params.filename.extension_string = [];
             inst_params.filename.data_loader = 'raw_read_ill_sans';
@@ -276,6 +592,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
             inst_params.detector1.dan_rotation_offset = 0.25; %m
             inst_params.detector1.imask = ones(128,128);
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.lead_string = [];
             inst_params.filename.extension_string = [];
             inst_params.filename.data_loader = 'raw_read_ill_sans';
@@ -287,6 +604,7 @@ switch grasp_env.inst
             inst_params.detector1.pixel_size = [8, 4]; %mm [x y]
             inst_params.detector1.nominal_beam_centre = [64 128];
             inst_params.detector1.imask = get_mask('ill_d22_rawdata_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.lead_string = '';
             inst_params.filename.extension_string = '.raw';
             inst_params.filename.data_loader = 'raw_read_ill_sans';
@@ -298,6 +616,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
             inst_params.detector1.dan_rotation_offset = 0.25; %m
             inst_params.detector1.imask = get_mask('ill_d22_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.numeric_length = 7;
             inst_params.filename.lead_string = ['D'];
             inst_params.filename.extension_string = ['.001'];
@@ -318,6 +637,7 @@ switch grasp_env.inst
         inst_params.vectors.str = 18; inst_params.vector_names{18} = {'Str'};
         inst_params.vectors.det = 19; inst_params.vector_names{19} = {'Detector Distance'};
         inst_params.vectors.sel_rpm = 20; inst_params.vector_names{20} = {'Selector RPM'};
+        inst_params.vectors.seltrs = 21; inst_params.vector_names{21} = {'Selector Trans'};
         inst_params.vectors.detcalc = 26; inst_params.vector_names{26} = {'Det_Calc'};
         inst_params.vectors.tset = 29; inst_params.vector_names{29} = {'Setpoint Temperature'};
         inst_params.vectors.treg = 30; inst_params.vector_names{30} = {'Regulation Temparature'};
@@ -329,13 +649,10 @@ switch grasp_env.inst
         inst_params.vectors.bath_switch = 36; inst_params.vector_names{36} = {'Bath Switch'};
         inst_params.vectors.air_temp = 37; inst_params.vector_names{37} = {'Air Temp'};
         inst_params.vectors.rack_temp = 38; inst_params.vector_names{38} = {'Rack Temp'};
-        inst_params.vectors.ps1_i = 39; inst_params.vector_names{39} = {'PS1 Current'};
-        inst_params.vectors.ps1_v = 40; inst_params.vector_names{40} = {'PS1 Voltage'};
-        inst_params.vectors.ps2_i = 41; inst_params.vector_names{41} = {'PS2 Current'};
-        inst_params.vectors.ps2_v = 42; inst_params.vector_names{42} = {'PS2 Voltage'};
-        inst_params.vectors.ps3_i = 43; inst_params.vector_names{43} = {'PS3 Current'};
-        inst_params.vectors.ps3_v = 44; inst_params.vector_names{44} = {'PS3 Voltage'};
-        
+        inst_params.vectors.vslit_center = 40; inst_params.vector_names{40} = {'Vertical Slit Center'};
+        inst_params.vectors.vslit_width = 41; inst_params.vector_names{41} = {'Vertical Slit Width'};
+        inst_params.vectors.hslit_center = 42; inst_params.vector_names{42} = {'Horizontal Slit Center'};
+        inst_params.vectors.hslit_width = 43; inst_params.vector_names{43} ={'Horizontal Slit Width'};
         
         inst_params.vectors.wav = 53; inst_params.vector_names{53} = {'Wavelength'};
         inst_params.vectors.deltawav = 54; inst_params.vector_names{54} = {'Delta_Wavelength'};
@@ -361,10 +678,35 @@ switch grasp_env.inst
         inst_params.vectors.tof_width = 87; inst_params.vector_names{87} = {'TOF Width muS'};
         inst_params.vectors.pickups = 88; inst_params.vector_names{88} = {'TOF/Kin Pickups'};
         %inst_params.vectors.tof_current_frame = 90; inst_params.vector_names{90} = {'TOF Current Frame #'};
+        
+        
+        inst_params.vectors.chopper1_phase = 90; inst_params.vector_names{90} = {'Chopper1 Phase'};
+        inst_params.vectors.chopper1_speed = 91; inst_params.vector_names{91} = {'Chopper1 Speed'};
+        inst_params.vectors.chopper2_phase = 92; inst_params.vector_names{92} = {'Chopper2 Phase'};
+        inst_params.vectors.chopper2_speed = 93; inst_params.vector_names{93} = {'Chopper2 Speed'};
+        
+        
         inst_params.vectors.trs = 101; inst_params.vector_names{101} = {'Trs'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.slit = 107; inst_params.vector_names{107} = {'Slit (mm)'};
         inst_params.vectors.shear_rate = 108; inst_params.vector_names{108} = {'Shear Rate RPM'};
+        
+        %Currents and voltages
+        inst_params.vectors.ps1_i = 110; inst_params.vector_names{110} = {'PS1 Current'};
+        inst_params.vectors.ps1_v = 111; inst_params.vector_names{111} = {'PS1 Voltage'};
+        inst_params.vectors.ps2_i = 112; inst_params.vector_names{112} = {'PS2 Current'};
+        inst_params.vectors.ps2_v = 113; inst_params.vector_names{113} = {'PS2 Voltage'};
+        inst_params.vectors.ps3_i = 114; inst_params.vector_names{114} = {'PS3 Current'};
+        inst_params.vectors.ps3_v = 115; inst_params.vector_names{115} = {'PS3 Voltage'};
+        inst_params.vectors.ps1_i = 116; inst_params.vector_names{116} = {'DAC1 Voltage'};
+        inst_params.vectors.ps1_v = 117; inst_params.vector_names{117} = {'DAC2 Voltage'};
+        inst_params.vectors.ps2_i = 118; inst_params.vector_names{118} = {'DAC3 Voltage'};
+        inst_params.vectors.ps2_v = 119; inst_params.vector_names{119} = {'DAC4 Voltage'};
+        inst_params.vectors.ps3_i = 120; inst_params.vector_names{120} = {'ADC1 Voltage'};
+        inst_params.vectors.ps3_v = 121; inst_params.vector_names{121} = {'ADC2 Voltage'};
+        inst_params.vectors.ps3_i = 122; inst_params.vector_names{122} = {'ADC3 Voltage'};
+        inst_params.vectors.ps3_v = 123; inst_params.vector_names{123} = {'ADC4 Voltage'};
+       
         inst_params.vectors.frame_time = 126; inst_params.vector_names{126} = {'Frame Time (s)'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.numor = 128; inst_params.vector_names{128} = {'Numor'};
@@ -459,6 +801,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
             inst_params.detector1.dead_time = 4.2*10^-7;
             inst_params.detector1.imask = get_mask('ill_d11_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
         else %old_d11
             inst_params.detector1.type = 'multiwire';
             inst_params.detector1.view_position = 'centre';
@@ -468,6 +811,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
             inst_params.detector1.dead_time = 8.5*10^-7;
             inst_params.detector1.imask = get_mask('ill_d11_old_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;
             inst_params.filename.data_loader = 'raw_read_d22d11_old';
         end
         
@@ -492,6 +836,7 @@ switch grasp_env.inst
         inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -557,6 +902,7 @@ switch grasp_env.inst
             inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
             inst_params.detector1.dead_time = zeros(128,1); %the direction of this matrix determines the direction of the tubes
             inst_params.detector1.imask = ones(128,128);
+            inst_params.detector1.relative_efficiency = 1;
             %Front-Left
             inst_params.detector2.type = 'tube';
             inst_params.detector2.view_position = 'left';
@@ -566,6 +912,7 @@ switch grasp_env.inst
             inst_params.detector2.nominal_det_translation = [80, 0]; %mm [x y]
             inst_params.detector2.dead_time = zeros(1,32);
             inst_params.detector2.imask = ones(128,32);
+            inst_params.detector2.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
             %Front-Right
             inst_params.detector3.type = 'tube';
             inst_params.detector3.view_position = 'right';
@@ -575,6 +922,7 @@ switch grasp_env.inst
             inst_params.detector3.nominal_det_translation = [-80, 0]; %mm [x y]
             inst_params.detector3.dead_time = zeros(1,32);
             inst_params.detector3.imask = ones(128,32);
+            inst_params.detector3.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
             %Front-Top
             inst_params.detector4.type = 'tube';
             inst_params.detector4.view_position = 'top';
@@ -584,6 +932,7 @@ switch grasp_env.inst
             inst_params.detector4.nominal_det_translation = [0, -80]; %mm [x y]
             inst_params.detector4.dead_time = zeros(32,1);
             inst_params.detector4.imask = ones(32,128);
+            inst_params.detector4.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
             %Front-Bottom
             inst_params.detector5.type = 'tube';
             inst_params.detector5.view_position = 'bottom';
@@ -593,6 +942,7 @@ switch grasp_env.inst
             inst_params.detector5.nominal_det_translation = [0, 80]; %mm [x y]
             inst_params.detector5.dead_time = zeros(32,1);
             inst_params.detector5.imask = ones(32,128);
+            inst_params.detector5.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
             
             
             %Parameter position vectors
@@ -634,13 +984,13 @@ switch grasp_env.inst
             inst_params.vectors.reactor_power = 84; inst_params.vector_names{84} = {'Reactor Power'};
             inst_params.vectors.sel_rpm = 20; inst_params.vector_names{20} = {'Selector RPM'};
             
-        elseif strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning');
+        elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning');
             
             %***** File name handleing parameters *****
             inst_params.filename.numeric_length = 6;
             inst_params.filename.lead_string = [];
             inst_params.filename.extension_string = ['.nxs'];
-            inst_params.filename.data_loader = 'raw_read_ill_nexus_d33';
+            inst_params.filename.data_loader = 'raw_read_ill_nexus_d33_commissioning';
             
             inst_params.guide_size = [30e-3,30e-3];  %mm x y
             inst_params.wav_range = [2 38];
@@ -712,8 +1062,9 @@ switch grasp_env.inst
             
             inst_params.detector1.nominal_beam_centre = [128.5 64.5]; %[x y]
             inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
-            inst_params.detector1.dead_time = zeros(128,1); %the direction of this matrix determines the direction of the tubes
+            inst_params.detector1.dead_time = 15e-6 * ones(128,1); %the direction of this matrix determines the direction of the tubes
             inst_params.detector1.imask = ones(128,256);
+            inst_params.detector1.relative_efficiency = 1;
 %             %Front-Left
 %             inst_params.detector4.type = 'tube';
 %             inst_params.detector4.view_position = 'left';
@@ -838,6 +1189,245 @@ switch grasp_env.inst
            % inst_params.vectors.det_pannel = 18; inst_params.vector_names(18) = {'Detector Pannel Distance'};
            % inst_params.vectors.ox = 21; inst_params.vector_names{21} = {'Det Pannel Ox'};
            % inst_params.vectors.oy = 22; inst_params.vector_names{22} = {'Det Pannel Oy'};
+           
+        elseif strcmp(grasp_env.inst_option,'D33');
+            
+            %***** File name handleing parameters *****
+            inst_params.filename.numeric_length = 6;
+            inst_params.filename.lead_string = [];
+            inst_params.filename.extension_string = ['.nxs'];
+            inst_params.filename.data_loader = 'raw_read_ill_nexus_d33';
+            
+            inst_params.guide_size = [30e-3,30e-3];  %mm x y
+            inst_params.wav_range = [2 38];
+            
+            inst_params.att.position = -13.8; %Position relative to sample
+            inst_params.att.number = [0, 1, 2, 3];
+            %inst_params.att.ratio = [1, 112, 447, 1790]; Nominal values
+            
+            %Wavelength & collimaton dependent attenuators, e.g. ratio(1,:) = [wav, att1, att2, att3 ....]
+            %if more than one wavelength entry then interpolate for wavelengths inbetween
+            n_cols =5; n_wavs = 4;
+            cols = [2.8, 5.3, 7.8, 10.3, 12.8];
+            wavs = [0; 6; 10; 40];
+
+            %3D matrix Att# col col col
+            %          wav
+            %          wav
+            %          wav
+            %inst_params.att.ratio = [];
+        
+            %Att0
+            inst_params.att.ratio(1:n_wavs+1,1:n_cols+1) = ones(n_wavs+1,n_cols+1);
+            inst_params.att.ratio(2:n_wavs+1,1) = wavs; inst_params.att.ratio(1,2:n_cols+1) = cols;
+            inst_params.att.ratio(1,1,1) = 0; %Att number
+            
+            %Att1
+            inst_params.att.ratio(1,:,2) = [1, 2.8, 5.3, 7.8, 10.3, 12.8];
+            inst_params.att.ratio(2,:,2) = [0, 110, 119, 118, 119, 128];
+            inst_params.att.ratio(3,:,2) = [6, 110, 119, 118, 119, 128];
+            %inst_params.att.ratio(4,:,2) = [10, 110, 119, 118, 119, 128];
+            %inst_params.att.ratio(5,:,2) = [40, 110, 119, 118, 119, 128];
+            
+            inst_params.att.ratio(4,:,2) = [10, 110, 121, 127, 135, 131];
+            inst_params.att.ratio(5,:,2) = [40, 110, 121, 127, 135, 131];
+            inst_params.att.ratio(1,1,2) = 1; %Att number
+         
+            %Att2 - rectangular diaphragm
+            inst_params.att.ratio(:,:,3) = inst_params.att.ratio(:,:,2) *3.89;
+            inst_params.att.ratio(1,:,3) = inst_params.att.ratio(1,:,2); %Reload Cols
+            inst_params.att.ratio(:,1,3) = inst_params.att.ratio(:,1,2); %Reload Wavs
+            inst_params.att.ratio(1,1,3) = 2; %Att number
+            
+            %Att3 - rectangular diaphragm
+            inst_params.att.ratio(:,:,4) = inst_params.att.ratio(:,:,3) *4.4;
+            inst_params.att.ratio(1,:,4) = inst_params.att.ratio(1,:,2); %Reload Cols
+            inst_params.att.ratio(:,1,4) = inst_params.att.ratio(:,1,2); %Reload Wavs
+            inst_params.att.ratio(1,1,4) = 3; %Att number
+            
+            inst_params.att.type = [{'aperture'}, {'sieve'}, {'sieve'}, {'sieve'}];
+            inst_params.att.size = {[30e-3,50e-3], [30e-3,50e-3], [30e-3,50e-3], [30e-3,50e-3]}; %mm rectangular or diameter
+            
+            inst_params.col = [2.8, 5.3, 7.8, 10.3, 12.8];
+            inst_params.col_aps{1} = {[30e-3,30e-3], [30e-3], [20e-3], [10e-3]};
+            inst_params.col_aps{2} = {[30e-3,30e-3], [30e-3], [20e-3], [10e-3]};
+            inst_params.col_aps{3} = {[30e-3,30e-3], [30e-3], [20e-3], [10e-3]};
+            inst_params.col_aps{4} = {[30e-3,30e-3], [30e-3], [20e-3], [10e-3]};
+            inst_params.col_aps{5} = {[30e-3,30e-3], [30e-3], [20e-3], [10e-3]};
+            
+            
+            %Describe Detector(s)
+            inst_params.detectors = 5;
+            %Rear
+            inst_params.detector1.type = 'tube';
+            inst_params.detector1.view_position = 'centre';
+            inst_params.detector1.pixels = [256 128]; %Number of pixels, x,y
+            %inst_params.detector1.pixel_size = [2.5, 5]; %mm [x y]
+            inst_params.detector1.pixel_size = [2.5, 5]; %mm [x y]
+            inst_params.detector1.nominal_beam_centre = [128.5 64.5]; %[x y]
+            inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
+            inst_params.detector1.dead_time = 15e-6 * ones(128,1); %the direction of this matrix determines the direction of the tubes
+            inst_params.detector1.imask = ones(128,256);
+            inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
+            %Front-Left
+            inst_params.detector3.type = 'tube';
+            inst_params.detector3.view_position = 'left';
+            inst_params.detector3.pixels = [32,256]; %Number of pixels, x,y
+            inst_params.detector3.pixel_size = [5,2.5]; %mm [x y]
+            inst_params.detector3.nominal_beam_centre = [16.5,128.5]; %[x y]
+            inst_params.detector3.nominal_det_translation = [0, 0]; %mm [x y]
+            inst_params.detector3.dead_time = 15e-6 * ones(1,32);
+            inst_params.detector3.imask = get_mask('d33_det3_msk.msk',3);
+            inst_params.detector3.relative_efficiency = 1.03;   % Efficiency relative to rear detector (detector 1)
+            %Front-Right
+            inst_params.detector2.type = 'tube';
+            inst_params.detector2.view_position = 'right';
+            inst_params.detector2.pixels = [32,256]; %Number of pixels, x,y
+            inst_params.detector2.pixel_size = [5,2.5]; %mm [x y]
+            inst_params.detector2.nominal_beam_centre = [16.5, 128.5]; %[x y]
+            inst_params.detector2.nominal_det_translation = [0, 0]; %mm [x y]
+            inst_params.detector2.dead_time = 15e-6 * ones(1,32);
+            inst_params.detector2.imask = get_mask('d33_det2_msk.msk',2);
+            inst_params.detector2.relative_efficiency = 1.03;   % Efficiency relative to rear detector (detector 1)
+            %Front-Top
+            inst_params.detector5.type = 'tube';
+            inst_params.detector5.view_position = 'top';
+            inst_params.detector5.pixels = [256,32]; %Number of pixels, x,y
+            inst_params.detector5.pixel_size = [2.5,5]; %mm [x y]
+            inst_params.detector5.nominal_beam_centre = [128.5, 16.5]; %[x y]
+            inst_params.detector5.nominal_det_translation = [0, 0]; %mm [x y]
+            inst_params.detector5.dead_time = 15e-6 * ones(32,1);
+            inst_params.detector5.imask = ones(32,256);
+            inst_params.detector5.relative_efficiency = 1.02;   % Efficiency relative to rear detector (detector 1)
+            %Front-Bottom
+            inst_params.detector4.type = 'tube';
+            inst_params.detector4.view_position = 'bottom';
+            inst_params.detector4.pixels = [256,32]; %Number of pixels, x,y
+            inst_params.detector4.pixel_size = [2.5,5]; %mm [x y]
+            inst_params.detector4.nominal_beam_centre = [128.5 16.5]; %[x y]
+            inst_params.detector4.nominal_det_translation = [0, 0]; %mm [x y]
+            inst_params.detector4.dead_time = 15e-6 * ones(32,1);
+            inst_params.detector4.imask = ones(32,256);
+            inst_params.detector4.relative_efficiency = 1.015;   % Efficiency relative to rear detector (detector 1)
+            
+            
+            %Parameter position vectors
+            inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
+            
+            inst_params.vectors.aq_time = 1; inst_params.vector_names{1} = {'Measurement Time'};
+            inst_params.vectors.slice_time = 2; inst_params.vector_names{2} = {'Slice Time'};
+            inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Exposure Time'};
+            inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
+            inst_params.vectors.monitor1 = 5; inst_params.vector_names{5} = {'Monitor'};
+            inst_params.vectors.monitor2 = 6; inst_params.vector_names{6} = {'Monitor2'};
+            
+            inst_params.vectors.det1 = 9; inst_params.vector_names{9} = {'Detector1 Distance'};
+            inst_params.vectors.detcalc1 = 10; inst_params.vector_names{10} = {'Det1_Calc'};
+            inst_params.vectors.det1_panel_offset = 11; inst_params.vector_names{11} = {'Detector1 Panel Offset'};
+            inst_params.vectors.oxl = 12; inst_params.vector_names{12} = {'DetPannel Opening OxL'};
+            inst_params.vectors.oxr = 13; inst_params.vector_names{13} = {'DetPannel Opening OxR'};
+            inst_params.vectors.oyt = 14; inst_params.vector_names{14} = {'DetPannel Opening OyT'};
+            inst_params.vectors.oyb = 15; inst_params.vector_names{15} = {'DetPannel Opening OyB'};
+            
+            inst_params.vectors.by = 16; inst_params.vector_names{16} = {'By'};
+            inst_params.vectors.bx = 17; inst_params.vector_names{17} = {'Bx'};
+            inst_params.vectors.str = 18; inst_params.vector_names{18} = {'Str'};
+            inst_params.vectors.det = 19; inst_params.vector_names{19} = {'Detector Distance'};
+            inst_params.vectors.det2 = 19; inst_params.vector_names{19} = {'Detector2 Distance'};
+           
+            inst_params.vectors.sel_rpm = 20; inst_params.vector_names{20} = {'Selector RPM'};
+            inst_params.vectors.seltrs = 21; inst_params.vector_names{21} = {'Selector Trans'};
+            
+            inst_params.vectors.detcalc = 26; inst_params.vector_names{26} = {'Det_Calc'};
+            inst_params.vectors.detcalc2 = 26; inst_params.vector_names{26} = {'Det2_Calc'};
+
+            inst_params.vectors.tset = 29; inst_params.vector_names{29} = {'Setpoint Temperature'};
+            inst_params.vectors.treg = 30; inst_params.vector_names{30} = {'Regulation Temparature'};
+            inst_params.vectors.temp = 31; inst_params.vector_names{31} = {'Sample Temperature'};
+            inst_params.vectors.bath1_temp = 32; inst_params.vector_names{32} = {'Bath1 Temp'};
+            inst_params.vectors.bath1_set = 33; inst_params.vector_names{33} = {'Bath1 Set'};
+            inst_params.vectors.bath2_temp = 34; inst_params.vector_names{34} = {'Bath2 Temp'};
+            inst_params.vectors.bath2_set = 35; inst_params.vector_names{35} = {'Bath2 Set'};
+            inst_params.vectors.bath_switch = 36; inst_params.vector_names{36} = {'Bath Switch'};
+            inst_params.vectors.air_temp = 37; inst_params.vector_names{37} = {'Air Temp'};
+            inst_params.vectors.rack_temp = 38; inst_params.vector_names{38} = {'Rack Temp'};
+            inst_params.vectors.potr = 40; inst_params.vector_names{40} = {'PoTr'};
+            inst_params.vectors.wvtr = 41; inst_params.vector_names{41} = {'WvTr'};
+            inst_params.vectors.attr = 42; inst_params.vector_names{42} = {'AtTr'};
+            inst_params.vectors.dia1 = 43; inst_params.vector_names{43} = {'Dia1'};
+            inst_params.vectors.col1 = 44; inst_params.vector_names{44} = {'Col1'};
+            inst_params.vectors.dia2 = 45; inst_params.vector_names{45} = {'Dia2'};
+            inst_params.vectors.col2 = 46; inst_params.vector_names{46} = {'Col2'};
+            inst_params.vectors.dia3 = 47; inst_params.vector_names{47} = {'Dia3'};
+            inst_params.vectors.col3 = 48; inst_params.vector_names{48} = {'Col3'};
+            inst_params.vectors.dia4 = 49; inst_params.vector_names{49} = {'Dia4'};
+            inst_params.vectors.col4 = 50; inst_params.vector_names{50} = {'Col4'};
+            inst_params.vectors.dia5 = 51; inst_params.vector_names{51} = {'Dia5'};
+            
+            
+            inst_params.vectors.wav = 53; inst_params.vector_names{53} = {'Wavelength'};
+            inst_params.vectors.deltawav = 54; inst_params.vector_names{54} = {'Delta_Wavelength'};
+            inst_params.vectors.pixel_x = 55; inst_params.vector_names{55} = {'Pixel Size x'};
+            inst_params.vectors.pixel_y = 56; inst_params.vector_names{56} = {'Pixel Size y'};
+            inst_params.vectors.col_app = 57; inst_params.vector_names{57} = {'Col Defining Aperture #'};
+            inst_params.vectors.col = 58; inst_params.vector_names{58} = {'Collimation'};
+            inst_params.vectors.att_type = 59; inst_params.vector_names{59} = {'Attenuator'};
+            inst_params.vectors.att_status = 60; inst_params.vector_names{60} = {'Attenuator Status'};
+            inst_params.vectors.sdi2 = 63; inst_params.vector_names{63} = {'Sdi2'};
+            inst_params.vectors.sdi = 64; inst_params.vector_names{64} = {'Sdi'};
+            inst_params.vectors.sdi1 = 64; inst_params.vector_names{64} = {'Sdi'};
+            inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
+            inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+            inst_params.vectors.sht = 67; inst_params.vector_names{67} = {'Sht'};
+            %inst_params.vectors.att2 = 68; inst_params.vector_names{68} = {'ChopperAttenuator2'};
+            inst_params.vectors.omega = 69; inst_params.vector_names{69} = {'Omega'};
+            inst_params.vectors.field = 82; inst_params.vector_names{82} = {'Magnetic Field'};
+            inst_params.vectors.reactor_power = 84; inst_params.vector_names{84} = {'Reactor Power'};
+            inst_params.vectors.tof_channels = 85; inst_params.vector_names{85} = {'TOF # Channels'};
+            inst_params.vectors.tof_delay = 86; inst_params.vector_names{86} = {'TOF Delay muS'};
+            inst_params.vectors.tof_width = 87; inst_params.vector_names{87} = {'TOF Width muS'};
+            inst_params.vectors.pickups = 88; inst_params.vector_names{88} = {'TOF/Kin Pickups'};
+            inst_params.vectors.chopper1_phase = 90; inst_params.vector_names{90} = {'Chopper1 Phase'};
+            inst_params.vectors.chopper1_speed = 91; inst_params.vector_names{91} = {'Chopper1 Speed'};
+            inst_params.vectors.chopper2_phase = 92; inst_params.vector_names{92} = {'Chopper2 Phase'};
+            inst_params.vectors.chopper2_speed = 93; inst_params.vector_names{93} = {'Chopper2 Speed'};
+            inst_params.vectors.chopper3_phase = 94; inst_params.vector_names{94} = {'Chopper3 Phase'};
+            inst_params.vectors.chopper3_speed = 95; inst_params.vector_names{95} = {'Chopper3 Speed'};
+            inst_params.vectors.chopper4_phase = 96; inst_params.vector_names{96} = {'Chopper4 Phase'};
+            inst_params.vectors.chopper4_speed = 97; inst_params.vector_names{97} = {'Chopper4 Speed'};
+            
+            
+            
+             
+            
+            %inst_params.vectors.tof_current_frame = 90; inst_params.vector_names{90} = {'TOF Current Frame #'};
+            inst_params.vectors.trs = 101; inst_params.vector_names{101} = {'Trs'};
+            inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
+            inst_params.vectors.slit = 107; inst_params.vector_names{107} = {'Slit (mm)'};
+            inst_params.vectors.shear_rate = 108; inst_params.vector_names{108} = {'Shear Rate RPM'};
+            
+            %Currents and voltages
+            inst_params.vectors.ps1_i = 110; inst_params.vector_names{110} = {'PS1 Current'};
+            inst_params.vectors.ps1_v = 111; inst_params.vector_names{111} = {'PS1 Voltage'};
+            inst_params.vectors.ps2_i = 112; inst_params.vector_names{112} = {'PS2 Current'};
+            inst_params.vectors.ps2_v = 113; inst_params.vector_names{113} = {'PS2 Voltage'};
+            inst_params.vectors.ps3_i = 114; inst_params.vector_names{114} = {'PS3 Current'};
+            inst_params.vectors.ps3_v = 115; inst_params.vector_names{115} = {'PS3 Voltage'};
+            inst_params.vectors.ps1_i = 116; inst_params.vector_names{116} = {'DAC1 Voltage'};
+            inst_params.vectors.ps1_v = 117; inst_params.vector_names{117} = {'DAC2 Voltage'};
+            inst_params.vectors.ps2_i = 118; inst_params.vector_names{118} = {'DAC3 Voltage'};
+            inst_params.vectors.ps2_v = 119; inst_params.vector_names{119} = {'DAC4 Voltage'};
+            inst_params.vectors.ps3_i = 120; inst_params.vector_names{120} = {'ADC1 Voltage'};
+            inst_params.vectors.ps3_v = 121; inst_params.vector_names{121} = {'ADC2 Voltage'};
+            inst_params.vectors.ps3_i = 122; inst_params.vector_names{122} = {'ADC3 Voltage'};
+            inst_params.vectors.ps3_v = 123; inst_params.vector_names{123} = {'ADC4 Voltage'};
+            
+            inst_params.vectors.frame_time = 126; inst_params.vector_names{126} = {'Frame Time (s)'};
+            inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
+            inst_params.vectors.numor = 128; inst_params.vector_names{128} = {'Numor'};
+            
+            
+            % inst_params.vectors.is_tof = 52; inst_params.vector_names{52} = {'Is Tof Flag'};
         end
         
         
@@ -882,6 +1472,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 0.6*10^-6;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('sinq_sans_i_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -910,6 +1501,7 @@ switch grasp_env.inst
         inst_params.vectors.omega = 65; %same as san
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.sum = 127; %same as array_counts
@@ -975,6 +1567,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 4.5*10^-5;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('sinq_sans_ii_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -1003,6 +1596,7 @@ switch grasp_env.inst
         inst_params.vectors.omega = 65; %same as san
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.sum = 127; %same as array_counts
@@ -1084,6 +1678,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 1.5e-6;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('nist_ng3_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -1104,6 +1699,7 @@ switch grasp_env.inst
         inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1177,6 +1773,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 2.3e-6;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('nist_ng7_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -1197,6 +1794,7 @@ switch grasp_env.inst
         inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1251,6 +1849,7 @@ switch grasp_env.inst
             inst_params.detector1.dead_time = 6*10^-6;
             inst_params.detector1.dan_rotation_offset = 0; %m
             inst_params.detector1.imask = get_mask('ornl_cg2_msk.msk');
+            inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         elseif strcmp(grasp_env.inst_option,'new_detector256y')
             inst_params.detectors = 1;
             inst_params.detector1.type = 'tube';
@@ -1263,6 +1862,7 @@ switch grasp_env.inst
             inst_params.detector1.dan_rotation_offset = 0; %m
             %inst_params.detector1.imask = get_mask('ornl_cg2_msk.msk'); % EB 06/08/2011
             inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
+            inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         end
         
         
@@ -1288,6 +1888,7 @@ switch grasp_env.inst
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.zarc = 102;
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1338,6 +1939,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 6*10^-6;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('ornl_cg3_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -1360,6 +1962,7 @@ switch grasp_env.inst
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.zarc = 102;
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1425,6 +2028,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 8.5e-7;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = get_mask('ansto_quokka_msk.msk');
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         %Parameter position vectors
         inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
@@ -1448,6 +2052,7 @@ switch grasp_env.inst
         inst_params.vectors.phi2 = 103; inst_params.vector_names{103} = {'Phi2'};
         
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1472,6 +2077,9 @@ switch grasp_env.inst
         inst_params.filename.lead_string = ['SANS2D'];
         inst_params.filename.extension_string = ['.nxs'];
         inst_params.filename.data_loader = 'raw_read_isis_sans2d';
+        
+        %Load Direct beam function data (detector / monitor efficiency ratio)
+        inst_params.direct_beam_function = dlmread('SANS2D_direct_beam_function.dat');
         
         inst_params.source.moderator_monitor_distance = 17.937;  %m
         
@@ -1509,6 +2117,7 @@ switch grasp_env.inst
         inst_params.detector1.dead_time = 8.5e-7;
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(2));
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         inst_params.detector2.type = 'multiwire';
         inst_params.detector2.view_position = 'centre_left';
@@ -1519,6 +2128,7 @@ switch grasp_env.inst
         inst_params.detector2.dead_time = 8.5e-7;
         inst_params.detector2.dan_rotation_offset = 0; %m
         inst_params.detector2.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(2));
+        inst_params.detector2.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         
         %Parameter position vectors
@@ -1543,6 +2153,7 @@ switch grasp_env.inst
         inst_params.vectors.phi2 = 103; inst_params.vector_names{103} = {'Phi2'};
         
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1599,6 +2210,7 @@ switch grasp_env.inst
             inst_params.detector1.dead_time = 0;
             inst_params.detector1.dan_rotation_offset = 0; %m
             inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(2));
+            inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
             
             %High resolution instrument config
         elseif strcmp(grasp_env.inst_option,'JAEA_sansu_hres')
@@ -1618,6 +2230,7 @@ switch grasp_env.inst
             inst_params.detector1.dead_time = 0;
             inst_params.detector1.dan_rotation_offset = 0; %m
             inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
+            inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         end
         
         
@@ -1641,6 +2254,7 @@ switch grasp_env.inst
         inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1692,6 +2306,7 @@ switch grasp_env.inst
         inst_params.detector1.view_position = 'centre';
         inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
         inst_params.detector1.dead_time = 0*10^-6;
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         
         if strcmp(grasp_env.inst_option,'data128x128') %New Detector
@@ -1733,6 +2348,7 @@ switch grasp_env.inst
         inst_params.vectors.om = 65; inst_params.vector_names{65} = {'Om'};
         inst_params.vectors.phi = 61; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1780,6 +2396,7 @@ switch grasp_env.inst
         inst_params.detector1.view_position = 'centre';
         inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
         inst_params.detector1.dead_time = 0*10^-6;
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
         
         if strcmp(grasp_env.inst_option,'V4_128')
             inst_params.detector1.pixels = [128 128]; %Number of pixels, x,y
@@ -1790,6 +2407,13 @@ switch grasp_env.inst
             inst_params.detector1.pixels = [64 64]; %Number of pixels, x,y
             inst_params.detector1.pixel_size = [10, 10]; %mm [x y]
             inst_params.detector1.nominal_beam_centre = [32.5 32.5];
+            
+        elseif strcmp(grasp_env.inst_option,'V4_NewDetector2012');
+            inst_params.detector1.pixels = [120 112]; %Number of pixels, x,y
+            inst_params.detector1.pixel_size = [8.3, 8.3]; %mm [x y]
+            inst_params.detector1.nominal_beam_centre = [110.5 56.5];
+            
+            
         end
         inst_params.detector1.dan_rotation_offset = 0; %m
         inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
@@ -1815,6 +2439,7 @@ switch grasp_env.inst
         inst_params.vectors.san = 65; inst_params.vector_names{65} = {'San'};
         inst_params.vectors.phi = 102; inst_params.vector_names{102} = {'Phi'};
         inst_params.vectors.chpos = 66; inst_params.vector_names{66} = {'Changer Position'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
         inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
         inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
         inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor'};
@@ -1831,7 +2456,96 @@ switch grasp_env.inst
         inst_params.vectors.pixel_y = 56; inst_params.vector_names{56} = {'Pixel Size y'};
         inst_params.vectors.reactor_power = 84; inst_params.vector_names{84} = {'Reactor Power'};
         inst_params.vectors.sel_rpm = 20; inst_params.vector_names{20} = {'Selector RPM'};
+  
         
+    case 'FRM2_SANS1'
+        %***** File name handleing parameters *****
+        inst_params.filename.numeric_length = 7;
+        inst_params.filename.lead_string = ['D'];
+        inst_params.filename.extension_string = ['.001'];
+        inst_params.filename.data_loader = 'raw_read_frm2_sans1';
+        
+        inst_params.guide_size = [50e-3,50e-3];  %m x y
+        inst_params.wav_range = [3.5 25];
+        
+        inst_params.att.position = -18.8; %Position relative to sample
+        inst_params.att.number = [0];
+        
+        %Wavelength dependent attenuators, e.g. ratio(1,:) = [wav, att1, att2, att3 ....]
+        %if more than one wavelength entry then interpolate for wavelengths inbetween
+        inst_params.att.ratio(1,:) = [3, 1, 10,100,1000];
+        inst_params.att.ratio(2,:) = [40, 1, 10, 100, 1000];
+        inst_params.att.type = [{'aperture'}, {'sieve'}, {'sieve'}, {'sieve'}];
+        inst_params.att.size = {[50e-3,50e-3]}; %m rectangular or diameter
+        
+        %Collimation distances
+        inst_params.col = [];
+        
+        %Describe Detector(s)
+        inst_params.detectors = 1;
+        inst_params.detector1.type = 'tube';
+        inst_params.detector1.view_position = 'centre';
+        inst_params.detector1.nominal_det_translation = [0, 0]; %mm [x y]
+        inst_params.detector1.dead_time = 0*10^-6;
+        inst_params.detector1.relative_efficiency = 1;   % Efficiency relative to rear detector (detector 1)
+        inst_params.detector1.pixels = [128 128]; %Number of pixels, x,y
+        inst_params.detector1.pixel_size = [8, 8]; %mm [x y]
+        inst_params.detector1.nominal_beam_centre = [64.5 64.5]; %[x y]
+        inst_params.detector1.dan_rotation_offset = 0; %m
+        inst_params.detector1.imask = ones(inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
+        
+        %Parameter position vectors
+        inst_params.vector_names = cell(128,1); %Create empty cells for parameter names
+
+        inst_params.vectors.time = 3; inst_params.vector_names{3} = {'Time'};
+        inst_params.vectors.aq_time = 3; inst_params.vector_names{3} = {'Measurement Time'};
+        inst_params.vectors.monitor = 5; inst_params.vector_names{5} = {'Monitor1'};
+        inst_params.vectors.monitor1 = 5; inst_params.vector_names{5} = {'Monitor1'};
+        inst_params.vectors.monitor2 = 6; inst_params.vector_names{6} = {'Monitor2'};
+        
+        inst_params.vectors.by = 16; inst_params.vector_names{16} = {'By'};
+        inst_params.vectors.bx = 17; inst_params.vector_names{17} = {'Bx'};
+        
+        inst_params.vectors.det = 19; inst_params.vector_names{19} = {'Detector Distance'};
+        inst_params.vectors.sel_rpm = 20; inst_params.vector_names{20} = {'Selector RPM'};
+
+        inst_params.vectors.detcalc = 26; inst_params.vector_names{26} = {'Det_Calc'};
+
+        inst_params.vectors.tset = 29; inst_params.vector_names{29} = {'Setpoint Temperature'};
+        inst_params.vectors.treg = 30; inst_params.vector_names{30} = {'Regulation Temparature'};
+        inst_params.vectors.temp = 31; inst_params.vector_names{31} = {'Sample Temperature'};
+        inst_params.vectors.field = 32; inst_params.vector_names{32} = {'Magnetic Field'};
+
+        inst_params.vectors.wav = 53; inst_params.vector_names{53} = {'Wavelength'};
+        inst_params.vectors.deltawav = 54; inst_params.vector_names{54} = {'Delta_Wavelength'};
+        
+        inst_params.vectors.pixel_x = 55; inst_params.vector_names{55} = {'Pixel Size x'};
+        inst_params.vectors.pixel_y = 56; inst_params.vector_names{56} = {'Pixel Size y'};
+        
+        inst_params.vectors.col = 58; inst_params.vector_names{58} = {'Collimation'};
+        inst_params.vectors.att_type = 59; inst_params.vector_names{59} = {'Attenuator'};
+        inst_params.vectors.att_status = 60; inst_params.vector_names{60} = {'Attenuator Status'};
+
+        inst_params.vectors.chpos = 62; inst_params.vector_names{62} = {'Changer Position'};
+        
+        inst_params.vectors.x_2b = 63; inst_params.vector_names{63} = {'x-2b'};
+        inst_params.vectors.sdi2 = 63; inst_params.vector_names{63} = {'x-2b'};
+        inst_params.vectors.x_2a = 64; inst_params.vector_names{64} = {'x-2b'};
+        inst_params.vectors.sdi1 = 64; inst_params.vector_names{64} = {'x-2b'};
+        inst_params.vectors.sdi = 64; inst_params.vector_names{64} = {'x-2b'};
+        inst_params.vectors.san = 65; inst_params.vector_names{65} = {'omega-2b'};
+        inst_params.vectors.omega_2b = 65; inst_params.vector_names{65} = {'omega-2b'};
+        inst_params.vectors.chi_2b = 66; inst_params.vector_names{66} = {'chi-2b'};
+        inst_params.vectors.phi_2b = 67; inst_params.vector_names{67} = {'phi-2b'};
+        inst_params.vectors.z_2a = 68; inst_params.vector_names{68} = {'z-2a'};
+        inst_params.vectors.sht = 68; inst_params.vector_names{68} = {'z-2a'};
+        inst_params.vectors.z_2b = 69; inst_params.vector_names{69} = {'z-2b'};
+        inst_params.vectors.y_2b = 70; inst_params.vector_names{70} = {'y-2b'};
+        inst_params.vectors.y_2a = 71; inst_params.vector_names{71} = {'y-2a'};
+        inst_params.vectors.trs = 72; inst_params.vector_names{72} = {'y-2a'};
+        
+        inst_params.vectors.array_counts = 127; inst_params.vector_names{127} = {'Total Array Counts'};
+        inst_params.vectors.numor = 128; inst_params.vector_names{128} = {'Numor'};
 end
 
 

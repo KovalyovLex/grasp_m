@@ -70,6 +70,8 @@ end
 param(inst_params.vectors.wav) = hdf5read(fname,strcat(entryName,'/D22/selector/wavelength'));
 param(inst_params.vectors.deltawav) = 0.1;
 param(inst_params.vectors.sel_rpm) = hdf5read(fname,strcat(entryName,'/D22/selector/rotation_speed'));
+try; param(inst_params.vectors.seltrs) = hdf5read(fname,strcat(entryName,'/D22/selector/seltrs_actual')); catch; end
+
 
 %BeamStop
 param(inst_params.vectors.bx) = hdf5read(fname,strcat(entryName,'/D22/beamstop/bx_actual'));
@@ -90,6 +92,11 @@ elseif max(size(temp)) == 1;
     param(inst_params.vectors.col_app) = 1;
 end
 
+param(inst_params.vectors.vslit_center) = hdf5read(fname,strcat(entryName,'/D22/collimation/vertical_slit_center'));
+param(inst_params.vectors.vslit_width) = hdf5read(fname,strcat(entryName,'/D22/collimation/vertical_slit_width_actual'));
+param(inst_params.vectors.hslit_center) = hdf5read(fname,strcat(entryName,'/D22/collimation/horizontal_slit_center'));
+param(inst_params.vectors.hslit_width) = hdf5read(fname,strcat(entryName,'/D22/collimation/horizontal_slit_width_actual'));
+
 if strcmp(grasp_env.inst,'ILL_d22') 
     %Patch effective collimation length if using entrance apertures at the attenuator position
     if param(inst_params.vectors.att_type) > 3 && param(inst_params.vectors.att_type) < 8
@@ -100,6 +107,14 @@ if strcmp(grasp_env.inst,'ILL_d22')
         end
     end
 end
+
+
+%Chopper Parameters
+param(inst_params.vectors.chopper1_phase) = hdf5read(fname,strcat(entryName,'/D22/chopper1/phase'));
+param(inst_params.vectors.chopper1_speed) = hdf5read(fname,strcat(entryName,'/D22/chopper1/rotation_speed'));
+param(inst_params.vectors.chopper2_phase) = hdf5read(fname,strcat(entryName,'/D22/chopper2/phase'));
+param(inst_params.vectors.chopper2_speed) = hdf5read(fname,strcat(entryName,'/D22/chopper2/rotation_speed'));
+
 
 %Sample Motors
 param(inst_params.vectors.san) = (hdf5read(fname,strcat(entryName,'/sample/san_actual'))); %m
@@ -170,7 +185,8 @@ disp(['File type is ' numor_data.file_type ', mode = ' num2str(mode)]);
 %Detector Data - all frames
 numor_data.data1 = [];
 data = double(hdf5read(fname,strcat(entryName,'/data/data')));
-temp_data_size = size(data);
+temp_data_size = size(data)
+
 data = reshape(data,temp_data_size(2),temp_data_size(3),temp_data_size(1));
 data_size = size(data);
 if length(data_size) <3; data_size(3) =1; end

@@ -48,6 +48,7 @@ for frame = 1:numor_data.n_frames
             total_monitor = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.monitor,dpth);
             %total_counts = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.counts,dpth);
             total_time = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.time,dpth);
+            aq_time = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.aq_time,dpth);
             total_array_counts = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.array_counts,dpth);
             
             %Over write the parameters
@@ -57,6 +58,7 @@ for frame = 1:numor_data.n_frames
             grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.monitor,dpth) = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.monitor,dpth) + total_monitor;
             %grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.counts,dpth) = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.counts,dpth) + total_counts;
             grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.time,dpth) = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.time,dpth) + total_time;
+            grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.aq_time,dpth) = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.aq_time,dpth) + aq_time;
             grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.array_counts,dpth) = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.array_counts,dpth) + total_array_counts;
         end
     end

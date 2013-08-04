@@ -99,11 +99,16 @@ grasp_handles.window_modules.radial_average.depth_combine_text = uicontrol(handl
 grasp_handles.window_modules.radial_average.depth_combine_check = uicontrol(handle,'units','normalized','Position',[0.90 0.15 0.068 0.05],'tooltip','Combine TOF Data to Single I vs. Q Curve','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'visible','on',....
     'value',status_flags.analysis_modules.radial_average.d33_tof_combine,'callback','radial_average_callbacks(''d33_tof_combine_check'');','visible',visible);
 
-%Frame Start & End
-if status_flags.analysis_modules.radial_average.single_depth_radio == 0; visible = 'off'; else visible = 'on'; end
-grasp_handles.window_modules.radial_average.frame_startend_text = uicontrol(handle,'units','normalized','position',[0.1 0.07 0.4 0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','left','Style','text','String','Frame Start & End','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'visible',visible);
-grasp_handles.window_modules.radial_average.frame_start = uicontrol(handle,'units','normalized','Position',[0.5 0.07 0.16 0.06],'tooltip','Depth Frame # Stat','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.radial_average.depth_frame_start),'HorizontalAlignment','center','Visible',visible,'callback','radial_average_callbacks(''depth_frame_start'');');
-grasp_handles.window_modules.radial_average.frame_end = uicontrol(handle,'units','normalized','Position',[0.7 0.07 0.16 0.06],'tooltip','Depth Frame # End','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.radial_average.depth_frame_end),'HorizontalAlignment','center','Visible',visible,'callback','radial_average_callbacks(''depth_frame_end'');');
+%%Frame Start & End
+%if status_flags.analysis_modules.radial_average.single_depth_radio == 0; visible = 'off'; else visible = 'on'; end
+%grasp_handles.window_modules.radial_average.frame_startend_text = uicontrol(handle,'units','normalized','position',[0.1 0.07 0.4 0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','left','Style','text','String','Frame Start & End','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'visible',visible);
+%grasp_handles.window_modules.radial_average.frame_start = uicontrol(handle,'units','normalized','Position',[0.5 0.07 0.16 0.06],'tooltip','Depth Frame # Stat','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.radial_average.depth_frame_start),'HorizontalAlignment','center','Visible',visible,'callback','radial_average_callbacks(''depth_frame_start'');');
+%grasp_handles.window_modules.radial_average.frame_end = uicontrol(handle,'units','normalized','Position',[0.7 0.07 0.16 0.06],'tooltip','Depth Frame # End','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.radial_average.depth_frame_end),'HorizontalAlignment','center','Visible',visible,'callback','radial_average_callbacks(''depth_frame_end'');');
+
+%New TOF rebin
+uicontrol(handle,'units','normalized','Position',[0.63 0.01 0.25 0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','New TOF rebin:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+grasp_handles.window_modules.radial_average.new_tof_rebin_check = uicontrol(handle,'units','normalized','Position',[0.90 0.01 0.068 0.05],'tooltip','New TOF rebin','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'visible','on',....
+    'value',status_flags.analysis_modules.radial_average.direct_to_file,'callback','radial_average_callbacks(''tof_iq'');');
 
 
 

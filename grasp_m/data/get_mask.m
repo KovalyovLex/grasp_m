@@ -15,10 +15,12 @@ for i = 1:lineskip; a=fgetl(fid); end
 
 mask = zeros(inst_params.(['detector' num2str(det)]).pixels(2),inst_params.(['detector' num2str(det)]).pixels(1));
 
+
+
 %Get Mask
 for y = 1:inst_params.(['detector' num2str(det)]).pixels(2)
-   line = fgetl(fid);
-   mask(y,:) = double(line(1:inst_params.(['detector' num2str(det)]).pixels(1)));
+    line = fgetl(fid);
+    mask(y,:) = double(line(1:inst_params.(['detector' num2str(det)]).pixels(1)));
 end
 fclose(fid);
 
@@ -28,4 +30,5 @@ mask = flipud(mask);
 %Convert to logical mask (1's and 0's)
 i = find(mask==46); mask(i) = 1;
 i = find(mask==35); mask(i) = 0;
+
 

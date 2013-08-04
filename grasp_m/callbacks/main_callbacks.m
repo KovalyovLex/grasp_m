@@ -36,8 +36,47 @@ global grasp_env
 
 
 switch to_do
+    case 'averaging_display_refresh'
+        if strcmp(status_flags.analysis_modules.radial_average.display_update,'off');
+            status_flags.analysis_modules.radial_average.display_update = 'on';
+        else
+            status_flags.analysis_modules.radial_average.display_update = 'off';
+        end
+        set(grasp_handles.menu.file.preferences.averaging_depth_update,'checked',status_flags.analysis_modules.radial_average.display_update);
+        
+        
+    case 'sectors_display_refresh'
+        if strcmp(status_flags.analysis_modules.sector_boxes.display_refresh,'off');
+            status_flags.analysis_modules.sector_boxes.display_refresh = 'on';
+        else
+            status_flags.analysis_modules.sector_boxes.display_refresh = 'off';
+        end
+        set(grasp_handles.menu.file.preferences.sector_box_update,'checked',status_flags.analysis_modules.sector_boxes.display_refresh);
+        
+    case 'boxes_display_refresh'
+        if strcmp(status_flags.analysis_modules.boxes.display_refresh,'off');
+            status_flags.analysis_modules.boxes.display_refresh = 'on';
+        else
+            status_flags.analysis_modules.boxes.display_refresh = 'off';
+        end
+        set(grasp_handles.menu.file.preferences.box_update,'checked',status_flags.analysis_modules.boxes.display_refresh);
+        
+        
+    case 'depth_min'
+        temp = str2num(get(gcbo,'string'));
+        if not(isempty(temp)); status_flags.selector.depth_range_min = temp; end
+        
+    case 'depth_max'
+        temp = str2num(get(gcbo,'string'));
+        if not(isempty(temp)); status_flags.selector.depth_range_max = temp; end
+            
+    case 'depth_range_chk'
+        status_flags.selector.depth_range_chk = get(gcbo,'value');
+        hide_stuff;
+        
     case 'raw_tube_data_load'
         status_flags.fname_extension.raw_tube_data_load = get(gcbo,'value');
+        status_flags.calibration.soft_det_cal = 0;
         hide_stuff;
     
     case 'pa_correct'
@@ -100,6 +139,9 @@ switch to_do
         selector_position = get(gcbo,'value');
         userdata = get(gcbo,'userdata');
         status_flags.selector.fw = userdata(selector_position);
+        if status_flags.selector.fw ==4 || status_flags.selector.fw ==5 || status_flags.selector.fw ==6 || status_flags.selector.fw == 8; %transmission worksheets.
+            main_callbacks('active_axis',1); %Reset active axis to the main detector to avoid accidental beam centres on D33 panels.
+        end
         main_callbacks('update_worksheet');
         
         
@@ -694,18 +736,45 @@ depth = 1;
                 
                 %Also need to store any detector pannel translation information if it exists
                 cm_params = displayimage.(['params' num2str(status_flags.display.active_axis)]);
-                if isfield(inst_params.vectors,'ox')
-                    ox = cm_params(inst_params.vectors.ox);
+                 
+                if strcmp(grasp_env.inst,'ILL_d33')
+                    if strcmp(grasp_env.inst_option,'D33_Model_Data')
+                        ox = cm_params(inst_params.vectors.ox);
+                        oy = cm_params(inst_params.vectors.oy);
+                    elseif strcmp(grasp_env.inst_option,'D33');
+                          %det = 1 ;  Rear
+                          %det = 2 ;  Right
+                          %det = 3 ;  Left
+                          %det = 4 ;  Bottom
+                          %det = 5 ;  Top
+                          if det == 1;
+                              ox = 0; oy = 0;
+                          elseif det == 2;
+                              ox = cm_params(inst_params.vectors.oxr);
+                              oy = 0;
+                          elseif det == 3;
+                              ox = cm_params(inst_params.vectors.oxl);
+                              oy = 0;
+                          elseif det == 4;
+                              ox = 0;
+                              oy = cm_params(inst_params.vectors.oyb);
+                          elseif det == 5;
+                              ox = 0;
+                              oy = cm_params(inst_params.vectors.oyt);
+                          end
+                    elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning')
+                        ox = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(1);
+                        oy = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(2);
+                    end
                 else
                     ox = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(1);
-                end
-                if isfield(inst_params.vectors,'oy')
-                    oy = cm_params(inst_params.vectors.oy);
-                else
                     oy = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(2);
                 end
-                grasp_data(index).(['cm' num2str(det)]){number}.cm_translation(depth,:) = [ox, oy];
                 
+                
+                grasp_data(index).(['cm' num2str(det)]){number}.cm_translation(depth,:) = [ox, oy];
+                disp(['Panel Translations:  Ox = ' num2str(ox) ' , Oy = ' num2str(oy)]);
+
                 %Only store the cm sigma widths if it was done for a proper direct
                 %beam or transmission worksheet - that way the resolution doesn't
                 %get screwed if simply take the CM of the foreground scattering as
@@ -751,19 +820,45 @@ depth = 1;
             %Poke cm back into storage
             grasp_data(index).(['cm' num2str(det)]){number}.cm_pixels(1,:) = cm.cm;
             
-            %Also need to store any detector pannel translation information if it exists
-            cm_params = displayimage.(['params' num2str(status_flags.display.active_axis)]);
-            if isfield(inst_params.vectors,'ox')
-                ox = cm_params(inst_params.vectors.ox);
-            else
-                ox = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(1);
-            end
-            if isfield(inst_params.vectors,'oy')
-                oy = cm_params(inst_params.vectors.oy);
-            else
-                oy = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(2);
-            end
+                %Also need to store any detector pannel translation information if it exists
+                cm_params = displayimage.(['params' num2str(status_flags.display.active_axis)]);
+                 
+                if strcmp(grasp_env.inst,'ILL_d33')
+                    if strcmp(grasp_env.inst_option,'D33_Model_Data')
+                        ox = cm_params(inst_params.vectors.ox);
+                        oy = cm_params(inst_params.vectors.oy);
+                    elseif strcmp(grasp_env.inst_option,'D33');
+                          %det = 1 ;  Rear
+                          %det = 2 ;  Right
+                          %det = 3 ;  Left
+                          %det = 4 ;  Bottom
+                          %det = 5 ;  Top
+                          if det == 1;
+                              ox = 0; oy = 0;
+                          elseif det == 2;
+                              ox = cm_params(inst_params.vectors.oxr);
+                              oy = 0;
+                          elseif det == 3;
+                              ox = cm_params(inst_params.vectors.oxl);
+                              oy = 0;
+                          elseif det == 4;
+                              ox = 0;
+                              oy = cm_params(inst_params.vectors.oyb);
+                          elseif det == 5;
+                              ox = 0;
+                              oy = cm_params(inst_params.vectors.oyt);
+                          end
+                    elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning');
+                        ox = 0; oy = 0;
+                    end
+                else
+                    ox = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(1);
+                    oy = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(2);
+                end
             grasp_data(index).(['cm' num2str(det)]){number}.cm_translation(1,:) = [ox, oy];
+            disp(['Panel Translations:  Ox = ' num2str(ox) ' , Oy = ' num2str(oy)]);
+
+            
             
             %delete any sigma widths if cm wasn't done for proper beam worksheet
             %if isfield(grasp_data(index).(['cm' num2str(det)]){number},'cm_sigma_pixels')
@@ -803,59 +898,67 @@ depth = 1;
         grasp_update
 
     case 'depth_scroll'
-        %Check if selector depths are grouped
-        if status_flags.selector.dgroup == 1;
-
-            %Check if sufficient depths exist
-            if status_flags.selector.fd <= status_flags.selector.bdpth_max;
-                status_flags.selector.bd = status_flags.selector.fd;
-            end
-
-            %Check if sufficient depths exist
-            if status_flags.selector.fd <= status_flags.selector.cdpth_max;
-                status_flags.selector.cd = status_flags.selector.fd;
-            end
-
-            %Check if sufficient depths exist
-            if status_flags.selector.fw >= 1 && status_flags.selector.fw <=8;
-                %Foreground, Background, Cadmium, Transmission & Empty beam types
-                ts_worksheet = 4; te_worksheet = 5;
-            elseif status_flags.selector.fw >= 101 && status_flags.selector.fw == 107
-                %Water & Water transmission types
-                ts_worksheet = 104; te_worksheet = 105;
-            elseif status_flags.selector.fw >= 10 && status_flags.selector.fw <= 19; %PA FR Check
-                ts_worksheet = 4; te_worksheet = 5;
-            else
-                ts_worksheet = 4; te_worksheet = 5;
-            end
-
-            nmbr = status_flags.selector.fn;
-
-            index = data_index(ts_worksheet);
-            ts_dpth = size(grasp_data(index).trans{nmbr},1);
-            sum_allow = grasp_data(index).sum_allow;
-            if status_flags.selector.fd <= (ts_dpth +sum_allow)
-                status_flags.transmission.ts_depth = status_flags.selector.fd;
-            end
-            
-            index = data_index(te_worksheet);
-            te_dpth = size(grasp_data(index).trans{nmbr},1);
-            sum_allow = grasp_data(index).sum_allow;
-            if status_flags.selector.fd <= (te_dpth + sum_allow)
-                status_flags.transmission.te_depth = status_flags.selector.fd;
-            end
-            
-            %Update Beam Centre Depth
-            index = data_index(1); %Beam centres are stored with the scattering data
-            cm_dpth = size(grasp_data(index).cm1{nmbr}.cm_pixels,1);
-            sum_allow = grasp_data(index).sum_allow;
-            if status_flags.selector.fd <= (cm_dpth + sum_allow);
-                status_flags.beamcentre.cm_depth = status_flags.selector.fd;
-            end
-            
-        end
-        grasp_update
-        %pause(0.1)
+        
+        main_callbacks('update_depths');
+      
+%         %Check if selector depths are grouped
+%         if status_flags.selector.dgroup == 1;
+% 
+%             %Check if sufficient depths exist
+%             if status_flags.selector.fd <= status_flags.selector.bdpth_max;
+%                 status_flags.selector.bd = status_flags.selector.fd;
+%             end
+% 
+%             %Check if sufficient depths exist
+%             if status_flags.selector.fd <= status_flags.selector.cdpth_max;
+%                 status_flags.selector.cd = status_flags.selector.fd;
+%             end
+% 
+%             %Check if sufficient depths exist
+%             if status_flags.selector.fw >= 1 && status_flags.selector.fw <=8;
+%                 %Foreground, Background, Cadmium, Transmission & Empty beam types
+%                 ts_worksheet = 4; te_worksheet = 5;
+%             elseif status_flags.selector.fw >= 101 && status_flags.selector.fw == 107
+%                 %Water & Water transmission types
+%                 ts_worksheet = 104; te_worksheet = 105;
+%             elseif status_flags.selector.fw >= 10 && status_flags.selector.fw <= 19; %PA FR Check
+%                 ts_worksheet = 4; te_worksheet = 5;
+%             else
+%                 ts_worksheet = 4; te_worksheet = 5;
+%             end
+% 
+%             nmbr = status_flags.selector.fn;
+% 
+%             index = data_index(ts_worksheet);
+%             ts_dpth = size(grasp_data(index).trans{nmbr},1);
+%             sum_allow = grasp_data(index).sum_allow;
+%             if status_flags.selector.fd <= (ts_dpth +sum_allow)
+%                 status_flags.transmission.ts_depth = status_flags.selector.fd;
+%             end
+%             
+%             index = data_index(te_worksheet);
+%             te_dpth = size(grasp_data(index).trans{nmbr},1);
+%             sum_allow = grasp_data(index).sum_allow;
+%             if status_flags.selector.fd <= (te_dpth + sum_allow)
+%                 status_flags.transmission.te_depth = status_flags.selector.fd;
+%             end
+%             
+%             %Update Beam Centre Depth
+%             index = data_index(1); %Beam centres are stored with the scattering data
+%             cm_dpth = size(grasp_data(index).cm1{nmbr}.cm_pixels,1);
+%             sum_allow = grasp_data(index).sum_allow;
+%             if status_flags.selector.fd <= (cm_dpth + sum_allow);
+%                 status_flags.beamcentre.cm_depth = status_flags.selector.fd;
+%             end
+%         end
+%         
+%         status_flags.transmission.ts_depth
+%         
+%         grasp_update
+%         
+%         pause(0.5)
+%         
+%         %pause(0.1)
         
     case 'calibrate_check'
         status_flags.calibration.calibrate_check = not(status_flags.calibration.calibrate_check);

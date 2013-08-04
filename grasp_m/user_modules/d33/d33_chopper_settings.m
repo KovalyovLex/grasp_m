@@ -15,13 +15,13 @@ if nargin<1; wav_band = [0,20]; end %Angs
 
 
 
-chopper_spacing12 = 2.8; %m
-chopper_spacing23 = 1.4; %m
-chopper_spacing34 = 0.7; %m
+chopper_spacing12 = 2.799; %m
+chopper_spacing23 = 1.407; %m
+chopper_spacing34 = 0.707; %m
 chopper_positions = [0, 2.8, 4.2, 4.9]; %choppers 1,2,3,4 in direction of neutrons, relative to first chopper
 
 chopper_opening_angle = 110; %degrees
-last_chopper_sample_length = 14.1; %(m)
+last_chopper_sample_length = 14.099; %(m)
 
 %Display Parameters Summary
 disp(' ')
@@ -53,7 +53,7 @@ total_tof_matrix(1:length(spacing_matrix),1) = rot90(spacing_matrix,3);
 for m = 1:length(spacing_matrix);
     for n = 1:length(detector_distance);
         delta_d = spacing_matrix(m);
-        total_tof = detector_distance(n) + last_chopper_sample_length + spacing_offset_matrix(m)+delta_d/2
+        total_tof = detector_distance(n) + last_chopper_sample_length + spacing_offset_matrix(m)+delta_d/2;
         resolution_matrix(m,n) = 100*delta_d/total_tof;
         total_tof_matrix(m,n) = total_tof;
     end
@@ -161,13 +161,14 @@ chopper_params.last_chopper_sample_distance = last_chopper_sample_length;
 chopper_params.detector_distance = detector_distance;
 for n = 1:length(resolution_matrix)
     chopper_params.resolution(n,:) = resolution_matrix(n);
-chopper_params.masters(n,:) = str2num(fliplr(spacing_masters_matrix{n}));
-chopper_params.slaves(n,:) = str2num(fliplr(spacing_slaves_matrix{n}));
-chopper_params.multiplier(n,:) = final_chopper_multiplier(n);
-chopper_params.masters_rpm(n,:) = f1_frequency_matrix(n) * final_chopper_multiplier(n);
-chopper_params.slaves_rpm(n,:) = f1_frequency_matrix(n);
-chopper_params.masters_phase(n,:) = [master1_phase, master2_phase];
-chopper_params.slaves_phase(n,:) = [slave_phase(n,1), slave_phase(n,2)];
-
+    chopper_params.masters(n,:) = str2num(fliplr(spacing_masters_matrix{n}));
+    chopper_params.slaves(n,:) = str2num(fliplr(spacing_slaves_matrix{n}));
+    chopper_params.multiplier(n,:) = final_chopper_multiplier(n);
+    chopper_params.masters_rpm(n,:) = f1_frequency_matrix(n) * final_chopper_multiplier(n);
+    chopper_params.slaves_rpm(n,:) = f1_frequency_matrix(n);
+    chopper_params.masters_phase(n,:) = [master1_phase, master2_phase];
+    chopper_params.slaves_phase(n,:) = [slave_phase(n,1), slave_phase(n,2)];
+    chopper_params.total_tof(n,:) = total_tof_matrix(n);
 
 end
+

@@ -11,7 +11,38 @@ global grasp_data
 %attachment_name = []; %This is the sup_figure attachment file name loaded with the main project
 button = [];
 
+
 switch to_do
+    
+    case 'sectors_color'
+        
+        status_flags.analysis_modules.sectors.sector_color = get(gcbo,'label');
+        set(grasp_handles.menu.file.preferences.sectors_color,'checked','off');
+        set(gcbo,'checked','on');
+        %Update, if sectors are open
+        if ishandle(grasp_handles.window_modules.sector.window);
+            sector_callbacks;
+        end
+    
+    case 'sector_box_color'
+        status_flags.analysis_modules.sector_boxes.box_color = get(gcbo,'label');
+        set(grasp_handles.menu.file.preferences.sector_box_color,'checked','off');
+        set(gcbo,'checked','on');
+        %Update, if sectors are open
+        if ishandle(grasp_handles.window_modules.sector_box.window);
+            sector_box_callbacks;
+        end
+        
+    case 'box_color'
+        status_flags.analysis_modules.boxes.box_color = get(gcbo,'label');
+        set(grasp_handles.menu.file.preferences.box_color,'checked','off');
+        set(gcbo,'checked','on');
+        %Update, if sectors are open
+        if ishandle(grasp_handles.window_modules.box.window);
+            box_callbacks;
+        end
+        
+        
     %***** File>Open Menu *****
     case 'open'
         
@@ -108,7 +139,77 @@ switch to_do
                 if not(isfield(status_flags.fname_extension,'raw_tube_data_load'))
                     status_flags.fname_extension.raw_tube_data_load = 0;
                 end
+
+                %Tof distance
+                if not(isfield(status_flags.normalization,'d33_total_tof_dist'));
+                    status_flags.normalization.d33_total_tof_dist = 0;
+                end
                 
+                %Tof delay
+                if not(isfield(status_flags.normalization,'d33_tof_delay'));
+                    status_flags.normalization.d33_tof_delay = 0;
+                end
+                
+                %Exposure time
+                if not(isfield(status_flags.normalization,'standard_exposure_time'));
+                    status_flags.normalization.standard_exposure_time  =1;
+                end
+                
+                %Aq time
+                if not(isfield(inst_params.vectors,'aq_time'));
+                    inst_params.vectors.aq_time = inst_params.vectors.time;
+                end
+                
+                %Depth frame
+                %if not(isfield(status_flags.analysis_modules.radial_average,'depth_frame_start'));
+                %    status_flags.analysis_modules.radial_average.depth_frame_start = 1;
+                %end
+                %if not(isfield(status_flags.analysis_modules.radial_average,'depth_frame_end'));
+                %    status_flags.analysis_modules.radial_average.depth_frame_end = 1;
+                %end
+                
+                %Relative Detector efficiency
+                for det = 1:inst_params.detectors
+                    if not(isfield(inst_params.(['detector' num2str(det)]),'relative_efficiency'));
+                        inst_params.(['detector' num2str(det)]).relative_efficiency = 1;
+                    end
+                end
+                
+                %Sector box & box track with wavelength
+                if not(isfield(status_flags.analysis_modules.sector_boxes,'q_lock_chk'))
+                    status_flags.analysis_modules.sector_boxes.q_lock_chk = 0;
+                    status_flags.analysis_modules.sector_boxes.q_lock_wav_ref = 0;
+                    status_flags.analysis_modules.sector_boxes.q_lock_box_size_chk = 0;
+                    status_flags.analysis_modules.boxes.q_lock_chk = 0;
+                    status_flags.analysis_modules.boxes.q_lock_wav_ref = 0;
+                    status_flags.analysis_modules.boxes.q_lock_box_size_chk = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_chk = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_box_size_chk = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_chk = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_box_size_chk = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref1 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref1 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref2 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref3 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref4 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref5 = 0;
+                    status_flags.analysis_modules.boxes.t2t_lock_angle_ref6 = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref2 = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref3 = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref4 = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref5 = 0;
+                    status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref6 = 0;
+                    status_flags.analysis_modules.boxes.display_refresh = 'off';
+                    status_flags.analysis_modules.sector_boxes.display_refresh = 'off';
+                    status_flags.analysis_modules.radial_average.display_update = 'off';
+                end
+                
+                %Depth range check
+                if not(isfield(status_flags.selector,'depth_range_chk'))
+                    status_flags.selector.depth_range_chk = 0;
+                    status_flags.selector.depth_range_min = 1;
+                    status_flags.selector.depth_range_max = 100;
+                end
                 
                 %Rebuild background & cadmium selector
                 selector_build
@@ -293,7 +394,9 @@ switch to_do
         
     case 'save_mask'
         %Retrieve current mask
-        for det = 1:inst_params.detectors
+        %for det = 1:inst_params.detectors
+            
+            det = status_flags.display.active_axis;
             mask = displayimage.(['mask' num2str(det)]);
             mask = flipud(mask); %Flip mask first to write in the same order as Rons
             
@@ -330,7 +433,7 @@ switch to_do
                 %Close File
                 fclose(fid);
             end
-        end
+        %end
         
 %     case 'export_displayimage'
 %         
@@ -366,8 +469,8 @@ switch to_do
         
         index = data_index(99); %Index to the det efficiency worksheet
         
-        for det = 1:inst_params.detectors
-            
+        %for det = 1:inst_params.detectors
+        det = status_flags.display.active_axis;    
             eff_data = grasp_data(index).(['data' num2str(det)]){1};
             eff_err_data = grasp_data(index).(['error' num2str(det)]){1};
             
@@ -377,7 +480,7 @@ switch to_do
                 path_name = 'c:\'
             end
             uisave({'eff_data', 'eff_err_data'} ,[path_name 'detector_efficiency_det' num2str(det) '_' grasp_env.inst grasp_env.inst_option]);
-        end
+        %end
 
         
     case 'export_depth_frames'
@@ -422,22 +525,14 @@ switch to_do
             grasp_env.path.project_dir = directory;
             
             %Read Mask File
-            mask = get_mask([directory fname]); %This returns a logical mask made from an imported Ron mask
-            
-            %Check what to do if multiple detectors
-            if inst_params.detectors >1; 
-                beep
-                disp('HELP:  What to do for multiple detectors in file_menu ~ line312');
-                return
-            end
-            det = 1;
+            mask = get_mask([directory fname],status_flags.display.active_axis); %This returns a logical mask made from an imported Ron mask
             
             %Put the mask into the right mask worksheet
             mask_number = status_flags.display.mask.number;
             index = data_index(7);
             
             %Replace the mask data
-            grasp_data(index).(['data' num2str(det)]){mask_number}(:,:) = mask;
+            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){mask_number}(:,:) = mask;
             grasp_update
         end
         

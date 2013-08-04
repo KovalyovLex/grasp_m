@@ -65,22 +65,22 @@ uicontrol(handle,'units','normalized','Position',[0.65, 0.9,0.3,0.06],'FontName'
 grasp_handles.window_modules.sector.mirror_sectors = uicontrol(handle,'units','normalized','Position',[0.7,0.85,0.25,0.06],'HorizontalAlignment','center','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','Popup','Tag','number_of_sectors',...
     'String',number_of_sectors_string,'CallBack','sector_callbacks(''mirror_sectors'');','Value',status_flags.analysis_modules.sectors.mirror_sectors);
 
-%Sector Plotting Colour
-sector_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
-uicontrol(handle,'units','normalized','Position',[0.65,0.75,0.3,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','Sector Colour:','BackgroundColor',grasp_env.background_color, 'ForegroundColor', [1 1 1]);
-for n = 1:length(sector_color_list_string);
-    if strcmp(status_flags.analysis_modules.sectors.sector_color,sector_color_list_string{n})
-        value = n;
-    end
-end
-grasp_handles.window_modules.sector.sector_color = uicontrol(handle,'units','normalized','Position',[0.7,0.68,0.25,0.08],'HorizontalAlignment','center','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','Popup','Tag','sector_colour',...
-    'String',sector_color_list_string,'CallBack','sector_callbacks(''color'');','Value',value);
+% %Sector Plotting Colour
+% sector_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
+% uicontrol(handle,'units','normalized','Position',[0.65,0.75,0.3,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','Sector Colour:','BackgroundColor',grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+% for n = 1:length(sector_color_list_string);
+%     if strcmp(status_flags.analysis_modules.sectors.sector_color,sector_color_list_string{n})
+%         value = n;
+%     end
+% end
+% grasp_handles.window_modules.sector.sector_color = uicontrol(handle,'units','normalized','Position',[0.7,0.68,0.25,0.08],'HorizontalAlignment','center','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','Popup','Tag','sector_colour',...
+%     'String',sector_color_list_string,'CallBack','sector_callbacks(''color'');','Value',value);
 
 %********* Sector Analysis Buttons *********
 %Averaging, Radial and azimuthal
 uicontrol(handle,'units','normalized','Position',[0.525,0.1,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Averaging','HorizontalAlignment','center','Tag','boxfox_button','Visible','on','CallBack','sector_callbacks(''radial_average'');');
 %Sector Box
-uicontrol(handle,'units','normalized','Position', [0.2,0.1,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Sector Boxes','HorizontalAlignment','center','Tag','sectfoxbutton','Visible','on','CallBack','sector_box_window','enable','on');
+uicontrol(handle,'units','normalized','Position', [0.2,0.1,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Sector Boxes','HorizontalAlignment','center','Tag','sectfoxbutton','Visible','on','CallBack','sector_box_window;','enable','on');
 
 %Refresh & draw the sectors
 sector_callbacks;

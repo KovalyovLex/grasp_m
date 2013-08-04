@@ -3,8 +3,33 @@ function grasp_ini
 global grasp_env
 global status_flags
 
+
 %Open File
-fid=fopen('grasp.ini');
+fid = -1;
+%Try smart opening of correct default instrument configuration .ini file
+if ispc; hostname = getenv('COMPUTERNAME');
+else [idum,hostname]= system('hostname');
+end
+
+temp = findstr(hostname,'11');
+if not(isempty(temp));
+    fid=fopen('grasp_d11.ini');
+end
+
+temp = findstr(hostname,'22');
+if not(isempty(temp));
+    fid=fopen('grasp_d22.ini');
+end
+
+temp = findstr(hostname,'33');
+if not(isempty(temp));
+    fid=fopen('grasp_d33.ini');
+end
+
+if fid ==-1 %Default
+    fid=fopen('grasp.ini');
+end
+
 line = 1;
 warning off
 

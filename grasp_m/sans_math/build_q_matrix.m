@@ -17,7 +17,7 @@ warning off
 
 global inst_params
 global status_flags
-
+global grasp_env
 
 %Loop though the number of detectors
 for det = 1:inst_params.detectors
@@ -52,6 +52,36 @@ for det = 1:inst_params.detectors
         end
         
         %DET:  Check if to use Det,  DetCalc (m) or Det_Pannel
+        if strcmp(grasp_env.inst,'ILL_d33');
+            sdet = params(inst_params.vectors.det); %Default, unless otherwise
+            if strcmp(grasp_env.inst_option,'D33_Model_Data') %Instrument model
+                if strcmp(status_flags.q.det,'detcalc');
+                    if isfield(inst_params.vectors,'detcalc')
+                        if not(isempty(inst_params.vectors.detcalc));
+                            sdet = params(inst_params.vectors.detcalc);
+                        end
+                    end
+                end
+                if isfield(inst_params.vectors,'det_pannel');
+                    sdet = params(inst_params.vectors.det_pannel);
+                end
+                
+            elseif strcmp(grasp_env.inst_option,'D33') %real D33 with panel detector
+                if det == 1; %Rear
+                    sdet = params(inst_params.vectors.detcalc2);
+                elseif det == 2; % Right
+                    sdet = params(inst_params.vectors.detcalc1) + params(inst_params.vectors.det1_panel_offset);
+                elseif det == 3; % Left
+                    sdet = params(inst_params.vectors.detcalc1) + params(inst_params.vectors.det1_panel_offset);
+                elseif det == 4; %Bottom
+                    sdet = params(inst_params.vectors.detcalc1);
+                elseif det == 5; %Top
+                    sdet = params(inst_params.vectors.detcalc1);
+                end
+            end
+            
+        else  %All other cases
+            
         sdet = params(inst_params.vectors.det); %Default, unless otherwise
         if strcmp(status_flags.q.det,'detcalc');
             if isfield(inst_params.vectors,'detcalc')
@@ -64,6 +94,8 @@ for det = 1:inst_params.detectors
             sdet = params(inst_params.vectors.det_pannel);
         end
         
+        end
+        
         %Detector pixel size (x,y)
         pixelsize_x = det_params.pixel_size(1) * 1e-3; %x-pixel size in m
         pixelsize_y = det_params.pixel_size(2) * 1e-3; %y-pixel size in m
@@ -73,21 +105,47 @@ for det = 1:inst_params.detectors
         k = (2*pi)/lambda;
         
         %Pixel distances from Beam Centre
-        if isfield(inst_params.vectors,'ox') %for D33 pannels
-            r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x) + (params(inst_params.vectors.ox) - cm_offset(1))/1000; %horizontal distance from beam centre to pixel (m)
-        else
+        if strcmp(grasp_env.inst,'ILL_d33')
+            if strcmp(grasp_env.inst_option,'D33'); %Real D33 instrument with Panel Detector
+                %det = 1 ;  Rear
+                %det = 2 ;  Right
+                %det = 3 ;  Left
+                %det = 4 ;  Bottom
+                %det = 5 ;  Top
+                if det == 1; %Rear
+                    %disp('build_q_matrix rear')
+                    r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
+                    r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
+                elseif det == 2; % Right
+                    r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x) + (params(inst_params.vectors.oxr) - cm_offset(1))/1000; %horizontal distance from beam centre to pixel (m)
+                    r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
+                elseif det == 3; % Left
+                    r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x) - (params(inst_params.vectors.oxl) - cm_offset(1))/1000; %horizontal distance from beam centre to pixel (m)
+                    r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
+                elseif det == 4; %Bottom
+                    r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
+                  r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y) - (params(inst_params.vectors.oyb) - cm_offset(2))/1000; %vertical distance from beam centre to pixel (m)
+                elseif det == 5; %Top
+                    r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
+                    r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y) + (params(inst_params.vectors.oyt) - cm_offset(2))/1000; %vertical distance from beam centre to pixel (m)
+                end
+                    
+            elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning'); %Real D33 during comissioning (Rear Detector Only)
+                r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
+                r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
+            elseif strcmp(grasp_env.inst_option,'D33_Model_Data'); %D33 Instrument Model
+                r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x) + (params(inst_params.vectors.ox) - cm_offset(1))/1000; %horizontal distance from beam centre to pixel (m)
+                r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y) + (params(inst_params.vectors.oy) - cm_offset(2))/1000; %vertical distance from beam centre to pixel (m)
+            end
+        else %All other instruments
             r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
-        end
-        
-        if isfield(inst_params.vectors,'oy')
-            r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y) + (params(inst_params.vectors.oy) - cm_offset(2))/1000; %vertical distance from beam centre to pixel (m)
-        else
             r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
         end
-        
         qmatrix(:,:,14) = r_x; %radii (m) used for building sector masks
         qmatrix(:,:,15) = r_y;
         qmatrix(:,:,16) = sqrt(r_x.^2 + r_y.^2);
+        
+      
         
         %DAN Correction (22/9/2008)
         %Find true Sample - Pixel distance based on DET and DAN Rotation
@@ -100,6 +158,7 @@ for det = 1:inst_params.detectors
         mod_r = sqrt(S.^2 + r_y.^2); %S is used instead of r_x for DAN correction.
         %mod_r is then the projected radius on the detector and not the physical radius on the detector
         
+       
         %Mod 2Theta
         two_theta = atan(mod_r ./ R); %radians.  R is used instead of DET for DAN correction
         qmatrix(:,:,9) = two_theta * (180/pi); %degrees in qmatrix;
@@ -133,9 +192,44 @@ for det = 1:inst_params.detectors
         pixel_distance = zeros(det_params.pixels(2),det_params.pixels(1),5); %x,y, r, theta on detector, then R, distance to sample
         
         %geometry!
-        pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
-        pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+        % pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+        % pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+        
+        %Geometry - Pixel distances from Beam Centre
+        if strcmp(grasp_env.inst,'ILL_d33')
+            if strcmp(grasp_env.inst_option,'D33'); %Real D33 instrument with Panel Detector
+                if det == 1; %Rear
+                    pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+                    pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+                elseif det == 2; % Right
+                    pixelx_line = (((1:det_params.pixels(1)) - cm(1))*pixelsize_x) + (params(inst_params.vectors.oxr) - cm_offset(1))/1000; %x distance from centre in m
+                    pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+                elseif det == 3; % Left
+                    pixelx_line = (((1:det_params.pixels(1)) - cm(1))*pixelsize_x)  - (params(inst_params.vectors.oxl) - cm_offset(1))/1000; %x distance from centre in m
+                    pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+                elseif det == 4; %Bottom
+                    pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+                    pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y  - (params(inst_params.vectors.oyb) - cm_offset(2))/1000; %y distance from centre in m
+                elseif det == 5; %Top
+                    pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+                    pixely_line = (((1:det_params.pixels(2)) - cm(2))*pixelsize_y)  + (params(inst_params.vectors.oyt) - cm_offset(2))/1000; %y distance from centre in m
+                end
+                
+            elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning'); %Real D33 during comissioning (Rear Detector Only)
+                pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+                pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+                
+            elseif strcmp(grasp_env.inst_option,'D33_Model_Data'); %D33 Instrument Model
+                pixelx_line = (((1:det_params.pixels(1)) - cm(1))*pixelsize_x) + (params(inst_params.vectors.ox) - cm_offset(1))/1000; %x distance from centre in m
+                pixely_line = (((1:det_params.pixels(2)) - cm(2))*pixelsize_y)  + (params(inst_params.vectors.oy) - cm_offset(2))/1000; %y distance from centre in m
+            end
+        else %All other instruments
+            pixelx_line = ((1:det_params.pixels(1)) - cm(1))*pixelsize_x; %x distance from centre in m
+            pixely_line = ((1:det_params.pixels(2)) - cm(2))*pixelsize_y; %y distance from centre in m
+            
+        end
         [pixel_distance(:,:,1), pixel_distance(:,:,2)] = meshgrid(pixelx_line,pixely_line);
+        
         
         %Correct pixel area for curvature effect
         effective_pixel_area = pixel_area .* cos((dan_angle*pi/180) - two_theta_x) .* cos(two_theta_y);
@@ -148,13 +242,10 @@ for det = 1:inst_params.detectors
         
         
         
-        
-        
-        
-        
-        
         %***** Calcualte resolution components, dq, dtheta or dlambda *****
-        
+        if status_flags.command_window.display_params ==1 & det ==1;
+            disp('***** Resolution Components: *****');
+        end
         
         %***** Beam Divergence *****
         col = params(inst_params.vectors.col); source_geometry = '';
@@ -190,14 +281,14 @@ for det = 1:inst_params.detectors
         end
         
         if strcmp(source_geometry,'Square') || strcmp(source_geometry,'Rectangular');
-            if status_flags.command_window.display_params ==1;
+            if status_flags.command_window.display_params ==1 & det ==1;
                 disp(['Effective source is ' source_geometry ' of dimensions:  ' num2str(ap_geometry(1)*1000) ' (mm)  x  ' num2str(ap_geometry(2)*1000) ' (mm)   at a distance of: ' num2str(col) ' (m)']);
             end
             div_x = ap_geometry(1) / col; %Radians FWHM TOPHAT Distribution
             div_y = ap_geometry(2) / col; %Radians FWHM TOPHAT Distribution
             
         elseif strcmp(source_geometry,'Circular');
-            if status_flags.command_window.display_params ==1
+            if status_flags.command_window.display_params ==1 & det ==1;
                 disp(['Effective source is Circular of dimensions:  ' num2str(ap_geometry(1)*1000) ' (mm) Diameter at a distance of: ' num2str(col) ' (m)']);
             end
             div_x = ap_geometry(1) / col; %Radians FWHM TOPHAT Distribution
@@ -210,20 +301,13 @@ for det = 1:inst_params.detectors
         
         elseif strcmp(source_geometry,'Square') || strcmp(source_geometry,'Rectangular');
             %For rectangular beam profile
-            angle_matrix = qmatrix(:,:,6)*pi/180;
-            d_theta = zeros(size(angle_matrix));
-            temp = find(angle_matrix >= 0 & angle_matrix < atan(div_x/ div_y));
-            d_theta(temp) = div_y ./ cos(angle_matrix(temp));
-            temp = find(angle_matrix >= atan(div_x/ div_y)  & angle_matrix < (pi-atan(div_x/div_y)));
-            d_theta(temp) = div_x ./ sin(angle_matrix(temp));
-            temp = find(angle_matrix >= (pi-atan(div_x/div_y)) & angle_matrix < (pi+ atan(div_x/div_y)));
-            d_theta(temp) = -div_y ./ cos(angle_matrix(temp));
-            temp = find(angle_matrix >= (pi+ atan(div_x/div_y)) & angle_matrix < (2*pi- atan(div_x/div_y)));
-            d_theta(temp) = -div_x ./ sin(angle_matrix(temp));
-            temp = find(angle_matrix >= (2*pi- atan(div_x/div_y)) & angle_matrix < (2*pi));
-            d_theta(temp) = div_y ./ cos(angle_matrix(temp));
+            %Which Mean to take?
+            %d_theta = sqrt((div_x.^2 + div_y.^2)/2); %RMS FWHM TOPHAT profile
+            %d_theta = (div_x + div_y)/2; %Mean FWHM TOPHAT profile
+            %d_theta = sqrt(div_x.*div_y); %Geometric Mean (square of equivalent area) FWHM TOPHAT profile
+            d_theta = 2*sqrt((div_x.*div_y)/pi); %Cricle of the same area FWHM TOPHAT profile
         end
-        
+       
         d_theta = d_theta /2;  %(Radians) Above actually calculates Delta_2Theta FWHM TOPHAT Distribution
         qmatrix(:,:,17) = d_theta*180/pi; %(Degrees) Delta Theta  FWHM TOPHAT Distribution in qmatrix
         
@@ -232,13 +316,23 @@ for det = 1:inst_params.detectors
         lambda = params(inst_params.vectors.wav); %absolute wavelength
         if isfield(inst_params.vectors,'deltawav');
             d_lambda_lambda = params(inst_params.vectors.deltawav); %Fraction (e.g. 0.1 FWHM TRIANGULAR distribution for velocity selector)
+            if status_flags.command_window.display_params ==1 & det ==1;
+                disp(['Wavelength resolution d_lambda / lambda:  ' num2str(d_lambda_lambda*100) ' [%]']);
+            end
         else
-            if status_flags.command_window.display_params == 1
+            if status_flags.command_window.display_params == 1 & det == 1;
                 disp('Warning:  Parameter ''Delta_Lambda'' does not exist');
                 disp('Using default assumed 10% FWHM wavelength spread');
             end
             d_lambda_lambda = 0.1; %10% FWHM default
         end
+        %Check for bad wavelength resolution parameter (coming in from D11)
+        if  d_lambda_lambda ==0;
+            disp('WARNING:  Wavelength resolution = 0')
+            disp('Patching Delta lamda to a default 10%');
+            d_lambda_lambda = 0.1;
+        end
+        
         
         %Wavelength delta_q resolution component
         warning off
@@ -254,29 +348,50 @@ for det = 1:inst_params.detectors
         [d_q_pixel_line_x] = (gradient(qmatrix(det_params.pixels(2)/2,:,3)));%FWHM TOPHAT profile
         [d_q_pixel_line_y] = (gradient(qmatrix(:,det_params.pixels(1)/2,4)));%FWHM TOPHAT profile
         [temp1,temp2] = meshgrid(d_q_pixel_line_x, d_q_pixel_line_y);
-        d_q_pixel = sqrt(temp1.^2 + temp2.^2);%FWHM TOPHAT profile
+        %Which Mean to take?
+        %d_q_pixel = sqrt((temp1.^2 + temp2.^2)/2); %RMS FWHM TOPHAT profile
+        %d_q_pixel = (temp1 + temp2)/2; %Mean FWHM TOPHAT profile
+        %d_q_pixel = sqrt(temp1.*temp2); %Geometric Mean (square of equivalent area) FWHM TOPHAT profile
+        d_q_pixel = 2*sqrt((temp1.*temp2)/pi); %Cricle of the same area FWHM TOPHAT profile
         qmatrix(:,:,18) = d_q_pixel; %FWHM TOPHAT Profile
+        if status_flags.command_window.display_params ==1 & det ==1;
+            disp(['Detector pixelation:']);
+        end
+
+        
         
         %Aperture (sample) smearing
         sample_ap_size = status_flags.resolution_control.aperture_size; %m (diameter)
         r = (sample_ap_size/2)*(col + sdet)/col;
         two_theta_ap = atan(r/sdet);
-        delta_q_hwhm = (4*pi/lambda)*sin(two_theta_ap/2);
-        qmatrix(:,:,19) = delta_q_hwhm*2; %FWHM Top_Hat Distribution 
-        
-        
-        
-        
-        
-        
+        delta_q_ap_hwhm = (4*pi/lambda)*sin(two_theta_ap/2);
+        delta_q_ap_fwhm = delta_q_ap_hwhm*2;
+        qmatrix(:,:,19) = delta_q_ap_fwhm; %FWHM Top_Hat Distribution 
+        if status_flags.command_window.display_params ==1 & det ==1;
+            disp(['Sample aperture: assuming circular  ' num2str(sample_ap_size*1000) ' [mm] diameter']);
+        end
+
         % ***** Classic Resolution ****
         % Total q-resolution (add components in quadrature)
         
         %convert to sigmas to add in quadrature
-        d_q_lambda_squared = d_q_lambda_squared ./ (2.45^2); %fwhm = 2.45sigma (triangular)
-        %d_q_lambda_squared = d_q_lambda_squared ./ (3.4^2); %fwhm = 3.4sigma (to-hat)
+        if status_flags.resolution_control.wavelength_type ==1;
+            d_q_lambda_squared = d_q_lambda_squared ./ (2.45^2); %fwhm = 2.45sigma (triangular)
+        elseif status_flags.resolution_control.wavelength_type ==2;
+            d_q_lambda_squared = d_q_lambda_squared ./ (3.4^2); %fwhm = 3.4sigma (to-hat)
+        end
         d_q_theta_squared = d_q_theta_squared ./ (3.4^2);
-        delta_q_squared = d_q_lambda_squared  +   d_q_theta_squared;
+        d_q_ap_squared = (delta_q_ap_fwhm^2) ./ (3.4^2); %fwhm to sigma for square
+        d_q_pixel_squared = mean(mean(d_q_pixel))^2 / (3.4^2); %fwhm to sigma for square
+        
+        %Check if to use all components
+        if status_flags.resolution_control.wavelength_check == 0; d_q_lambda_squared = 0; end
+        if status_flags.resolution_control.divergence_check == 0; d_q_theta_squared = 0; end
+        if status_flags.resolution_control.aperture_check == 0; d_q_ap_squared = 0; end
+        if status_flags.resolution_control.pixelation_check == 0; d_q_pixel_squared = 0; end
+        
+        %Add all resolution components 'sigma's' in quadrature (Gaussian Aproximation)
+        delta_q_squared = d_q_lambda_squared  +   d_q_theta_squared   + d_q_ap_squared  +  d_q_pixel_squared;
         delta_q = real(sqrt(delta_q_squared));
         
         delta_q = delta_q*2.3548; %back to fwhm Gaussian
@@ -285,5 +400,4 @@ for det = 1:inst_params.detectors
     end
     foreimage.(['qmatrix' num2str(det)]) = qmatrix;
 end
-
 warning on

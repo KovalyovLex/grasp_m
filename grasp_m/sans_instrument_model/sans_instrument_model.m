@@ -99,6 +99,12 @@ sample_config.model(model).structname = [];
 sample_config.model(model).fn_eval = 'ff_ribosome(q)';
 
 model=model+1;
+sample_config.model(model).name = 'Gabel Protien';
+sample_config.model(model).pnames = [];
+sample_config.model(model).structname = [];
+sample_config.model(model).fn_eval = 'ff_gabel_protien(q)';
+
+model=model+1;
 sample_config.model(model).name = 'Empty Cell';
 sample_config.model(model).pnames = [];
 sample_config.model(model).structname = [];
@@ -206,9 +212,12 @@ inst_model_params.sample_thickness = 0.1; %cm
 inst_model_params.sample_area = 1*0.7; %cm^2
 inst_model_params.monitor = 0; %Some beam monitor fraction of the incoming beam intensity
 inst_model_params.poissonian_noise_check = 1;
+inst_model_params.divergence_check = 0;
+inst_model_params.delta_lambda_check = 0;
 inst_model_params.smearing_pos = 4; %position on the popupmenu
 inst_model_params.smearing = 10; %Smearing itterations
 inst_model_params.subtitle = 'Sample';
+inst_model_params.square_tri_selector_check = 0;
 
 %***** Initialise Handles *****
 d33_handles.iq_plot1 = []; d33_handles.iq_plot2 = []; d33_handles.iq_plot3 = []; d33_handles.iq_plot4 = []; d33_handles.iq_plot5 = [];
@@ -586,25 +595,34 @@ d33_handles.subtitle = uicontrol('units','normalized','Position',[0.4   0.03    
 
 
 %Auto Calculate On/Off Button
-d33_handles.auto_calculate_button = uicontrol('units','normalized','Position',[0.92    0.9    0.06    0.018],'Style','pushbutton','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'value',inst_model_params.det_image_log_check,'callback','sans_instrument_model_callbacks(''auto_calculate_button'')');
+d33_handles.auto_calculate_button = uicontrol('units','normalized','Position',[0.92    0.95    0.06    0.018],'Style','pushbutton','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'value',inst_model_params.det_image_log_check,'callback','sans_instrument_model_callbacks(''auto_calculate_button'')');
 %Single Shot Calculate Button
-d33_handles.single_shot_calculate_button = uicontrol('units','normalized','Position',[0.92    0.872    0.06    0.018],'Style','pushbutton','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string','Calculate','value',inst_model_params.det_image_log_check,'callback','sans_instrument_model_callbacks(''single_shot_calculate'')');
+d33_handles.single_shot_calculate_button = uicontrol('units','normalized','Position',[0.92    0.922    0.06    0.018],'Style','pushbutton','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string','Calculate','value',inst_model_params.det_image_log_check,'callback','sans_instrument_model_callbacks(''single_shot_calculate'')');
 %Smearing Dropdown
-d33_handles.smearing_text = uicontrol('units','normalized','Position',[0.895    0.82    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','M.C. Itterations (/pixel)');
+d33_handles.smearing_text = uicontrol('units','normalized','Position',[0.895    0.87    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','M.C. Itterations (/pixel)');
 smearing_string = {'1','2','5','10','25','50','100','250','500','1000'};
-d33_handles.smearing_dropdown = uicontrol('units','normalized','Position',[0.975    0.82    0.025    0.018],'Style','popupmenu','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',smearing_string,'value',inst_model_params.smearing_pos,'userdata',smearing_string,'callback','sans_instrument_model_callbacks(''smearing_itterations'')');
+d33_handles.smearing_dropdown = uicontrol('units','normalized','Position',[0.975    0.87    0.025    0.018],'Style','popupmenu','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',smearing_string,'value',inst_model_params.smearing_pos,'userdata',smearing_string,'callback','sans_instrument_model_callbacks(''smearing_itterations'')');
 %Measurement Time Edit box
-d33_handles.measurement_time_text = uicontrol('units','normalized','Position',[0.895    0.79    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Measurement Time (s)');
-d33_handles.measurement_time_edit = uicontrol('units','normalized','Position',[0.975    0.79    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.measurement_time),'callback','sans_instrument_model_callbacks(''measurement_time'')');
+d33_handles.measurement_time_text = uicontrol('units','normalized','Position',[0.895    0.84    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Measurement Time (s)');
+d33_handles.measurement_time_edit = uicontrol('units','normalized','Position',[0.975    0.84    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.measurement_time),'callback','sans_instrument_model_callbacks(''measurement_time'')');
 %Sample thickness edit box
-d33_handles.sample_thickness_text = uicontrol('units','normalized','Position',[0.895    0.76    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Sample Thickness(cm)');
-d33_handles.sample_thickness_edit = uicontrol('units','normalized','Position',[0.975    0.76    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.sample_thickness),'callback','sans_instrument_model_callbacks(''sample_thickness'')');
+d33_handles.sample_thickness_text = uicontrol('units','normalized','Position',[0.895    0.81    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Sample Thickness(cm)');
+d33_handles.sample_thickness_edit = uicontrol('units','normalized','Position',[0.975    0.81    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.sample_thickness),'callback','sans_instrument_model_callbacks(''sample_thickness'')');
 %Sample area edit box
-d33_handles.sample_area_text = uicontrol('units','normalized','Position',[0.895    0.73    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Sample Area(cm^2)');
-d33_handles.sample_area_edit = uicontrol('units','normalized','Position',[0.975    0.73    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.sample_area),'callback','sans_instrument_model_callbacks(''sample_area'')');
+d33_handles.sample_area_text = uicontrol('units','normalized','Position',[0.895    0.78    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Sample Area(cm^2)');
+d33_handles.sample_area_edit = uicontrol('units','normalized','Position',[0.975    0.78    0.02    0.018],'Style','edit','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'string',num2str(inst_model_params.sample_area),'callback','sans_instrument_model_callbacks(''sample_area'')');
 %Poissonian Noise
-d33_handles.poissonian_text = uicontrol('units','normalized','Position',[0.895    0.70    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Add Poissonian Noise');
-d33_handles.poissonian_check = uicontrol('units','normalized','Position',[0.975    0.70    0.02    0.018],'Style','checkbox','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'value',inst_model_params.poissonian_noise_check,'callback','sans_instrument_model_callbacks(''poissonian_noise_check'')');
+d33_handles.poissonian_text = uicontrol('units','normalized','Position',[0.895    0.75    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Add Poissonian Noise');
+d33_handles.poissonian_check = uicontrol('units','normalized','Position',[0.975    0.75    0.02    0.018],'Style','checkbox','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'value',inst_model_params.poissonian_noise_check,'callback','sans_instrument_model_callbacks(''poissonian_noise_check'')');
+%Switch off divergence
+d33_handles.divergence_text = uicontrol('units','normalized','Position',[0.895    0.72    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Divergence OFF');
+d33_handles.divergence_check = uicontrol('units','normalized','Position',[0.975    0.72    0.02    0.018],'Style','checkbox','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'value',inst_model_params.divergence_check,'callback','sans_instrument_model_callbacks(''divergence_check'')');
+%Switch off delta_lambda
+d33_handles.delta_lambda_text = uicontrol('units','normalized','Position',[0.895    0.69    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Delta_Lambda OFF');
+d33_handles.delta_lambda_check = uicontrol('units','normalized','Position',[0.975    0.69    0.02    0.018],'Style','checkbox','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'value',inst_model_params.delta_lambda_check,'callback','sans_instrument_model_callbacks(''delta_lambda_check'')');
+%Square or Triangle Selector profile
+d33_handles.square_tri_selector_text = uicontrol('units','normalized','Position',[0.895    0.66    0.08    0.018],'Style','text','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'ForegroundColor',inst_model_params.foreground_color,'string','Selector: Tri [] or Square [x]');
+d33_handles.square_tri_selector_check = uicontrol('units','normalized','Position',[0.975    0.66    0.02    0.018],'Style','checkbox','fontname',inst_model_params.font,'fontsize',inst_model_params.fontsize,'BackgroundColor',inst_model_params.background_color,'value',inst_model_params.delta_lambda_check,'callback','sans_instrument_model_callbacks(''square_tri_selector_check'')');
 
 
 %Thinking!

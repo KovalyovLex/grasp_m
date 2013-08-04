@@ -41,7 +41,9 @@ end
 
 %Plot resolution Kernels
 if status_flags.resolution_control.show_kernels_check==1;
-    figure; legend_str = [];
+    kernel_figure = figure; legend_str = [];
+    %temp_figure = figure;
+            
 end
 
 
@@ -89,7 +91,9 @@ for n = 1:length(x_in)
         %Plot resolution Kernels
         if status_flags.resolution_control.show_kernels_check==1;
             if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+                figure(kernel_figure);
                 hold on; plot(new_x,weight,'-r.');
+                %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_wav.dat'],rot90([new_x;weight],1),'delimiter','\t');
             end
             if n == length(x_in); legend_str = [legend_str, {'Wavelength'}];end
         end
@@ -102,9 +106,44 @@ for n = 1:length(x_in)
     %***** Divergence Resolution Smearing *****
     if status_flags.resolution_control.divergence_check ==1; %Use divergence resolution
         
-        %Use Geometric Beam Profile - Generate in any case as default in case measured profile does not exist
+%         %Use Geometric Beam Profile - Generate in any case as default in case measured profile does not exist
+%         %if status_flags.resolution_control.divergence_type == 1
+%             [weight] = tophat_kernel_1d(x_in(n),(kernel_data.theta.fwhm(n)/2),1,new_x,dx); %Arguments (x0,halfwidth,intint,x_range,dx)
+%             div_legend_txt = 'Geometric Divergence';
+%             if n ==1; resolution_kernels.history{length(resolution_kernels.history)+1} = 'Geometric Divergence'; end
+%             if status_flags.command_window.display_params ==1;
+%             if n==1; disp('Divergence:  Geometric Divergence (Top-Hat) Kernel'); end
+%             end
+%             weight = weight*dx;
+%             if status_flags.resolution_control.show_kernels_check==1;
+%                 if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+%                     figure(temp_figure);
+%                     hold on; plot(new_x,weight,'-gx');
+%                 end
+%             end
+%             
+%         %elseif status_flags.resolution_control.divergence_type == 2 & isfield(kernel_data.cm,'x_kernel_weight');
+%             %Use Measured Beam Profle Kernel
+%             temp = not(isnan(kernel_data.cm.x_kernel_q)); %Stip out the padding NaN's
+%             temp = find(temp);
+%             weight = interp1(kernel_data.cm.x_kernel_q(temp)+x_in(n),kernel_data.cm.x_kernel_weight(temp),new_x,'linear','extrap');
+%             weight = weight /sum(weight); %Normalise to 1
+%             div_legend_txt = 'Measured Beam Profile Divergence';
+%             if n ==1; resolution_kernels.history{length(resolution_kernels.history)} = 'Measured Beam Profile Divergence'; end
+%             if status_flags.command_window.display_params ==1;
+%             if n==1; disp('Divergence:  Measured Beam Profile Divergence Kernel'); end
+%             end
+%             if status_flags.resolution_control.show_kernels_check==1;
+%                 if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+%                     figure(temp_figure);
+%                     hold on; plot(new_x,weight,'-y.');
+%                     legend('Geometric Divergence','Measured Beam Profile x')
+%                 end
+%             end
+%         %end
+        
         if status_flags.resolution_control.divergence_type == 1
-            [weight] = tophat_kernel_1d(x_in(n),kernel_data.theta.fwhm(n)/2,1,new_x,dx); %Arguments (x0,halfwidth,intint,x_range,dx)
+            [weight] = tophat_kernel_1d(x_in(n),(kernel_data.theta.fwhm(n)/2),1,new_x,dx); %Arguments (x0,halfwidth,intint,x_range,dx)
             div_legend_txt = 'Geometric Divergence';
             if n ==1; resolution_kernels.history{length(resolution_kernels.history)+1} = 'Geometric Divergence'; end
             if status_flags.command_window.display_params ==1;
@@ -125,13 +164,16 @@ for n = 1:length(x_in)
             end
         end
         
+        
         %Convolute with previous kernel
         weight_final = conv(weight_final,weight,'same'); %Convolute
         
         %Plot resolution Kernels
         if  status_flags.resolution_control.show_kernels_check==1;
             if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
-                hold on; plot(new_x,weight,'-g.');
+                figure(kernel_figure);
+                hold on; plot(new_x,weight,'-gx');
+                %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_div.dat'],rot90([new_x;weight],1),'delimiter','\t');
             end
             if n == length(x_in); legend_str = [legend_str, {div_legend_txt}];end
         end
@@ -161,7 +203,9 @@ for n = 1:length(x_in)
         %Plot resolution Kernels
         if  status_flags.resolution_control.show_kernels_check==1;
             if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
-                hold on; plot(new_x,weight,'-b.','markersize',20);
+                figure(kernel_figure);
+                hold on; plot(new_x,weight,'-b.');
+                %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_ap.dat'],rot90([new_x;weight],1),'delimiter','\t');
             end
             if n == length(x_in); legend_str = [legend_str, {ap_legend_txt}];end
         end
@@ -190,7 +234,9 @@ for n = 1:length(x_in)
         %Plot resolution Kernels
         if  status_flags.resolution_control.show_kernels_check==1;
             if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+                figure(kernel_figure);
                 hold on; plot(new_x,weight,'-c.');
+                %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_pix.dat'],rot90([new_x;weight],1),'delimiter','\t');
             end
             if n == length(x_in); legend_str = [legend_str, {'Detector Pixelation'}];end
         end
@@ -219,7 +265,9 @@ for n = 1:length(x_in)
         %Plot resolution Kernels
         if  status_flags.resolution_control.show_kernels_check==1;
             if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+                figure(kernel_figure);
                 hold on; plot(new_x,weight,'-m.');
+                %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_bin.dat'],rot90([new_x;weight],1),'delimiter','\t');
             end
             if n == length(x_in); legend_str = [legend_str, {'Binning Resolution'}];end
         end
@@ -235,7 +283,9 @@ for n = 1:length(x_in)
     %***** Display combined resolution kernel *****
     if status_flags.resolution_control.show_kernels_check==1;
         if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+            figure(kernel_figure);
             hold on; plot(new_x,weight_final,'-w.');
+            %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_combined.dat'],rot90([new_x;weight_final],1),'delimiter','\t');
         end
         if status_flags.command_window.display_params ==1;
         if n == length(x_in); legend_str = [legend_str, {'Combined Resolution Kernel'}];end
@@ -280,10 +330,13 @@ for n = 1:length(x_in)
     %Plot Classic Gaussian resolution
     if status_flags.resolution_control.show_kernels_check==1;
         if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+        %if n ==length(x_in)
             %Plot classic gaussian resolution
             [weight] = gauss_kernel_1d(x_in(n),resolution_kernels.classic_res.fwhm(n)/(2*sqrt(2*log(2))),1,new_x); %Arguments (xcentre,sigma_x,intint,x_range,dx)
             weight = weight*dx;
+            figure(kernel_figure);
             hold on; plot(new_x,weight,'-b.');
+            %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_classic.dat'],rot90([new_x;weight],1),'delimiter','\t');
         end
         if n == length(x_in); legend_str = [legend_str, {'Classic Gaussian Resolution'}];end
     end
@@ -291,10 +344,13 @@ for n = 1:length(x_in)
     %Plot Gaussian Equivalent resolution
     if status_flags.resolution_control.show_kernels_check==1;
         if n ==1 || n == round(length(x_in)/2) || n == length(x_in);
+        %    if n ==length(x_in)
             %Plot gaussian of same sigma as final resolution width - just to compare
             [weight] = gauss_kernel_1d(x_in(n),resolution_kernels.fwhm(n)/(2*sqrt(2*log(2))),1,new_x); %Arguments (xcentre,sigma_x,intint,x_range,dx)
             weight = weight*dx;
+            figure(kernel_figure);
             hold on; plot(new_x,weight,'-y.');
+            %dlmwrite(['~/Desktop/Kernel_Data/kernel_' num2str(n) '_gauss_equiv.dat'],rot90([new_x;weight],1),'delimiter','\t');
         end
         if n == length(x_in); legend_str = [legend_str, {'Gausian Equivalent Kernel'}];end
     end

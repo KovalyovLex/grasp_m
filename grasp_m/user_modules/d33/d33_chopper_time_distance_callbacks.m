@@ -106,12 +106,11 @@ switch(to_do)
 end
 
 set(d33_chopper_time_distance_handles.f1_freq,'string',num2str(d33_chopper_time_distance_params.slaves_rpm(resolution_preset)));
-
 set(d33_chopper_time_distance_handles.det_distance,'string',num2str(d33_chopper_time_distance_params.detector_distance));
 set(d33_chopper_time_distance_handles.last_chopper_sample,'string',['Last Chopper-Sample Distance [m]: ' num2str(d33_chopper_time_distance_params.last_chopper_sample_distance)]);
+set(d33_chopper_time_distance_handles.total_tof_distance,'string',['Total TOF Distance (Mid-Masters to Detector) [m]: ' num2str(d33_chopper_time_distance_params.total_tof(resolution_preset))]);
 set(d33_chopper_time_distance_handles.wav_min,'string',num2str(d33_chopper_time_distance_params.wav_range(1)));
 set(d33_chopper_time_distance_handles.wav_max,'string',num2str(d33_chopper_time_distance_params.wav_range(2)));
-
 
 
 %Draw the time-distance diagram
@@ -143,7 +142,7 @@ end
 
 
 %chopper2
-chopper2_position = 2.8+first_chopper_position;
+chopper2_position = 2.799+first_chopper_position;
 temp = find(d33_chopper_time_distance_params.masters(resolution_preset,:)==2);
 if not(isempty(temp));
     chopper2_rpm = d33_chopper_time_distance_params.masters_rpm(resolution_preset);
@@ -160,7 +159,7 @@ end
 
 
 %chopper3
-chopper3_position = 4.2+first_chopper_position;
+chopper3_position = 4.206+first_chopper_position;
 temp = find(d33_chopper_time_distance_params.masters(resolution_preset,:)==3);
 if not(isempty(temp));
     chopper3_rpm = d33_chopper_time_distance_params.masters_rpm(resolution_preset);
@@ -177,7 +176,7 @@ end
 
 
 %chopper4
-chopper4_position = 4.9+first_chopper_position;
+chopper4_position = 4.913+first_chopper_position;
 temp = find(d33_chopper_time_distance_params.masters(resolution_preset,:)==4);
 if not(isempty(temp));
     chopper4_rpm = d33_chopper_time_distance_params.masters_rpm(resolution_preset);

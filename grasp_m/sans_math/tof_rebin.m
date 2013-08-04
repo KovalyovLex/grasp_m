@@ -30,8 +30,14 @@ for n = 1:number_bins-1;
         nan_check = find(isnan(di_i));
         if not(isempty(nan_check)); di_i(nan_check) = 1; end
         dq_q = array(temp,4)./array(temp,1);
+        
+        
         quality_factor = 1./((di_i.^status_flags.analysis_modules.rebin.dii_power).*(dq_q.^status_flags.analysis_modules.rebin.dqq_power));
         
+        %Check for very low statistics
+        low_stats = find(abs(di_i) > 0.1);
+        if not(isempty(low_stats)); quality_factor(low_stats) = 1; end
+ 
         binned_array.array(m,1) = sum(array(temp,1).*quality_factor) / sum(quality_factor); %Q
         binned_array.array(m,2) = sum(array(temp,2).*quality_factor) / sum(quality_factor); %I
         binned_array.array(m,3) = sqrt( sum((array(temp,3).*quality_factor).^2)) / sum(quality_factor); %Err I

@@ -211,6 +211,14 @@ switch todo
     case 'poissonian_noise_check'
         inst_model_params.poissonian_noise_check = get(gcbo,'value');
         
+    case 'divergence_check'
+        inst_model_params.divergence_check = get(gcbo,'value');
+        
+    case 'delta_lambda_check'
+        inst_model_params.delta_lambda_check = get(gcbo,'value');
+       
+    case 'square_tri_selector_check'
+        inst_model_params.square_tri_selector_check = get(gcbo,'value');
         
     case 'measurement_time'
         time_str = get(gcbo,'string');
@@ -993,7 +1001,20 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
     end
     
     
+    %Aperture Smearing
+    disp(['Sample Aperture:  Area ' num2str(inst_model_params.sample_area) ' [cm^2]' ]);
+    disp(['Assuming Square:  Dimensions of ' num2str(sqrt(inst_model_params.sample_area)) ' [cm]']);
     
+    
+    %Aperture (sample) smearing
+    sample_dimension = sqrt(inst_model_params.sample_area); %cm
+    sample_dimension = sample_dimension /100; %m
+    
+    r = (sample_dimension)*(inst_config.col + inst_config.longest_det)/inst_config.col;
+    two_theta_ap = atan(r/inst_config.longest_det) * (180/pi);
+    inst_config.aperture_x_divergence_fwhm = two_theta_ap; %FWHM
+    inst_config.aperture_y_divergence_fwhm = two_theta_ap; %FWHM
+
     
     %***** Build Wavelength list to calculate scattering at depending on Mono or TOF mode *****
     if strcmp(inst_config.mono_tof,'Mono')
@@ -1019,7 +1040,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
     
     
     %Generate the beam stop mask
-    beam_patch_fwidth = inst_config.source_size * inst_config.longest_det / inst_config.col; %m
+    beam_patch_fwidth = (r/2) + inst_config.source_size * inst_config.longest_det / inst_config.col; %m
     disp(['Required beam stop size (x,y) => ' num2str(beam_patch_fwidth*1000) ' [mm]']);
     disp(' ');
     for n = 1:length(inst_component);
@@ -1122,22 +1143,45 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                             %disp('Mono Wavelength Gaussian Distribution')
                             %NEW VERSION:  Make a matrix of random wavelengths with a Gaussian distribution (Based on Matlab's RANDN fn.)
                             %Generate values from a normal distribution with mean 1 and standard deviation 2. e.g:  r = 1 + 2.*randn(100,1);
-                            delta_lambda_sigma  = (lambda * dlambda_lambda) / 2.3548;
-                            wav_matrix = lambda + delta_lambda_sigma.* randn(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
+                            %delta_lambda_sigma  = (lambda * dlambda_lambda) / 2.3548;
+                            %wav_matrix = lambda + delta_lambda_sigma.* randn(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
                             
+                            %Remove Wavelength Spread
+                            if inst_model_params.delta_lambda_check ==0;  %Switch ON Wavelength Spread
+                                delta_lambda_fwhm = lambda*dlambda_lambda;
+                                if inst_model_params.square_tri_selector_check ==0; %Usual Triangular distribution
+                                    %Make TRIANGULAR wavelength distribution
+                                    wav_matrix = rand_tri(lambda,delta_lambda_fwhm,pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
+                                elseif inst_model_params.square_tri_selector_check ==1; %Square distribution (like TOF frames)
+                                    %Make a SQUARE wavelength distribution
+                                    delta_wav = ((rand(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1)) - 0.5) * delta_lambda_fwhm);
+                                    wav_matrix = delta_wav + lambda; %Use this in build_q_matrix
+                                end
+                                
+                                
+                            else %Switch OFF wavelength spread
+                                wav_matrix = ones(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1))*lambda;
+                            end
                         end
                         
                         
                         %Make a matrix of random delta_theta's with a SQUARE distribution
-                        delta_theta_x_matrix = (rand(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1))-0.5) * inst_config.divergence_x_fwhm;
-                        delta_theta_y_matrix = (rand(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1))-0.5) * inst_config.divergence_y_fwhm;
+                        %Old Simple version (Collimation divergence only)
+                        %delta_theta_x_matrix = (rand(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1))-0.5) * inst_config.divergence_x_fwhm;
+                        %delta_theta_y_matrix = (rand(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1))-0.5) * inst_config.divergence_y_fwhm;
                         
-                        %***** Uncomment below to force zero divergence *****
-                        %delta_theta_x_matrix = zeros(size(delta_theta_x_matrix));
-                        %delta_theta_y_matrix = zeros(size(delta_theta_y_matrix));
+                        %New version to include aperture smearing
+                        delta_theta_x_matrix = rand_trapezoid(0,inst_config.divergence_x_fwhm,inst_config.aperture_x_divergence_fwhm,pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
+                        delta_theta_y_matrix = rand_trapezoid(0,inst_config.divergence_y_fwhm,inst_config.aperture_y_divergence_fwhm,pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
+                        
+                        
+                        
+                        if inst_model_params.divergence_check ==1; %Switch OFF divergence
+                            delta_theta_x_matrix = zeros(size(delta_theta_x_matrix));
+                            delta_theta_y_matrix = zeros(size(delta_theta_y_matrix));
+                        end
                         
                         %Generate the 'real' q matrix that has statistical variations to account for wavelength resolution and divergence
-                        
                         real_q_matrix = sans_instrument_model_build_q_matrix(detector_info,wav_matrix,delta_theta_x_matrix, delta_theta_y_matrix); %Used by some of the model functions, eg. Flux Lattice
                         q = real_q_matrix(:,:,5);  %This is just the mod_q from above q_matrix
                         

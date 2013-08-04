@@ -4,6 +4,7 @@ function foreimage = normalize_data(foreimage)
 %Performs deadtime correction
 %Performs auto attenuator correction
 
+
 global status_flags
 global inst_params
 vectors = inst_params.vectors;
@@ -104,9 +105,24 @@ elseif strcmp(status_flags.normalization.status,'time') %i.e. normalisation to s
         end
         divider = 1;
     else
-        foreimage.units = [foreimage.units '\\ Std time '];
-        history = [history, {['Data Normalisation: Standard Time (' num2str(divider_standard) ') seconds']}];
+        foreimage.units = [foreimage.units '\\ Aqc time '];
+        history = [history, {['Data Normalisation: Acquisition Time (' num2str(divider_standard) ') seconds']}];
     end
+
+elseif strcmp(status_flags.normalization.status,'exposure_time') %i.e. normalisation to standard time
+    divider = foreimage.params1(vectors.time); divider_standard = status_flags.normalization.standard_exposure_time;
+    if divider == 0;
+        if status_flags.command_window.display_params == 1;
+            disp(['Attempted divide by zero using this data normalisation scheme ''' status_flags.normalization.status '''']);
+            disp('resetting divider = 1  in normalize_data.m');
+        end
+        divider = 1;
+    else
+        foreimage.units = [foreimage.units '\\ Exp time '];
+        history = [history, {['Data Normalisation: Exposure Time (' num2str(divider_standard) ') seconds']}];
+    end
+    
+    
     
 elseif strcmp(status_flags.normalization.status,'det') %i.e. detector counts
     divider = foreimage.params1(vectors.counts); %This is the parameter block counts (not actual array counts)
@@ -269,5 +285,7 @@ end
 
 
 foreimage.history = history;
+
+    
 
 

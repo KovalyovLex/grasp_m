@@ -3,6 +3,12 @@
 %y  - column of intensities corresponding to x coordinate above 
 
 %********************************************************************************************************
+<Divider>
+----General Functions----
+</Divider>
+%********************************************************************************************************
+
+%********************************************************************************************************
 <Function>
 
 <FnName>
@@ -546,6 +552,11 @@ guess_values = [m, c];
 %********************************************************************************************************
 
 
+%********************************************************************************************************
+<Divider>
+----Form Factor & Scattering Functions----
+</Divider>
+%********************************************************************************************************
 
 
 
@@ -858,325 +869,6 @@ guess_values = [y0, m, n, i0, xc, fwhm];
 <Function>
 
 <FnName>
-Linear Step
-</FnName>
-
-<Params>
-y1
-y0
-xc
-width
-</Params>
-
-<StartValues>
-1
-0
-0.5
-0.1
-</StartValues>
-
-<ParamNames>
-High Y Value
-Low Y Value
-Centre
-Width
-</ParamNames>
-
-<FnCode>
-y=zeros(size(x)); li=find(x<(xc-width/2)); ri=find(x>(xc+width/2));mi=find(x>=(xc-width/2) & x<=(xc+width/2));y(li)=y(li)+y0;y(ri)=y(ri)+y1;g=(y1-y0)/width;y(mi)=y(mi)+y0+(x(mi)-(xc-width/2))*g;
-</FnCode>
-
-<AutoGuessCode>
-[ymax i_ymax] = max(y); %ymax
-[ymin i_ymin] = min(y); %ymin
-if i_ymax > i_ymin; low = ymin; high = ymax; centre = (x(i_ymax) - x(i_ymin))/2 + x(i_ymin); width = i_ymax - i_ymin; else low = ymax; high = ymin; centre = (x(i_ymin) - x(i_ymax))/2 + x(i_ymax); width = i_ymin - i_ymax; end
-if low == 0; low = 1; end
-guess_values = [high low centre width];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Bottom of Y Step'],1,'sub');
-[xymin ymin]=ginput(1);
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Top of Y Step'],1,'sub');
-[xymax ymax]=ginput(1);
-delete(text_handle);pause(0.1);
-if xymax > xymin; low = ymin; high = ymax; centre = (xymax - xymin)/2 + xymin; width = xymax - xymin; else low = ymax; high = ymin; centre = (xymin - xymax)/2 + xymax; width = xymin - xymax; end
-if low == 0; low = 1; end
-guess_values = [high low centre width];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-
-
-
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Trapezoidal
-</FnName>
-
-<Params>
-y0
-xc
-y1
-top_width
-wing_width
-</Params>
-
-<StartValues>
-0
-0
-0
-0
-0
-</StartValues>
-
-<ParamNames>
-Background
-Centre
-Height
-Top Width
-Wing Width
-</ParamNames>
-
-<FnCode>
-y = y0*ones(size(x)); mi = find(x>(xc-top_width) & x <(xc+top_width)); wli = find(x>(xc-top_width-wing_width) & x<=(xc-top_width)); wri = find(x<(xc+top_width+wing_width) & x>=(xc+top_width)); y(mi) = y(mi) + y1; g = y1/wing_width; y(wli) = y(wli) + (x(wli)-(xc-top_width-wing_width))*g; y(wri) = y(wri) + ((xc+top_width+wing_width)-x(wri))*g;
-</FnCode>
-
-<AutoGuessCode>
-[ymax i_ymax] = max(y); %ymax
-[ymin i_ymin] = min(y); %ymin
-bck = ymin;
-height = ymax-ymin;
-centre = x(i_ymax);
-base_width = abs(x(i_ymax)-x(i_ymin));
-guess_values = [bck centre height base_width base_width];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Top Centre'],1,'sub');  %Grasp Message
-[xc y1]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Top Width'],1,'sub');  %Grasp Message
-[top_width y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Base Width'],1,'sub');  %Grasp Message
-[base_width y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-top_width = abs(top_width-xc);
-base_width=abs(base_width-xc);
-y1=y1-y0;
-%Put estimated parameters into the output array.
-guess_values = [y0, xc, y1, top_width base_width];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Triangle
-</FnName>
-
-<Params>
-y0
-xc
-y1
-base_width
-</Params>
-
-<StartValues>
-0
-0
-0
-0
-</StartValues>
-
-<ParamNames>
-Background
-Centre
-Height
-Base Width
-</ParamNames>
-
-<FnCode>
-y = y0*ones(size(x));
-wli = find(x>(xc-(base_width/2)) & x<=xc);
-wri = find(x<(xc+(base_width/2)) & x>=xc);
-g = y1/(base_width/2);
-y(wli) = y(wli) + y1 + (x(wli)-xc)*g;
-y(wri) = y(wri) + y1 + (xc-x(wri))*g;
-</FnCode>
-
-<AutoGuessCode>
-[ymax i_ymax] = max(y); %ymax
-[ymin i_ymin] = min(y); %ymin
-bck = ymin;
-height = ymax-ymin;
-centre = x(i_ymax);
-base_width = abs(x(i_ymax)-x(i_ymin))*2;
-guess_values = [bck centre height base_width];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc y1]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Base Width'],1,'sub');  %Grasp Message
-[base_width y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-base_width=abs(base_width-xc)*2;
-y1=y1-y0;
-%Put estimated parameters into the output array.
-guess_values = [y0, xc, y1, base_width];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Log-Normal
-</FnName>
-
-<Params>
-y0
-i0
-xc
-fwhm
-</Params>
-
-<StartValues>
-0
-1000
-0.5
-1
-</StartValues>
-
-<ParamNames>
-Background
-Integrated Intensity
-Centre
-FWHM
-</ParamNames>
-
-<FnCode>
-sigma = fwhm / (2*xc);
-y = y0 + (i0./(x.*sigma*sqrt(2*pi))) .* exp(-(1/(2*sigma^2)).*(log(xc./x)).^2);
-</FnCode>
-
-<AutoGuessCode>
-[amp i_amp] = max(y);    %Peak Intensity
-xc = x(i_amp);         %Centre Position
-y0 = min(y);         %Background
-x_diff = diff(x); %Differences between adjacent x's.
-ytemp = y(1:length(y)-1);
-i0 = abs((sum((ytemp-y0).*x_diff)));
-sigma = i0/(amp*sqrt(2*pi));
-fwhm = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
-guess_values = [y0, i0, xc, fwhm];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc amp]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
-[fwhm y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-fwhm=abs(fwhm-xc);
-amp=amp-y0;
-i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
-%Put estimated parameters into the output array.
-guess_values = [y0, i0, xc, fwhm];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-
-
-
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Cosine^2
-</FnName>
-
-<Params>
-y0
-amp
-phase
-</Params>
-
-<StartValues>
-0
-0
-0
-</StartValues>
-
-<ParamNames>
-Background
-Amplitude
-Phase
-</ParamNames>
-
-<FnCode>
-y = y0+ abs(amp).*(cos((x+phase)*2*pi/360)).^2;;
-</FnCode>
-
-<AutoGuessCode>
-[Amax i_amp_max] = max(y); %Amplitude
-[Amin i_amp_min] = min(y); %Amplitude
-y0 = Amin;
-amp = Amax-Amin;
-phase = x(i_amp_max);
-guess_values = [y0, amp, phase];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Cosine Min'],1,'sub');
-[x_amp_min Amin]=ginput(1);
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Cosine Max'],1,'sub');
-[x_amp_max Amax]=ginput(1);
-delete(text_handle);pause(0.1);
-y0 = Amin;
-amp = Amax - Amin;
-phase = x_amp_max;
-guess_values = [y0, amp, phase];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
 Guinier
 </FnName>
 
@@ -1197,6 +889,7 @@ Background
 Scale
 Radius Gyration
 </ParamNames>
+
 
 <FnCode>
 y = y0 + k*exp( -((x.*rg).^2)/3);
@@ -1524,7 +1217,7 @@ guess_values = [y0, K, R, L];
 <Function>
 
 <FnName>
-Gaussian Coil
+FF_Gaussian Coil
 </FnName>
 
 <Params>
@@ -1577,6 +1270,435 @@ guess_values = [y0, k, rg];
 </PointClickCode>
 
 </Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Divider>
+----Instrument Functions----
+</Divider>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Linear Step
+</FnName>
+
+<Params>
+y1
+y0
+xc
+width
+</Params>
+
+<StartValues>
+1
+0
+0.5
+0.1
+</StartValues>
+
+<ParamNames>
+High Y Value
+Low Y Value
+Centre
+Step Width
+</ParamNames>
+
+<FnCode>
+y=zeros(size(x)); li=find(x<(xc-width/2)); ri=find(x>(xc+width/2));mi=find(x>=(xc-width/2) & x<=(xc+width/2));y(li)=y(li)+y0;y(ri)=y(ri)+y1;g=(y1-y0)/width;y(mi)=y(mi)+y0+(x(mi)-(xc-width/2))*g;
+</FnCode>
+
+<AutoGuessCode>
+[ymax i_ymax] = max(y); %ymax
+[ymin i_ymin] = min(y); %ymin
+if i_ymax > i_ymin; low = ymin; high = ymax; centre = (x(i_ymax) - x(i_ymin))/2 + x(i_ymin); width = (x(i_ymax) - x(i_ymin))/4; else low = ymax; high = ymin; centre = (x(i_ymin) - x(i_ymax))/2 + x(i_ymax);width = (x(i_ymin) - x(i_ymax))/4; end
+if low == 0; low = 1; end
+guess_values = [high low centre width];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Bottom of Y Step'],1,'sub');
+[xymin ymin]=ginput(1);
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Top of Y Step'],1,'sub');
+[xymax ymax]=ginput(1);
+delete(text_handle);pause(0.1);
+if xymax > xymin; low = ymin; high = ymax; centre = (xymax - xymin)/2 + xymin; width = xymax - xymin; else low = ymax; high = ymin; centre = (xymin - xymax)/2 + xymax; width = xymin - xymax; end
+if low == 0; low = 1; end
+guess_values = [high low centre width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Triangle CONV Linear Step
+</FnName>
+
+<Params>
+y1
+y0
+xc
+width
+base_width
+</Params>
+
+<StartValues>
+1
+0
+0.5
+0.1
+0.1
+</StartValues>
+
+<ParamNames>
+High Y Value
+Low Y Value
+Centre
+Step Width
+Triangle Base Width
+</ParamNames>
+
+<FnCode>
+x = reshape(x,1,length(x));
+%Step fn
+y_step=zeros(size(x));
+li=find(x<(xc-width/2));
+ri=find(x>(xc+width/2));
+mi=find(x>=(xc-width/2) & x<=(xc+width/2));
+y_step(li)=y_step(li);y_step(ri)=y_step(ri)+y1;
+g=y1/width;
+y_step(mi)=y_step(mi)+(x(mi)-(xc-width/2))*g;
+y_step = y_step + y0;
+%%Triangle smear fn (thorough version)
+%x_tri = -base_width/2:base_width/7:base_width/2;
+%y_tri = zeros(size(x_tri));
+%wli = find(x_tri<=0);
+%wri = find(x_tri>0);
+%g = y1/(base_width/2);
+%y_tri(wli) = y_tri(wli) + y1 + (x_tri(wli))*g;
+%y_tri(wri) = y_tri(wri) + y1 + (-x_tri(wri))*g;
+%y_tri = y_tri./sum(y_tri);
+%%Convolute (thorough version)
+%for n = 1:length(x); y_conv(n) = 0;  for m = 1:length(x_tri); x_temp = x(n) + x_tri(m); y_temp =interp1(x,y_step,x_temp,'linear','extrap'); y_conv(n) = y_conv(n)+y_temp*y_tri(m); end; end
+%y=y_conv;
+%Convolute with a triangle  (fast version)
+g = 1/(base_width/2);
+for n = 1:length(x); y_conv(n) = 0; temp = find(x>=(x(n)-base_width/2) & x<=(x(n)+base_width/2)); x_tri = x(temp); y_tri = zeros(size(x_tri)); wli = find(x_tri<=x(n)); wri = find(x_tri>x(n)); y_tri(wli) = y_tri(wli) + 1 + (x_tri(wli)-x(n))*g; y_tri(wri) = y_tri(wri) + 1 + (x(n)-x_tri(wri))*g; y_tri = y_tri./sum(y_tri); y_conv(n)= sum(y_tri.*y_step(temp)); end
+y = y_conv;
+</FnCode>
+
+<AutoGuessCode>
+[ymax i_ymax] = max(y); %ymax
+[ymin i_ymin] = min(y); %ymin
+if i_ymax > i_ymin; low = ymin; high = ymax; centre = (x(i_ymax) - x(i_ymin))/2 + x(i_ymin); width = (x(i_ymax) - x(i_ymin))/4; else low = ymax; high = -ymax; centre = (x(i_ymin) - x(i_ymax))/2 + x(i_ymax);width = (x(i_ymin) - x(i_ymax))/4; end
+if low == 0; low = 1; end
+guess_values = [high low centre width width];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Bottom of Y Step'],1,'sub');
+[xymin ymin]=ginput(1);
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Top of Y Step'],1,'sub');
+[xymax ymax]=ginput(1);
+delete(text_handle);pause(0.1);
+if xymax > xymin; low = ymin; high = ymax; centre = (xymax - xymin)/2 + xymin; width = xymax - xymin; else low = ymax; high = ymin; centre = (xymin - xymax)/2 + xymax; width = xymin - xymax; end
+if low == 0; low = 1; end
+guess_values = [high low centre width width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Trapezoidal
+</FnName>
+
+<Params>
+y0
+xc
+y1
+top_width
+wing_width
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Centre
+Height
+Top Width
+Wing Width
+</ParamNames>
+
+<FnCode>
+y = y0*ones(size(x)); mi = find(x>(xc-top_width) & x <(xc+top_width)); wli = find(x>(xc-top_width-wing_width) & x<=(xc-top_width)); wri = find(x<(xc+top_width+wing_width) & x>=(xc+top_width)); y(mi) = y(mi) + y1; g = y1/wing_width; y(wli) = y(wli) + (x(wli)-(xc-top_width-wing_width))*g; y(wri) = y(wri) + ((xc+top_width+wing_width)-x(wri))*g;
+</FnCode>
+
+<AutoGuessCode>
+[ymax i_ymax] = max(y); %ymax
+[ymin i_ymin] = min(y); %ymin
+bck = ymin;
+height = ymax-ymin;
+centre = x(i_ymax);
+base_width = abs(x(i_ymax)-x(i_ymin));
+guess_values = [bck centre height base_width base_width];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Top Centre'],1,'sub');  %Grasp Message
+[xc y1]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Top Width'],1,'sub');  %Grasp Message
+[top_width y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Base Width'],1,'sub');  %Grasp Message
+[base_width y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+top_width = abs(top_width-xc);
+base_width=abs(base_width-xc);
+y1=y1-y0;
+%Put estimated parameters into the output array.
+guess_values = [y0, xc, y1, top_width base_width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Triangle
+</FnName>
+
+<Params>
+y0
+xc
+y1
+base_width
+</Params>
+
+<StartValues>
+0
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Centre
+Height
+Base Width
+</ParamNames>
+
+<FnCode>
+y = y0*ones(size(x));
+wli = find(x>(xc-(base_width/2)) & x<=xc);
+wri = find(x<(xc+(base_width/2)) & x>xc);
+g = y1/(base_width/2);
+y(wli) = y(wli) + y1 + (x(wli)-xc)*g;
+y(wri) = y(wri) + y1 + (xc-x(wri))*g;
+</FnCode>
+
+<AutoGuessCode>
+[ymax i_ymax] = max(y); %ymax
+[ymin i_ymin] = min(y); %ymin
+bck = ymin;
+height = ymax-ymin;
+centre = x(i_ymax);
+base_width = abs(x(i_ymax)-x(i_ymin))*2;
+guess_values = [bck centre height base_width];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc y1]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Base Width'],1,'sub');  %Grasp Message
+[base_width y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+base_width=abs(base_width-xc)*2;
+y1=y1-y0;
+%Put estimated parameters into the output array.
+guess_values = [y0, xc, y1, base_width];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Log-Normal
+</FnName>
+
+<Params>
+y0
+i0
+xc
+fwhm
+</Params>
+
+<StartValues>
+0
+1000
+0.5
+1
+</StartValues>
+
+<ParamNames>
+Background
+Integrated Intensity
+Centre
+FWHM
+</ParamNames>
+
+<FnCode>
+sigma = fwhm / (2*xc);
+y = y0 + (i0./(x.*sigma*sqrt(2*pi))) .* exp(-(1/(2*sigma^2)).*(log(xc./x)).^2);
+</FnCode>
+
+<AutoGuessCode>
+[amp i_amp] = max(y);    %Peak Intensity
+xc = x(i_amp);         %Centre Position
+y0 = min(y);         %Background
+x_diff = diff(x); %Differences between adjacent x's.
+ytemp = y(1:length(y)-1);
+i0 = abs((sum((ytemp-y0).*x_diff)));
+sigma = i0/(amp*sqrt(2*pi));
+fwhm = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
+guess_values = [y0, i0, xc, fwhm];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
+[x y0]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
+[xc amp]=ginput(1); %Mouse input, Centre and Peak intensity
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
+[fwhm y]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+fwhm=abs(fwhm-xc);
+amp=amp-y0;
+i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
+%Put estimated parameters into the output array.
+guess_values = [y0, i0, xc, fwhm];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Divider>
+----Magnetic Scattering----
+</Divider>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Cosine^2
+</FnName>
+
+<Params>
+y0
+amp
+phase
+</Params>
+
+<StartValues>
+0
+0
+0
+</StartValues>
+
+<ParamNames>
+Background
+Amplitude
+Phase
+</ParamNames>
+
+<FnCode>
+y = y0+ abs(amp).*(cos((x+phase)*2*pi/360)).^2;;
+</FnCode>
+
+<AutoGuessCode>
+[Amax i_amp_max] = max(y); %Amplitude
+[Amin i_amp_min] = min(y); %Amplitude
+y0 = Amin;
+amp = Amax-Amin;
+phase = x(i_amp_max);
+guess_values = [y0, amp, phase];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Cosine Min'],1,'sub');
+[x_amp_min Amin]=ginput(1);
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Cosine Max'],1,'sub');
+[x_amp_max Amax]=ginput(1);
+delete(text_handle);pause(0.1);
+y0 = Amin;
+amp = Amax - Amin;
+phase = x_amp_max;
+guess_values = [y0, amp, phase];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Divider>
+----Polarisation & Analysis----
+</Divider>
 %********************************************************************************************************
 
 
@@ -1693,3 +1815,46 @@ y = (2*p-1).*(2*a-1);
 %********************************************************************************************************
 
 
+
+%********************************************************************************************************
+<Divider>
+----Testing----
+</Divider>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Gabel Protien Model
+</FnName>
+
+<Params>
+I0
+y0
+</Params>
+
+<StartValues>
+1
+0
+</StartValues>
+
+<ParamNames>
+Intensity Scale
+Background
+</ParamNames>
+
+<FnCode>
+y = ff_gabel_protien(x);
+y = y*I0 + y0;
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************

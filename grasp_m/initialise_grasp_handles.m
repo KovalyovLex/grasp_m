@@ -57,3 +57,8 @@ grasp_handles.window_modules.curve_fit1d.res_window = [];
 
 %Grasp Changer
 grasp_handles.grasp_changer.window = [];
+
+%User Modules
+grasp_handles.user_modules.rheo_anisotropy.window = [];
+grasp_handles.user_modules.rheo_anisotropy.sketch_handles = [];
+

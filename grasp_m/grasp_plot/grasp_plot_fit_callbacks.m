@@ -134,11 +134,11 @@ switch(to_do)
                 grasp_plot_fit_callbacks('draw_fn',guess_color);
                 
             catch
-                disp(' ');
+                disp(' ')
                 disp(['There was an error in evaluating the AutoGuessCode in your Fit Function']);
                 disp('Reform your Matlab code and Try again.');
                 disp('Make sure that the variable ''guess_values = [    ]'' is defined as a final result of the auto guess procedure');
-                disp(' ');
+                disp(' ')
                 return
             end
             
@@ -211,6 +211,10 @@ switch(to_do)
                     fn_name = fgetl(fid);
                     fn_name_list = [fn_name_list, {fn_name}];
                 end
+                if strcmpi(line,'<Divider>')
+                    fn_name = fgetl(fid);
+                    fn_name_list = [fn_name_list, {fn_name}];
+                end
             end
             fclose(fid);
         else
@@ -234,17 +238,22 @@ switch(to_do)
         fn.auto_guess_code = [];
         fn.point_click_code = [];
         values = [];
-        
+  
         %Open the function file and find the fit parameters and function
         loop_exit = 0;
         fid=fopen('functions1d.fn');
         if not(fid==-1)
             disp(['Loading 1D Fit Function: ' fn.name]);
+            if not(isempty(strfind(fn.name,'----'))); %Check for Divider line
+                status_flags.fitter.function_info_1d = fn; %Put the blank functions parameters in to status flage
+                grasp_plot_fit_callbacks('update_curve_fit_window'); %update the window to be blank
+                return;
+            end
             while feof(fid) ==0 || loop_exit ==0;
                 line = fgetl(fid);
                 %Search for FnName declarations
                 if strcmpi(line,'<Function>')
-                    while not(strcmpi(line,'</Function>')) || loop_exit ==0;
+                    while not(strcmpi(line,'</Function>')) || loop_exit ==0
                         line = fgetl(fid);
                         if strcmpi(line,'<FnName>')
                             line = fgetl(fid);
@@ -863,6 +872,7 @@ switch(to_do)
         for n = 1:n_curves
             %temp = find(output.edat.(['curve' num2str(n)])~=1e99); %do not include the padded points in the list
             %IF USING THIS CODE THEN ALSO SWAP BELOW FOR EXDAT_ALL
+            %AND Swap the large block between the '(temp)' or not.
             %output.xdat_all = [output.xdat_all; output.xdat.(['curve' num2str(n)])(temp)];
             %output.ydat_all = [output.ydat_all; output.ydat.(['curve' num2str(n)])(temp)];
             %output.edat_all = [output.edat_all; output.edat.(['curve' num2str(n)])(temp)];
@@ -885,24 +895,43 @@ switch(to_do)
                 if n ==1;
                     output.resolution_kernels_all = output.resolution_kernels.(['curve' num2str(n)]);
                 else
-                    output.resolution_kernels_all.x = [output.resolution_kernels_all.x output.resolution_kernels.(['curve' num2str(n)]).x(temp)];
-                    output.resolution_kernels_all.weight = [output.resolution_kernels_all.weight output.resolution_kernels.(['curve' num2str(n)]).weight(temp)];
-                    output.resolution_kernels_all.fwhm = [output.resolution_kernels_all.fwhm; output.resolution_kernels.(['curve' num2str(n)]).fwhm(temp)];
-                    output.resolution_kernels_all.lambda.fwhm = [output.resolution_kernels_all.lambda.fwhm; output.resolution_kernels.(['curve' num2str(n)]).lambda.fwhm(temp)];
+                    output.resolution_kernels_all.x = [output.resolution_kernels_all.x output.resolution_kernels.(['curve' num2str(n)]).x];
+                    output.resolution_kernels_all.weight = [output.resolution_kernels_all.weight output.resolution_kernels.(['curve' num2str(n)]).weight];
+                    output.resolution_kernels_all.fwhm = [output.resolution_kernels_all.fwhm; output.resolution_kernels.(['curve' num2str(n)]).fwhm];
+                    output.resolution_kernels_all.lambda.fwhm = [output.resolution_kernels_all.lambda.fwhm; output.resolution_kernels.(['curve' num2str(n)]).lambda.fwhm];
                     output.resolution_kernels_all.lambda.shape = output.resolution_kernels.(['curve' num2str(n)]).lambda.shape;
-                    output.resolution_kernels_all.theta.fwhm = [output.resolution_kernels_all.theta.fwhm; output.resolution_kernels.(['curve' num2str(n)]).theta.fwhm(temp)];
+                    output.resolution_kernels_all.theta.fwhm = [output.resolution_kernels_all.theta.fwhm; output.resolution_kernels.(['curve' num2str(n)]).theta.fwhm];
                     output.resolution_kernels_all.theta.shape = output.resolution_kernels.(['curve' num2str(n)]).theta.shape;
-                    output.resolution_kernels_all.pixel.fwhm = [output.resolution_kernels_all.pixel.fwhm; output.resolution_kernels.(['curve' num2str(n)]).pixel.fwhm(temp)];
+                    output.resolution_kernels_all.pixel.fwhm = [output.resolution_kernels_all.pixel.fwhm; output.resolution_kernels.(['curve' num2str(n)]).pixel.fwhm];
                     output.resolution_kernels_all.pixel.shape = output.resolution_kernels.(['curve' num2str(n)]).pixel.shape;
-                    output.resolution_kernels_all.binning.fwhm = [output.resolution_kernels_all.binning.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm(temp)];
+                    output.resolution_kernels_all.binning.fwhm = [output.resolution_kernels_all.binning.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm];
                     output.resolution_kernels_all.binning.shape = output.resolution_kernels.(['curve' num2str(n)]).binning.shape;
-                    output.resolution_kernels_all.aperture.fwhm = [output.resolution_kernels_all.aperture.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm(temp)];
+                    output.resolution_kernels_all.aperture.fwhm = [output.resolution_kernels_all.aperture.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm];
                     output.resolution_kernels_all.aperture.shape = output.resolution_kernels.(['curve' num2str(n)]).aperture.shape;
-                    output.resolution_kernels_all.classic_res.fwhm = [output.resolution_kernels_all.classic_res.fwhm; output.resolution_kernels.(['curve' num2str(n)]).classic_res.fwhm(temp)];
+                    output.resolution_kernels_all.classic_res.fwhm = [output.resolution_kernels_all.classic_res.fwhm; output.resolution_kernels.(['curve' num2str(n)]).classic_res.fwhm];
                     output.resolution_kernels_all.classic_res.shape = output.resolution_kernels.(['curve' num2str(n)]).classic_res.shape;
                     output.resolution_kernels_all.cm = output.resolution_kernels.(['curve' num2str(n)]).cm;
                     output.resolution_kernels_all.fwhmwidth = output.resolution_kernels.(['curve' num2str(n)]).fwhmwidth;
                     output.resolution_kernels_all.finesse = output.resolution_kernels.(['curve' num2str(n)]).finesse;
+                    
+%                     output.resolution_kernels_all.x = [output.resolution_kernels_all.x output.resolution_kernels.(['curve' num2str(n)]).x(temp)];
+%                     output.resolution_kernels_all.weight = [output.resolution_kernels_all.weight output.resolution_kernels.(['curve' num2str(n)]).weight(temp)];
+%                     output.resolution_kernels_all.fwhm = [output.resolution_kernels_all.fwhm; output.resolution_kernels.(['curve' num2str(n)]).fwhm(temp)];
+%                     output.resolution_kernels_all.lambda.fwhm = [output.resolution_kernels_all.lambda.fwhm; output.resolution_kernels.(['curve' num2str(n)]).lambda.fwhm(temp)];
+%                     output.resolution_kernels_all.lambda.shape = output.resolution_kernels.(['curve' num2str(n)]).lambda.shape;
+%                     output.resolution_kernels_all.theta.fwhm = [output.resolution_kernels_all.theta.fwhm; output.resolution_kernels.(['curve' num2str(n)]).theta.fwhm(temp)];
+%                     output.resolution_kernels_all.theta.shape = output.resolution_kernels.(['curve' num2str(n)]).theta.shape;
+%                     output.resolution_kernels_all.pixel.fwhm = [output.resolution_kernels_all.pixel.fwhm; output.resolution_kernels.(['curve' num2str(n)]).pixel.fwhm(temp)];
+%                     output.resolution_kernels_all.pixel.shape = output.resolution_kernels.(['curve' num2str(n)]).pixel.shape;
+%                     output.resolution_kernels_all.binning.fwhm = [output.resolution_kernels_all.binning.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm(temp)];
+%                     output.resolution_kernels_all.binning.shape = output.resolution_kernels.(['curve' num2str(n)]).binning.shape;
+%                     output.resolution_kernels_all.aperture.fwhm = [output.resolution_kernels_all.aperture.fwhm; output.resolution_kernels.(['curve' num2str(n)]).binning.fwhm(temp)];
+%                     output.resolution_kernels_all.aperture.shape = output.resolution_kernels.(['curve' num2str(n)]).aperture.shape;
+%                     output.resolution_kernels_all.classic_res.fwhm = [output.resolution_kernels_all.classic_res.fwhm; output.resolution_kernels.(['curve' num2str(n)]).classic_res.fwhm(temp)];
+%                     output.resolution_kernels_all.classic_res.shape = output.resolution_kernels.(['curve' num2str(n)]).classic_res.shape;
+%                     output.resolution_kernels_all.cm = output.resolution_kernels.(['curve' num2str(n)]).cm;
+%                     output.resolution_kernels_all.fwhmwidth = output.resolution_kernels.(['curve' num2str(n)]).fwhmwidth;
+%                     output.resolution_kernels_all.finesse = output.resolution_kernels.(['curve' num2str(n)]).finesse;
                 end
             else
                 output.resolution_kernels_all = [];

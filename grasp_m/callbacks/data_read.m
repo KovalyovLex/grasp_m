@@ -86,7 +86,18 @@ for n = 1:length(numor_list);
     numor_data = eval(fn_string);
     numor_data.load_string = numors_str_in;
     
+    
+    
+%***** Soft Detector Position Correction - Tube detectors like D22 & d33 *****
+if status_flags.calibration.soft_det_cal ~= 0
+    if strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') || strcmp(grasp_env.inst_option,'D33')
+        disp('Detector calibration in data_read.m');
+        numor_data = d33_rawdata_calibration(numor_data);
+    end
+end
 
+    
+    
     if isfield(numor_data,'file_type');
         if strcmp(numor_data.file_type,'single frame');
             
@@ -113,7 +124,6 @@ for n = 1:length(numor_list);
             
         elseif strcmp(numor_data.file_type,'kinetic');
             disp('kin time here in data_read.m 115')
-            
         end
         
     else
@@ -155,6 +165,7 @@ for n = 1:length(numor_list);
 %     end
     
     %Place data
+    
     place_data(numor_data, status_flags.selector.fw, status_flags.selector.fn, depth);
     
     if ishandle(text_handle); delete(text_handle); end

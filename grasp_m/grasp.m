@@ -3,6 +3,9 @@ function grasp
 
 %Declare functions that are only used by callbacks - Required for Runtime
 
+%#function tof_iq
+
+
 %***** Root Directory *****
 %#function ploterr
 %#function initialise_status_flags
@@ -61,6 +64,7 @@ function grasp
 %#function raw_read_ill_sans
 %#function raw_read_ill_nexus
 %#function raw_read_ill_nexus_d33
+%#function raw_read_ill_nexus_d33_commissioning
 %#function raw_read_jaea_highres
 %#function raw_read_jaea_sansu
 %#function raw_read_nist_sans
@@ -68,6 +72,7 @@ function grasp
 %#function raw_read_sinq_sans1
 %#function raw_read_frm2_mira
 %#function raw_read_hzb_v4
+%#function raw_read_frm2_sans1
 %#function raw_save
 %#function retrieve_data
 %#function update_last_saved_project
@@ -167,6 +172,7 @@ function grasp
 %#function ff_porod
 %#function ff_mag_porod
 %#function ff_ribosome
+%#function ff_gabel_protien
 %#function ff_sphere
 %#function ff_vortex
 %#function ff_vortex_rock
@@ -213,6 +219,12 @@ function grasp
 %#function fll_spot_angle_average_callbacks
 %#function fll_spot_angle_average_window
 %#function fll_window
+%#function bindata
+%#function rheo_anisotropy_callbacks
+%#function rheo_anisotropy_window
+
+
+
 %***** Other User Modules *****
 %#function tof_calculator_window
 %#function tof_calculator_callbacks
@@ -266,8 +278,8 @@ global grasp_env
 global grasp_handles
 
 %***** Grasp Version Number ******
-grasp_env.grasp_version = '6.60';
-grasp_env.grasp_version_date = '11th October 2012';
+grasp_env.grasp_version = '6.72';
+grasp_env.grasp_version_date = '18th April 2013';
 grasp_env.grasp_name = 'GRASP';
 
 
@@ -319,6 +331,5 @@ if isdeployed
         grasp_handles.window_modules.about_grasp=[];
     end
 end
-% change default instrument to d22
-inst_menu_callbacks('change','ILL_d22','d22');
+
 

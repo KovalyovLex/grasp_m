@@ -8,22 +8,22 @@ global grasp_data
 global displayimage
 global inst_params
 
-%Radial Average Window
-%Depth Start & End 
-index = data_index(status_flags.selector.f_type);
-sum_allow = grasp_data(index).sum_allow;
-max_frames = status_flags.selector.fdpth_max - sum_allow;
-
-if status_flags.analysis_modules.radial_average.depth_frame_start > max_frames;
-    status_flags.analysis_modules.radial_average.depth_frame_start = 1;
-end
-if status_flags.analysis_modules.radial_average.depth_frame_end > max_frames;
-    status_flags.analysis_modules.radial_average.depth_frame_end = max_frames;
-end
-if ishandle(grasp_handles.window_modules.radial_average.window); %i.e. Radial Average window is open
-    set(grasp_handles.window_modules.radial_average.frame_start,'string',num2str(status_flags.analysis_modules.radial_average.depth_frame_start));
-    set(grasp_handles.window_modules.radial_average.frame_end,'string',num2str(status_flags.analysis_modules.radial_average.depth_frame_end));
-end
+% %Radial Average Window
+% %Depth Start & End 
+% index = data_index(status_flags.selector.f_type);
+% sum_allow = grasp_data(index).sum_allow;
+% max_frames = status_flags.selector.fdpth_max - sum_allow;
+% 
+% if status_flags.analysis_modules.radial_average.depth_frame_start > max_frames;
+%     status_flags.analysis_modules.radial_average.depth_frame_start = 1;
+% end
+% if status_flags.analysis_modules.radial_average.depth_frame_end > max_frames;
+%     status_flags.analysis_modules.radial_average.depth_frame_end = max_frames;
+% end
+% if ishandle(grasp_handles.window_modules.radial_average.window); %i.e. Radial Average window is open
+%     set(grasp_handles.window_modules.radial_average.frame_start,'string',num2str(status_flags.analysis_modules.radial_average.depth_frame_start));
+%     set(grasp_handles.window_modules.radial_average.frame_end,'string',num2str(status_flags.analysis_modules.radial_average.depth_frame_end));
+% end
 
 
 %Resolution Control Window
@@ -46,7 +46,6 @@ end
 
 %Calibration Options Window
 if ishandle(grasp_handles.window_modules.resolution_control_window.window); %i.e. calibration control window is open
-    grasp_handles.window_modules.resolution_control_window.aperture_size
     set(grasp_handles.window_modules.resolution_control_window.aperture_size,'string',num2str(status_flags.resolution_control.aperture_size*1e3));
 end
 

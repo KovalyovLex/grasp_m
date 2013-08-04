@@ -286,19 +286,23 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
     
     
     %Update Active Axis OnOff Cross
+    temp = findobj('tag','active_axis_cross');
+    delete(temp);
+    
+    %current_axes = gca;
     for det = 1:inst_params.detectors
         %Delete Old Cross
-        if isfield(grasp_handles.displayimage,['det_off_cross' num2str(det)]);
-            if ishandle(grasp_handles.displayimage.(['det_off_cross' num2str(det)]))
-                delete(grasp_handles.displayimage.(['det_off_cross' num2str(det)]));
-                grasp_handles.displayimage.(['det_off_cross' num2str(det)]) = [];
-            end
-        end
+        %if isfield(grasp_handles.displayimage,['det_off_cross' num2str(det)]);
+        %    if ishandle(grasp_handles.displayimage.(['det_off_cross' num2str(det)]))
+        %        delete(grasp_handles.displayimage.(['det_off_cross' num2str(det)]));
+        %        grasp_handles.displayimage.(['det_off_cross' num2str(det)]) = [];
+        %    end
+        %end
         
         if status_flags.display.(['axis' num2str(det) '_onoff'])==0;
             %Draw New Cross
             det_size = inst_params.(['detector' num2str(det)]).pixels;
-            z_height = status_flags.display.z_max.det1;
+            z_height = status_flags.display.z_max.(['det' num2str(det)]);
             draw_vectors(1,:) = [1,1];
             draw_vectors(2,:) = [det_size(1),det_size(2)];
             draw_vectors(3,:) = [1,det_size(2)];
@@ -306,12 +310,13 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
             z_height = z_height * ones(size(draw_vectors(:,1)));
             
             axes(grasp_handles.displayimage.(['axis' num2str(det)]));
-            temp_handle1  = line(draw_vectors(1:2,1),draw_vectors(1:2,2),z_height(1:2,1),'color','red','linewidth',1);
-            temp_handle2 = line(draw_vectors(3:4,1),draw_vectors(3:4,2),z_height(3:4,1),'color','red','linewidth',1);
-            grasp_handles.displayimage.(['det_off_cross' num2str(det)]) = [temp_handle1, temp_handle2];
+            temp_handle1  = line(draw_vectors(1:2,1),draw_vectors(1:2,2),z_height(1:2,1),'color','black','linewidth',1,'tag','active_axis_cross');
+            temp_handle2 = line(draw_vectors(3:4,1),draw_vectors(3:4,2),z_height(3:4,1),'color','black','linewidth',1,'tag','active_axis_cross');
+            %grasp_handles.displayimage.(['det_off_cross' num2str(det)]) = [temp_handle1, temp_handle2];
         end
         
     end
+    %axes(current_axes);
     
     
     

@@ -10,9 +10,15 @@ circleref = []; %in case not assigned for '(none)' color
 if nargin <9; eccentricity = 1; eccentricity_angle = 0; end
 if nargin <10; eccentricity_angle = 0; end
 
-pixelsize_x = inst_params.detector1.pixel_size(1)/1000; %x-pixel size in m
-pixelsize_y = inst_params.detector1.pixel_size(2)/1000; %y-pixel size in m
+pixelsize_x = inst_params.(['detector' num2str(det)]).pixel_size(1)/1000; %x-pixel size in m
+pixelsize_y = inst_params.(['detector' num2str(det)]).pixel_size(2)/1000; %y-pixel size in m
 pixel_anisotropy = pixelsize_x / pixelsize_y;
+
+if det == 2 || det == 3
+    pixel_anisotropy = 1;
+end
+
+
 
 %Main Axis Handle - make sure we draw in the correct graph
 main_axis_handle = grasp_handles.displayimage.(['axis' num2str(det)]);
@@ -81,16 +87,16 @@ z_height = z_height * ones(size(draw_vectors(:,1:2)));
 
 %Convert coordinates from pixels to q or two theta
 if strcmp(status_flags.axes.current,'q') | strcmp(status_flags.axes.current,'t')
-    x_pixel_strip = displayimage.qmatrix1(1,:,1);
-    y_pixel_strip = displayimage.qmatrix1(:,1,2);
+    x_pixel_strip = displayimage.(['qmatrix' num2str(det)])(1,:,1);
+    y_pixel_strip = displayimage.(['qmatrix' num2str(det)])(:,1,2);
     if strcmp(status_flags.axes.current,'q')
         %Look up q values from qmatrix
-        x_axes_strip = displayimage.qmatrix1(1,:,3);
-        y_axes_strip = displayimage.qmatrix1(:,1,4);
+        x_axes_strip = displayimage.(['qmatrix' num2str(det)])(1,:,3);
+        y_axes_strip = displayimage.(['qmatrix' num2str(det)])(:,1,4);
     elseif strcmp(status_flags.axes.current,'t')
         %Look up 2theta values from qmatrix
-        x_axes_strip = displayimage.qmatrix1(1,:,7);
-        y_axes_strip = displayimage.qmatrix1(:,1,8);
+        x_axes_strip = displayimage.(['qmatrix' num2str(det)])(1,:,7);
+        y_axes_strip = displayimage.(['qmatrix' num2str(det)])(:,1,8);
     end
     %Interpolate new co-ordinates in the current axes
     draw_vectors(:,1:2) = interp1(x_pixel_strip,x_axes_strip,draw_vectors(:,1:2),'spline');

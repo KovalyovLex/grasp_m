@@ -13,8 +13,8 @@ global inst_params
 status_flags.analysis_modules.rebin.bin_spacing = 'linear';
 status_flags.analysis_modules.rebin.n_bins = 500;
 status_flags.analysis_modules.rebin.regroup_bands = [0,1];
-status_flags.analysis_modules.rebin.dii_power = 2;
-status_flags.analysis_modules.rebin.dqq_power = 2;
+status_flags.analysis_modules.rebin.dii_power = 0;
+status_flags.analysis_modules.rebin.dqq_power = 0;
 
 %Resolution Control
 status_flags.resolution_control.wavelength_check = 1;
@@ -27,7 +27,7 @@ status_flags.resolution_control.pixelation_check = 1;
 status_flags.resolution_control.binning_check = 1;
 status_flags.resolution_control.show_kernels_check = 0;
 status_flags.resolution_control.convolution_type = 1;
-status_flags.resolution_control.fwhmwidth = 1; %extent to which convolution kernel goes out.
+status_flags.resolution_control.fwhmwidth = 2; %extent to which convolution kernel goes out.
 status_flags.resolution_control.finesse = 31;  %finesse (number of points) over the concolution kernel - should be ODD number
 
 
@@ -94,6 +94,9 @@ status_flags.selector.cd = 1;
 status_flags.selector.c_check = 0;
 status_flags.selector.ngroup = 1;
 status_flags.selector.dgroup = 1;
+status_flags.selector.depth_range_chk = 0;
+status_flags.selector.depth_range_min = 1;
+status_flags.selector.depth_range_max = 100;
 status_flags.selector.fdpth_max = 0;
 status_flags.selector.bdpth_max = 1;
 status_flags.selector.cdpth_max = 1;
@@ -131,6 +134,7 @@ status_flags.transmission.thickness_correction = 'on';
 %Data Normalization parameters
 status_flags.normalization.standard_monitor = 10000000; %standard monitor (counts)
 status_flags.normalization.standard_time = 1; %standard time (seconds)
+status_flags.normalization.standard_exposure_time = 1; %standard time (seconds)
 status_flags.normalization.standard_detector = 1; %Standard detector counts norm upscaler
 status_flags.normalization.status = 'mon';
 status_flags.normalization.detwin = [1,1,1,1]; %x1, x2, y1, y2
@@ -140,7 +144,8 @@ status_flags.normalization.standard_count_scaler = 1;
 status_flags.normalization.param = 126;
 status_flags.deadtime.status = 'on'; %auto deadtime correction
 
-status_flags.nomalization.d33_total_tof_dist = 19.9;
+status_flags.normalization.d33_total_tof_dist = 19.9;
+status_flags.normalization.d33_tof_delay = 0;
 
 
 %Parameter Survey
@@ -191,7 +196,7 @@ status_flags.color.invert = 0;
 status_flags.color.swap = 0;
 
 %Display control
-status_flags.display.grouped_z_scale  = 1; %If multiple detectors 1 = all same z_scale, 0 = independent z_scales
+status_flags.display.grouped_z_scale  = 0; %If multiple detectors 1 = all same z_scale, 0 = independent z_scales
 status_flags.display.render = 'interp';
 status_flags.display.image = 1;
 status_flags.display.contour = 0;
@@ -253,7 +258,7 @@ status_flags.contour.current_levels_list = [];
 
 %Curve fitter parameters
 status_flags.fitter.fn2d = 1; %This stores the last fit function that was used between successive opening and closing of the fit window.
-status_flags.fitter.fn1d = 1;
+status_flags.fitter.fn1d = 2;
 status_flags.fitter.number2d = 1; %Number of simultaneous functions
 status_flags.fitter.number1d = 1;
 status_flags.fitter.curve_number1d = 1; %Curve number to fit
@@ -283,26 +288,20 @@ status_flags.analysis_modules.radial_average.q_bin_absolute = 0.001;
 status_flags.analysis_modules.radial_average.q_bin_resolution = 2;
 status_flags.analysis_modules.radial_average.q_bin_absolute_scale = 'linear';
 status_flags.analysis_modules.radial_average.q_bin_units = 'pixels';
-
 status_flags.analysis_modules.radial_average.theta_bin_pixels = 1;
 status_flags.analysis_modules.radial_average.theta_bin_absolute = 0.01;
 status_flags.analysis_modules.radial_average.theta_bin_resolution = 2;
 status_flags.analysis_modules.radial_average.theta_bin_absolute_scale = 'linear';
 status_flags.analysis_modules.radial_average.theta_bin_units = 'pixels';
-
 status_flags.analysis_modules.radial_average.azimuth_bin_absolute = 1;
 status_flags.analysis_modules.radial_average.azimuth_bin_units = 'absolute';
-
 status_flags.analysis_modules.radial_average.sector_mask_chk = 0;
 status_flags.analysis_modules.radial_average.strip_mask_chk = 0;
-
 status_flags.analysis_modules.radial_average.single_depth_radio = 0; %0 = single, 1= depth
-
-status_flags.analysis_modules.radial_average.depth_frame_start = 1;
-status_flags.analysis_modules.radial_average.depth_frame_end = 1;
-
 status_flags.analysis_modules.radial_average.direct_to_file = 0;
 status_flags.analysis_modules.radial_average.d33_tof_combine = 0;
+status_flags.analysis_modules.radial_average.display_update = 'off';
+
 
 %Sectors Window
 status_flags.analysis_modules.sectors.inner_radius = 10;
@@ -325,19 +324,32 @@ status_flags.analysis_modules.strips.width = [10];
 status_flags.analysis_modules.strips.strips_color = 'white';
 
 %Boxes
+status_flags.analysis_modules.boxes.display_refresh = 'off';
 status_flags.analysis_modules.boxes.parameter = 65;
 status_flags.analysis_modules.boxes.sum_box_chk = 0;
 status_flags.analysis_modules.boxes.box_nrm_chk = 0;
 status_flags.analysis_modules.boxes.box_color = 'red';
 status_flags.analysis_modules.boxes.scan_boxes_check = [0,0,0,0,0,0];
 status_flags.analysis_modules.boxes.scan_boxes_angle0 = [0,0,0,0,0,0];
+status_flags.analysis_modules.boxes.q_lock_chk = 0;
+status_flags.analysis_modules.boxes.q_lock_wav_ref = 0;
+status_flags.analysis_modules.boxes.q_lock_box_size_chk = 0;
+status_flags.analysis_modules.boxes.t2t_lock_chk = 0;
+status_flags.analysis_modules.boxes.t2t_lock_box_size_chk = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref1 = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref2 = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref3 = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref4 = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref5 = 0;
+status_flags.analysis_modules.boxes.t2t_lock_angle_ref6 = 0;
 
-status_flags.analysis_modules.boxes.coords1 = [1,1,1,1,1]; %The 5th coordinate is the detector number
-status_flags.analysis_modules.boxes.coords2 = [1,1,1,1,1];
-status_flags.analysis_modules.boxes.coords3 = [1,1,1,1,1];
-status_flags.analysis_modules.boxes.coords4 = [1,1,1,1,1];
-status_flags.analysis_modules.boxes.coords5 = [1,1,1,1,1];
-status_flags.analysis_modules.boxes.coords6 = [1,1,1,1,1];
+
+status_flags.analysis_modules.boxes.coords1 = [0,0,0,0,1]; %The 5th coordinate is the detector number
+status_flags.analysis_modules.boxes.coords2 = [0,0,0,0,1];
+status_flags.analysis_modules.boxes.coords3 = [0,0,0,0,1];
+status_flags.analysis_modules.boxes.coords4 = [0,0,0,0,1];
+status_flags.analysis_modules.boxes.coords5 = [0,0,0,0,1];
+status_flags.analysis_modules.boxes.coords6 = [0,0,0,0,1];
 
 %Reflectivity Toolkit
 status_flags.analysis_modules.reflectivity.ymin = 60;
@@ -345,17 +357,29 @@ status_flags.analysis_modules.reflectivity.ymax = 70;
 
 
 %Sector Boxes
+status_flags.analysis_modules.sector_boxes.display_refresh = 'off';
 status_flags.analysis_modules.sector_boxes.parameter = 65;
 status_flags.analysis_modules.sector_boxes.sum_box_chk = 0;
 status_flags.analysis_modules.sector_boxes.box_nrm_chk = 0;
 status_flags.analysis_modules.sector_boxes.box_color = 'red';
+status_flags.analysis_modules.sector_boxes.q_lock_chk = 0;
+status_flags.analysis_modules.sector_boxes.q_lock_wav_ref = 0;
+status_flags.analysis_modules.sector_boxes.q_lock_box_size_chk = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_chk = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_box_size_chk = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref1 = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref2 = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref3 = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref4 = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref5 = 0;
+status_flags.analysis_modules.sector_boxes.t2t_lock_angle_ref6 = 0;
 
-status_flags.analysis_modules.sector_boxes.coords1 = [1,1,1,1,1,0,1]; %R1, R2, Thta, DThta, g, gThta,  Detector number (7th)
-status_flags.analysis_modules.sector_boxes.coords2 = [1,1,1,1,1,0,1];
-status_flags.analysis_modules.sector_boxes.coords3 = [1,1,1,1,1,0,1];
-status_flags.analysis_modules.sector_boxes.coords4 = [1,1,1,1,1,0,1];
-status_flags.analysis_modules.sector_boxes.coords5 = [1,1,1,1,1,0,1];
-status_flags.analysis_modules.sector_boxes.coords6 = [1,1,1,1,1,0,1];
+status_flags.analysis_modules.sector_boxes.coords1 = [0,0,0,0,0,0,0]; %R1, R2, Thta, DThta, g, gThta,  Detector number (7th)
+status_flags.analysis_modules.sector_boxes.coords2 = [0,0,0,0,0,0,0];
+status_flags.analysis_modules.sector_boxes.coords3 = [0,0,0,0,0,0,0];
+status_flags.analysis_modules.sector_boxes.coords4 = [0,0,0,0,0,0,0];
+status_flags.analysis_modules.sector_boxes.coords5 = [0,0,0,0,0,0,0];
+status_flags.analysis_modules.sector_boxes.coords6 = [0,0,0,0,0,0,0];
 
 
 %Ancos2
@@ -366,6 +390,18 @@ status_flags.analysis_modules.ancos2.radius_step = 1;
 status_flags.analysis_modules.ancos2.phase_lock = 0;
 status_flags.analysis_modules.ancos2.phase_angle = 0;
 status_flags.analysis_modules.ancos2.color = 'white';
+
+%rheo-anisotropy
+status_flags.user_modules.rheo_anisotropy.radius = 20;
+status_flags.user_modules.rheo_anisotropy.radius_width = 3;
+status_flags.user_modules.rheo_anisotropy.phase_lock = 0;
+status_flags.user_modules.rheo_anisotropy.phase_angle = 0;
+status_flags.user_modules.rheo_anisotropy.color = 'white';
+status_flags.user_modules.rheo_anisotropy.binning_Af = 2;
+status_flags.user_modules.rheo_anisotropy.parameter = 65;
+
+
+
 
 %Detector Efficiency Calculator
 status_flags.analysis_modules.det_eff.split_line = 45;

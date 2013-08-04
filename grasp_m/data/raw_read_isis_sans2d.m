@@ -152,16 +152,23 @@ for n = 1:frames
     param(inst_params.vectors.deltawav) = 0.01; %This is a guess (1%) and need to be properly calculated from moderator pulse size & total tof
     
     %Monitor for each frame
-        %Calculate effective monitor for detector based time bin, interpolated from monitor based time bin.
+        %Do nothing to monitor - at different distance to detector so should be wrong
+        %param(inst_params.vectors.monitor) = wav_monitor(n,2);
+        
+        %Linear interpolation only to match detector wav bins
+        %param(inst_params.vectors.monitor) = interp1(wav_monitor(:,1),wav_monitor(:,2),wav_detector(n,1),'linear','extrap');
+        
         %Note this is interpolation of a HISTOGRAM, not a point graph so is weighted to the dx (delta_wavlength) bin widths also
         monitor_histogram_area = interp1(wav_monitor(:,1),wav_monitor(:,2),wav_detector(n,1),'linear','extrap');
         monitor_histogram_lower_bin_edge = interp1(wav_monitor(:,1),wav_monitor(:,3),wav_detector(n,1),'linear','extrap');
         monitor_histogram_upper_bin_edge = interp1(wav_monitor(:,1),wav_monitor(:,4),wav_detector(n,1),'linear','extrap');
-        %Final interpolated histogram area (i.e. effective monitor counts relative to detector time channels)
         monitor = monitor_histogram_area *(wav_detector(n,3) - wav_detector(n,2)) /  (monitor_histogram_upper_bin_edge - monitor_histogram_lower_bin_edge);
-    
-        param(inst_params.vectors.monitor) =monitor_counts(n);  %This is the NOT re-binned Monitor histogram - in principle it should NOT be this
-        %param(inst_params.vectors.monitor) =monitor; %This is the re-binned Monitor histogram to take into account the fact the monitor is at a different tof-distance compared to the detector
+        param(inst_params.vectors.monitor) =monitor; %This is the re-binned Monitor histogram to take into account the fact the monitor is at a different tof-distance compared to the detector
+        
+        %Rescale monitor by the direct beam function
+        db_scaler = interp1(inst_params.direct_beam_function(:,1),inst_params.direct_beam_function(:,2),wav_detector(n,1),'linear','extrap');
+        param(inst_params.vectors.monitor) =  param(inst_params.vectors.monitor) * db_scaler;
+        
         
         
     %Store all the parameters for each depth

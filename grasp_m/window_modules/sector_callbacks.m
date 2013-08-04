@@ -8,6 +8,7 @@ global grasp_handles
 global status_flags
 global displayimage
 global inst_params
+global grasp_env
 
 smask = []; %dummy value for when not used
 
@@ -141,8 +142,8 @@ switch to_do
                 smask.(['det' num2str(det)]) = or(smask.(['det' num2str(det)]),(smask1.*(smask2+smask3+smask4)));
                 smask.(['det' num2str(det)]) = +smask.(['det' num2str(det)]); %Converts from logical to integer
             end
-             %figure
-             %pcolor(smask.(['det' num2str(det)]))
+            % figure
+            % pcolor(smask.(['det' num2str(det)]))
         end
         return
 end
@@ -194,6 +195,7 @@ for det = 1:inst_params.detectors
     eff_outer_radius = status_flags.analysis_modules.sectors.outer_radius * det_current / det1det;
     eff_inner_radius = status_flags.analysis_modules.sectors.inner_radius * det_current / det1det;
     warning on 
+
     
     %Pixel distances from Beam Centre
     if isfield(inst_params.vectors,'ox')
@@ -207,6 +209,28 @@ for det = 1:inst_params.detectors
     else
         cy_eff = cm.cm_pixels(2);
     end
+
+if strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33')
+    if det ==1; %Rear
+        cx_eff = cm.cm_pixels(1);
+        cy_eff = cm.cm_pixels(2);
+    elseif det == 2; % Right
+        cx_eff = cm.cm_pixels(1) - ((params(inst_params.vectors.oxr) - cm.cm_translation(1)))/inst_params.(['detector' num2str(det)]).pixel_size(2); %horizontal distance from beam centre to pixel (m)
+        cy_eff = cm.cm_pixels(2);
+    elseif det == 3; % Left
+        cx_eff = cm.cm_pixels(1) + ((params(inst_params.vectors.oxl) - cm.cm_translation(1)))/inst_params.(['detector' num2str(det)]).pixel_size(2); %horizontal distance from beam centre to pixel (m)
+        cy_eff = cm.cm_pixels(2);
+    elseif det == 4; %Bottom
+        cx_eff = cm.cm_pixels(1);
+        cy_eff = cm.cm_pixels(2)  + ((params(inst_params.vectors.oyb) - cm.cm_translation(2)))/inst_params.(['detector' num2str(det)]).pixel_size(2); %vertical distance from beam centre to pixel (m)
+    elseif det == 5; %Top
+        cx_eff = cm.cm_pixels(1);
+        cy_eff = cm.cm_pixels(2) - ((params(inst_params.vectors.oyt) - cm.cm_translation(2)))/inst_params.(['detector' num2str(det)]).pixel_size(2); %vertical distance from beam centre to pixel (m)
+    end
+end
+
+        
+    
     
     
     mirrors = status_flags.analysis_modules.sectors.mirror_sectors;

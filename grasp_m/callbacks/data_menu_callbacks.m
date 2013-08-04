@@ -364,17 +364,28 @@ case 'pixel_pick'
         end
         grasp_update;
 
-    case 'set_d33_tof_dist'
-        tof_dist=inputdlg({'Enter D33 TOTAL TOF Distance'},'D33 TOF Distance',1,{num2str(status_flags.nomalization.d33_total_tof_dist)});
+    case 'set_tof_dist'
+        tof_dist=inputdlg({'Enter TOTAL TOF Distance [m]'},'TOF Distance',1,{num2str(status_flags.normalization.d33_total_tof_dist)});
         if not(isempty(tof_dist));
             value = str2num(tof_dist{1});
             if not(isempty(value));
-                status_flags.nomalization.d33_total_tof_dist = value;
+                status_flags.normalization.d33_total_tof_dist = value;
             else
-                disp('Please enter a sensible value for Count Scaler');
+                disp('Please enter a sensible value for TOTAL TOF Distance [m]');
             end
         end
         
+    case 'set_tof_delay'
+        tof_delay=inputdlg({'Enter TOF Delay [microS] (i.e. Time between Trigger and Mid Window Opening)'},'TOF Delay',1,{num2str(status_flags.normalization.d33_tof_delay)});
+        if not(isempty(tof_delay));
+            value = str2num(tof_delay{1});
+            if not(isempty(value));
+                status_flags.normalization.d33_tof_delay = value;
+            else
+                disp('Please enter a sensible value for TOF Delat (microS)');
+            end
+        end
+    
         
 
 %     case 'set_deadtime'

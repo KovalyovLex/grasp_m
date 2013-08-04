@@ -1,4 +1,4 @@
-function [foreimage,history] = direct_beam_callibration(foreimage,history)
+function [foreimage,history] = direct_beam_calibration(foreimage,history)
 
 global inst_params
 global status_flags
@@ -50,6 +50,7 @@ if status_flags.calibration.beam_flux_check==1;
     empty_beam = normalize_data(empty_beam);
     
     empty_beam_detector = 1; %This is the detector to use the empty beam intensity from for ALL other detectors
+    
     if sum(sum(empty_beam.(['data' num2str(empty_beam_detector)]))) ~=0; %Check if direct beam worksheet is empty otherwise don't bother with below
         
         %Divide direct beam data also by detector efficiency

@@ -4,6 +4,7 @@ global grasp_env
 global status_flags
 global grasp_handles
 global grasp_data
+global inst_params
 
 message_handle = [];
 
@@ -24,10 +25,16 @@ fname = 'image';
 %     end
 % end
 
-%Re-color any white contours slightly grey before printing
-i = findobj(gca,'type','line');
-j = findobj(i,'color',[1,1,1]);
-set(j,'color',[0.99,0.99,0.99]);
+
+for det = 1:inst_params.detectors
+    %Re-color any white contours slightly grey before printing
+    if isfield(grasp_handles.displayimage, ['contour' num2str(det)])
+        if ishandle(grasp_handles.displayimage.(['contour' num2str(det)]));
+            set(grasp_handles.displayimage.(['contour' num2str(det)]),'color',[0.01,0.01,0.01]');
+        end
+    end
+end
+    
 
 
 %Invert Figure Legend Text from White to Black

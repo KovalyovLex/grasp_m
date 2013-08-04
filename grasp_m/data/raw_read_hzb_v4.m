@@ -16,11 +16,33 @@ while isempty(findstr(linestr,'%Counts'));
     linestr = fgetl(fid);
     line_counter = line_counter +1;
     
-    if findstr(linestr,'FromDate='); l = length(linestr); numor_data.info.start_date = linestr(findstr(linestr,'=')+1:l); end
-    if findstr(linestr,'FromTime='); l = length(linestr); numor_data.info.start_time = linestr(findstr(linestr,'=')+1:l); end
-    if findstr(linestr,'ToDate='); l = length(linestr); numor_data.info.end_date = linestr(findstr(linestr,'=')+1:l); end
-    if findstr(linestr,'ToTime='); l = length(linestr); numor_data.info.end_time = linestr(findstr(linestr,'=')+1:l); end
-    if findstr(linestr,'User='); l = length(linestr); numor_data.info.user = linestr(findstr(linestr,'=')+1:l); end
+    if findstr(linestr,'FromDate=');
+        l = length(linestr); numor_data.info.start_date = linestr(findstr(linestr,'=')+1:l);
+    else
+        numor_data.info.start_date = '';
+    end
+    if findstr(linestr,'FromTime=');
+        l = length(linestr); numor_data.info.start_time = linestr(findstr(linestr,'=')+1:l);
+    else
+        numor_data.info.start_time = '';
+    end
+    if findstr(linestr,'ToDate=');
+        l = length(linestr); numor_data.info.end_date = linestr(findstr(linestr,'=')+1:l);
+    else
+        numor_data.info.end_date = '';
+    end
+    if findstr(linestr,'ToTime=');
+        l = length(linestr); numor_data.info.end_time = linestr(findstr(linestr,'=')+1:l);
+    else
+        numor_data.info.end_time ='';
+    end
+    if findstr(linestr,'User=');
+        l = length(linestr); numor_data.info.user = linestr(findstr(linestr,'=')+1:l);
+    else
+        numor_data.info.user = '';
+    end
+    
+    numor_data.subtitle = '';
     
     if findstr(linestr,'FileName=');
         numor_str = strtok(linestr,'FileName=');
@@ -102,12 +124,12 @@ end
 %New reading routine - end
 fclose(fid);
 
-data = reshape(data,inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
+data = reshape(data,inst_params.detector1.pixels(1),inst_params.detector1.pixels(2));
 data = rot90(data);
 data = flipud(data);
 
 if not(isempty(error_data));
-    error_data = reshape(error_data,inst_params.detector1.pixels(2),inst_params.detector1.pixels(1));
+    error_data = reshape(error_data,inst_params.detector1.pixels(1),inst_params.detector1.pixels(2));
     error_data = rot90(error_data);
     error_data = flipud(error_data);
 end
@@ -126,5 +148,4 @@ end
 numor_data.data1 = data;
 numor_data.error1 = error_data;
 numor_data.params1 = param;
-
 

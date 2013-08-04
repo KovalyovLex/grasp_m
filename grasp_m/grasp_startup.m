@@ -68,20 +68,21 @@ else
             grasp_env.path.grasp_root = '~/grasp_m/';
         end
         
-    elseif strcmp(machine_type,'MACI') %32bit Mac CSIMAC
-        grasp_env.path.grasp_root = '/Users/chuck/Desktop/grasp_m_develop/';
+elseif strcmp(machine_type,'MACI') %32bit Mac CSIMAC
+        grasp_env.path.grasp_root = '/Applications/grasp_m';
         
     elseif strcmp(machine_type,'MACI64') %64bit Mac CSIMAC
         [status,hostname] = system('hostname');
         if findstr(hostname,'pormac.gen.ill.fr')
             grasp_env.path.grasp_root = '/Applications/grasp_m';
+        elseif findstr(hostname,'lionel-porcars-macbook.local')
+            grasp_env.path.grasp_root = '/Applications/grasp_m';
         else
-            grasp_env.path.grasp_root = '/Users/chuck/Desktop/grasp_m_develop/';
+            grasp_env.path.grasp_root = '/Applications/grasp_m';
         end
     end
 end
  
-
 addpath(grasp_env.path.grasp_root);
 addpath(fullfile(grasp_env.path.grasp_root,'math'));
 addpath(fullfile(grasp_env.path.grasp_root,'sans_math'));
@@ -101,7 +102,7 @@ addpath(fullfile(grasp_env.path.grasp_root,'grasp_plot'));
 addpath(fullfile(grasp_env.path.grasp_root,'grasp_plot','fit_functions'));
 addpath(fullfile(grasp_env.path.grasp_root,'polarisation_analysis'));
 addpath(fullfile(grasp_env.path.grasp_root,'main_interface'));
-
+addpath(fullfile(grasp_env.path.grasp_root,'user_modules','rheo'));
 
 
 

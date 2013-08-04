@@ -1,0 +1,20 @@
+function temp(mean,fwhm)
+
+resolution =1000;  %Finess of the random distribution
+
+scale_magnitude = log10(resolution) - round(log10(fwhm));
+magnitude_scale = 10^scale_magnitude
+
+
+fwhm = fwhm*magnitude_scale;
+
+a=randi(fwhm,1,1000000);
+b=randi(fwhm,1,1000000);
+
+c=mean + (a+b)/magnitude_scale;
+figure
+
+%hist(c,max(c)-min(c)+1)
+
+
+hist(c,resolution)

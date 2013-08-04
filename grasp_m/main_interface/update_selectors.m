@@ -52,3 +52,9 @@ set(grasp_handles.figure.fore_dpth,'value',status_flags.selector.fd);
 set(grasp_handles.figure.back_dpth,'value',status_flags.selector.bd);
 set(grasp_handles.figure.cad_dpth,'value',status_flags.selector.cd);
 
+%Depth Range
+set(grasp_handles.figure.dpth_range_chk,'value',status_flags.selector.depth_range_chk);
+set(grasp_handles.figure.depth_range_min,'string',num2str(status_flags.selector.depth_range_min));
+set(grasp_handles.figure.depth_range_max,'string',num2str(status_flags.selector.depth_range_max));
+
+

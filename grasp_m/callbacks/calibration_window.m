@@ -37,7 +37,7 @@ grasp_handles.window_modules.calibration.det_eff_chk = uicontrol(grasp_handles.w
 grasp_handles.window_modules.calibration.det_eff_nmbr = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.8 0.9 0.15 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','popup','String','', 'ForegroundColor', [0 0 0]);
 
 %D22 &D33 Efficiency Paralax
-if strcmp(grasp_env.inst,'ILL_d22') || (strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning'));
+if strcmp(grasp_env.inst,'ILL_d22') || (strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning')) || (strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33'));
 %if strcmp(grasp_env.inst,'ILL_d22');
     uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.05 0.85 0.8 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','left','Style','text','String','Correct Detector Tube Paralax:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
     grasp_handles.window_modules.calibration.d22_tube_angle_chk = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.8 0.85 0.068 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'value',status_flags.calibration.d22_tube_angle_check,'callback','calibration_callbacks(''d22_tube_angle_correction'')');

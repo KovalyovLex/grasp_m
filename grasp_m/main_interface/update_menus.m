@@ -7,6 +7,13 @@ global status_flags
 global grasp_handles
 global grasp_env
 
+
+
+%Update averaging, sector & box depth graphic updates
+set(grasp_handles.menu.file.preferences.averaging_depth_update,'checked',status_flags.analysis_modules.radial_average.display_update);
+set(grasp_handles.menu.file.preferences.sector_box_update,'checked',status_flags.analysis_modules.sector_boxes.display_refresh);
+set(grasp_handles.menu.file.preferences.box_update,'checked',status_flags.analysis_modules.boxes.display_refresh);
+
 %Update param display and graphic display tick
 if status_flags.command_window.display_params ==1; status = 'on'; else status = 'off'; end
 set(grasp_handles.menu.display.parameter_display,'checked',status);

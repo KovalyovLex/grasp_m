@@ -194,7 +194,11 @@ switch to_do
         if strcmp(status_flags.subfigure.export.auto_filename,'off');
             %Get file name proposal from run number
             plot_info = get(curve_handles{1}(1),'userdata');
-            fname_in = num2str(plot_info.params(128));
+            if isfield(plot_info,'params');
+                fname_in = num2str(plot_info.params(128));
+            else
+                fname_in = 'curve_data';
+            end
             %File name dialog
             [fname_in, directory] = uiputfile([grasp_env.path.project_dir fname_in '.dat'],'Export Data');
             if isequal(fname_in,0) || isequal(directory,0) %Check the save dialog was'nt canceled
@@ -254,18 +258,21 @@ switch to_do
             fid=fopen([grasp_env.path.project_dir fname],'wt');
             
             %Check if to include history header
-            if strcmp(status_flags.subfigure.export.data_history,'on');
-                history = plot_info.history;
-                
-                for m = 1:length(history)
-                    textstring = history{m};
-                    fprintf(fid,'%s \n',textstring);
+            if isfield(plot_info,'history');
+                if strcmp(status_flags.subfigure.export.data_history,'on');
+                    history = plot_info.history;
+                    
+                    for m = 1:length(history)
+                        textstring = history{m};
+                        fprintf(fid,'%s \n',textstring);
+                    end
+                    fprintf(fid,'%s \n','');
+                    fprintf(fid,'%s \n','');
                 end
-                fprintf(fid,'%s \n','');
-                fprintf(fid,'%s \n','');
             end
             
             export_data = plot_info.export_data;
+            
             %Check if to include column labels
             if strcmp(status_flags.subfigure.export.column_labels,'on')
                 if isfield(plot_info,'column_labels');

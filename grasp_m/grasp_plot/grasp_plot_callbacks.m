@@ -130,7 +130,7 @@ switch to_do
         
     case 'moments'
         disp(' ');
-        disp(['***** Centre of Mass, Standard Deviation, Skewness & Kurtosis *****']);
+        disp(['***** Sum, Average, Centre of Mass, Standard Deviation, Skewness & Kurtosis *****']);
         n_curves = length(curve_handles);
         for n = 1:n_curves
             
@@ -158,6 +158,11 @@ switch to_do
                 ex = zeros(size(x));
             end
             
+            %Calcualte Average
+            [sum_i, err_sum_i] = err_sum(y,ey);
+            n_points = length(y);
+            
+             
             
             %Calculate Centre of Mass
             %cm = sum(x.*y)./sum(y)
@@ -200,7 +205,14 @@ switch to_do
             [kurt1, err_kurt1] = err_divide(sum_yxcm4,err_sum_yxcm4,points_sigma4,err_points_sigma4);
             [kurtosis,err_kurtosis] = err_divide(kurt1,err_kurt1,sum_mass,err_sum_mass);
             
-            disp(['Curve # ' num2str(n) '  :  Centre of Mass: ' num2str(cm) ' +- ' num2str(err_cm) '  Sigma: ' num2str(sigma) ' +- ' num2str(err_sigma)]);
+            %Calculate Area 
+            step = diff(x);
+            step(length(step)+1) = step(length(step)); %Make the delta_x array the same length as the data
+            [area_array, err_area_array] = err_multiply(y, ey, step, zeros(size(step)));
+            [total_area, err_total_area] = err_sum(area_array,err_area_array);
+            
+            disp(['Curve # ' num2str(n) '  :  Sum: ' num2str(sum_i) ' +- ' num2str(err_sum_i) ' :  Average: ' num2str(sum_i/n_points) ' +- ' num2str(err_sum_i/n_points) '  :  Area: ' num2str(total_area) ' +- ' num2str(err_total_area)]);
+            disp(['              Centre of Mass: ' num2str(cm) ' +- ' num2str(err_cm) '  Sigma: ' num2str(sigma) ' +- ' num2str(err_sigma)]);
             disp(['              Skewness: ' num2str(skewness) ' +- ' num2str(err_skewness) '  Kurtosis: ' num2str(kurtosis) ' +- ' num2str(err_kurtosis)]);
             disp(' ');
             

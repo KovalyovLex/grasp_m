@@ -118,6 +118,7 @@ for det = 1:inst_params.detectors
         param_sum = sum(grasp_data(index).(['params' num2str(det)]){nmbr},2);
         output.(['params' num2str(det)])(inst_params.vectors.monitor) = param_sum(inst_params.vectors.monitor);
         output.(['params' num2str(det)])(inst_params.vectors.time) = param_sum(inst_params.vectors.time);
+        output.(['params' num2str(det)])(inst_params.vectors.aq_time) = param_sum(inst_params.vectors.aq_time);
         output.(['params' num2str(det)])(inst_params.vectors.array_counts) = param_sum(inst_params.vectors.array_counts);
     else
         output.(['data' num2str(det)]) = grasp_data(index).(['data' num2str(det)]){nmbr}(:,:,real_dpth);
@@ -151,12 +152,14 @@ end
 
 
 
-
-%***** Soft Detector Position Correction - Tube detectors like D22 & d33 *****
-if status_flags.calibration.soft_det_cal ~= 0 && strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning')
-    %&& sum(sum(output.data1)) ~=0
-    
-   if output.type ~= 7 && output.type ~=99; %Not Masks or detector efficiency
-        output.data1 = d33_rawdata_calibration(output.data1);
-   end
-end
+% 
+% %***** Soft Detector Position Correction - Tube detectors like D22 & d33 *****
+% if status_flags.calibration.soft_det_cal ~= 0
+%     if strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') || strcmp(grasp_env.inst_option,'D33')
+%     %&& sum(sum(output.data1)) ~=0
+%     
+%    if output.type ~= 7 && output.type ~=99; %Not Masks or detector efficiency
+%         output = d33_rawdata_calibration(output);
+%    end
+%     end
+% end

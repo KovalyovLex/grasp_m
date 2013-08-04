@@ -28,7 +28,7 @@ grasp_handles.figure.grasp_main = figure(....
     'windowbuttonmotionfcn','live_coords');
 
 %***** Worksheet Display and Load selector *****
-uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.01,0.286,0.49,0.074],'HorizontalAlignment','right','Style','frame','BackgroundColor', grasp_env.background_color,'ForegroundColor', [1 1 1]);
+uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.01,0.286,0.485,0.074],'HorizontalAlignment','right','Style','frame','BackgroundColor', grasp_env.background_color,'ForegroundColor', [1 1 1]);
 uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.02,0.32,0.11,0.02],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','Foreground:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.02,0.3,0.11,0.02],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','& Data Load:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 
@@ -36,6 +36,12 @@ uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.02,
 uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.225,0.28,0.065,0.020],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','Group:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 grasp_handles.figure.wks_group_chk = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.36,0.277,0.03,0.025],'tooltip','Group Worksheet Numbers','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','Tag','group_worksheets_check','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'callback','main_callbacks(''wks_group'');');
 grasp_handles.figure.dpth_group_chk = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.45,0.277,0.03,0.025],'tooltip','Group Worksheet Depths','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','Tag','group_depth_check','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'callback','main_callbacks(''dpth_group'');');
+grasp_handles.figure.dpth_range_chk = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.5,0.345,0.03,0.025],'value',status_flags.selector.depth_range_chk,'tooltip','Limit Depth Range','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','Tag','depth_range_check','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1,1,1],'callback','main_callbacks(''depth_range_chk'');');
+grasp_handles.figure.depth_range_min = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.50, 0.32, 0.05, 0.025],'tooltip','Depth Min','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.selector.depth_range_min),'HorizontalAlignment','center','Visible','on','callback','main_callbacks(''depth_min'');');
+grasp_handles.figure.depth_range_max = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.50, 0.29, 0.05, 0.025],'tooltip','Depth Max','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.selector.depth_range_max),'HorizontalAlignment','center','Visible','on','callback','main_callbacks(''depth_max'');');
+
+
+
 
 %Foreground Worksheet Selector
 grasp_handles.figure.fore_wks = uicontrol(grasp_handles.figure.grasp_main,'units','normalized','Position',[0.16,0.31,0.13,0.03],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'tooltip',['Select Worksheet Type' char(13) char(10) 'e.g. Foreground, Background or Cadmium Scattering Data'],'Style','Popup','Tag','worksheet','String','xxxx','Value',1,'CallBack','main_callbacks(''foreground_wks'');'); %Callback also sets flag to refresh axes

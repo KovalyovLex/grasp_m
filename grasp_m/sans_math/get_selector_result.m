@@ -278,6 +278,7 @@ else %Conventional Analysis - Get foreground, background and cadmium selector da
     
     %Get Foreground data
     [foreimage] = retrieve_data('fore'); %foreground data, and flag - determines if data is 'data' or masks etc.
+       
     status_flags.selector.f_type = foreimage.type; %Flag to show what type of data is displayed, e.g. foreground,
     
     history = [history, {['***** Sample, Backgrounds and Transmissions Data: *****']}];
@@ -295,8 +296,7 @@ else %Conventional Analysis - Get foreground, background and cadmium selector da
     if foreimage.type ~= 7 && foreimage.type ~=99; %Normalise foreground data (only if real data, not masks etc)
         foreimage = normalize_data(foreimage);  %Data Normalisation, Attenuator correction and deadtime
     end
-
-    
+   
     %Get Background data
     if status_flags.selector.b_check == 1 && (foreimage.type == 1 || foreimage.type == 2); %i.e. subtract background
         [backimage] = retrieve_data('back'); %background data
@@ -421,28 +421,31 @@ end
 %***** CALIRBATIONS ***** %***** CALIRBATIONS ***** %***** CALIRBATIONS *****
 %Only do data calibrations for certain worksheet types described by flag:  i.e. fore, back, masks etc.
 %AND check that the intensity matrix isn't empty
-if ((foreimage.type >=1 && foreimage.type <=3 ) || (foreimage.type >= 11 && foreimage.type <= 18)) && sum(sum(foreimage.data1))~=0
-
-    %Normalise D22 data by the detector response paralax correction
-    if strcmp(grasp_env.inst,'ILL_d22') && status_flags.calibration.d22_tube_angle_check ==1;
-        foreimage = d22_paralax_correction(foreimage);
-        history = [history, {['Data: Corrected for D22 Detector Paralax']}];
-    end
+if ((foreimage.type >=1 && foreimage.type <=3 ) || (foreimage.type >= 11 && foreimage.type <= 18)) && sum(sum(foreimage.params1))~=0
     
-     %Normalise D33 data by the detector response paralax correction
-     if strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') && status_flags.calibration.d22_tube_angle_check ==1;
-         foreimage = d33_paralax_correction(foreimage);
-         history = [history, {['Data: Corrected for D33 Detector Paralax']}];
-     end
-    
-    
-    
-
     %Check General Calibration options are ON
     if status_flags.calibration.calibrate_check == 1; %i.e. Calibration is switched on
         history = [history, {[' ']}];
         history = [history, {['***** Calibrations: *****']}];
+        
+        %Paralax Correction
+        if status_flags.calibration.d22_tube_angle_check ==1;
+            
+            if strcmp(grasp_env.inst,'ILL_d22')
+                %Normalise D22 data by the detector response paralax correction
+                foreimage = d22_paralax_correction(foreimage);
+                history = [history, {['Data: Corrected for D22 Detector Paralax']}];
+                
+            elseif strcmp(grasp_env.inst,'ILL_d33')
+                %Normalise D33 data by the detector response paralax correction
+                if strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') || strcmp(grasp_env.inst_option,'D33');
+                    foreimage = d33_paralax_correction(foreimage);
+                    history = [history, {['Data: Corrected for D33 Detector Paralax']}];
+                end
+            end
+        end
 
+        
         %***** Divide by Detector Efficiency *****
         if status_flags.calibration.det_eff_check == 1;
             %also returns a 'nan_mask' in the data structure
@@ -504,3 +507,4 @@ history = [history, {['Intensity units are:  ' foreimage.units]}];
 history = [history, {[' ']}];
 
 foreimage.history = history;
+

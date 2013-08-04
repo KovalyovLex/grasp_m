@@ -104,8 +104,63 @@ grasp_handles.menu.file.preferences.markersize.markersize = marker_size_handles;
 %Preferences:  Invert HardCopy Print
 visible = 'off';
 grasp_handles.menu.file.preferences.inverthard = uimenu(grasp_handles.menu.file.preferences.root,'label','Invert Hard Copy (BW => WB)','checked','off','tag','invert_hardcopy','callback','file_menu(''invert_hardcopy'');','visible',visible);
+
 %Preferences:  Save Sub_Figures
 grasp_handles.menu.file.preferences.save_subfigure = uimenu(grasp_handles.menu.file.preferences.root,'label','Save Sub_Figures in Project','checked','off','tag','save_sub_figures','callback','file_menu(''save_sub_figures'');','enable','on');
+
+%Radial Average Depth Display Update
+grasp_handles.menu.file.preferences.averaging_depth_update = uimenu(grasp_handles.menu.file.preferences.root,'label','Averaging Depth Display Update','enable','on','checked',status_flags.analysis_modules.radial_average.display_update,'callback','main_callbacks(''averaging_display_refresh'');');
+
+
+%Preferences:  Color of Boxes, sectors etc.
+
+%Sectors Color
+grasp_handles.menu.file.preferences.sectors_color_root = uimenu(grasp_handles.menu.file.preferences.root,'label','Sectors Color','enable','on');
+box_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
+grasp_handles.menu.file.preferences.sectors_color = [];
+for n = 1:length(box_color_list_string);
+    if strcmp(status_flags.analysis_modules.sectors.sector_color,box_color_list_string{n})
+        checked = 'on';
+    else
+        checked = 'off';
+    end
+    temp = uimenu(grasp_handles.menu.file.preferences.sectors_color_root,'label',box_color_list_string{n},'checked',checked,'callback','file_menu(''sectors_color'');');
+    grasp_handles.menu.file.preferences.sectors_color = [grasp_handles.menu.file.preferences.sectors_color, temp];
+end
+
+
+%Sector Box Color
+grasp_handles.menu.file.preferences.sector_box_color_root = uimenu(grasp_handles.menu.file.preferences.root,'label','Sector Box Color','enable','on');
+box_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
+grasp_handles.menu.file.preferences.sector_box_color = [];
+for n = 1:length(box_color_list_string);
+    if strcmp(status_flags.analysis_modules.sector_boxes.box_color,box_color_list_string{n})
+        checked = 'on';
+    else
+        checked = 'off';
+    end
+    temp = uimenu(grasp_handles.menu.file.preferences.sector_box_color_root,'label',box_color_list_string{n},'checked',checked,'callback','file_menu(''sector_box_color'');');
+    grasp_handles.menu.file.preferences.sector_box_color = [grasp_handles.menu.file.preferences.sector_box_color, temp];
+end
+grasp_handles.menu.file.preferences.sector_box_update = uimenu(grasp_handles.menu.file.preferences.root,'label','Sector Box Display Update','enable','on','checked',status_flags.analysis_modules.sector_boxes.display_refresh,'callback','main_callbacks(''sectors_display_refresh'');');
+
+
+
+%Box Color
+grasp_handles.menu.file.preferences.box_color_root = uimenu(grasp_handles.menu.file.preferences.root,'label','Box Color','enable','on');
+box_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
+grasp_handles.menu.file.preferences.box_color = [];
+for n = 1:length(box_color_list_string);
+    if strcmp(status_flags.analysis_modules.boxes.box_color,box_color_list_string{n})
+        checked = 'on';
+    else
+        checked = 'off';
+    end
+    temp = uimenu(grasp_handles.menu.file.preferences.box_color_root,'label',box_color_list_string{n},'checked',checked,'callback','file_menu(''box_color'');');
+    grasp_handles.menu.file.preferences.box_color = [grasp_handles.menu.file.preferences.box_color, temp];
+end
+grasp_handles.menu.file.preferences.box_update = uimenu(grasp_handles.menu.file.preferences.root,'label','Box Display Update','enable','on','checked',status_flags.analysis_modules.boxes.display_refresh,'callback','main_callbacks(''boxes_display_refresh'');');
+
 
 %Exit
 grasp_handles.menu.file.exit = uimenu(grasp_handles.menu.file.root,'label','&Exit','separator','on','callback','file_menu(''exit'');');
@@ -318,7 +373,6 @@ for n = 1:length(grasp_env.availaible_instruments);
         %Loop though the inst options
         for m = 2:length(inst_str);
             inst_str2 = inst_str{m};
-            disp(['inst_menu_callbacks(change,' inst_root_str ',' inst_str2 ')']);
             grasp_handles.menu.instrument.inst.([inst_str2]) = uimenu(grasp_handles.menu.instrument.inst.([inst_root_str '_root']),'label',inst_str2,'tag','inst_menu','callback',['inst_menu_callbacks(''change'',''' inst_root_str ''',''' inst_str2 ''');'],'checked','off');
         end
     else
@@ -361,7 +415,8 @@ enable = 'on';
 grasp_handles.menu.data.normalization.root = uimenu(grasp_handles.menu.data.root,'label','Data Normalization:','enable',enable);
 grasp_handles.menu.data.normalization.none = uimenu(grasp_handles.menu.data.normalization.root,'label','None: Absolute Counts','tag','data_norm','userdata','none','callback','data_menu_callbacks(''normalization'',''none'');');
 grasp_handles.menu.data.normalization.stdmon = uimenu(grasp_handles.menu.data.normalization.root,'label','Standard Monitor','tag','data_norm','userdata','mon','callback','data_menu_callbacks(''normalization'',''mon'');');
-grasp_handles.menu.data.normalization.stdtime = uimenu(grasp_handles.menu.data.normalization.root,'label','Standard Time','tag','data_norm','userdata','time','callback','data_menu_callbacks(''normalization'',''time'');');
+grasp_handles.menu.data.normalization.stdtime = uimenu(grasp_handles.menu.data.normalization.root,'label','Acquisition Time','tag','data_norm','userdata','time','callback','data_menu_callbacks(''normalization'',''time'');');
+grasp_handles.menu.data.normalization.exptime = uimenu(grasp_handles.menu.data.normalization.root,'label','Exposure Time','tag','data_norm','userdata','exposure_time','callback','data_menu_callbacks(''normalization'',''exposure_time'');');
 grasp_handles.menu.data.normalization.totaldet = uimenu(grasp_handles.menu.data.normalization.root,'label','Total Detector Counts','tag','data_norm','userdata','det','callback','data_menu_callbacks(''normalization'',''det'');');
 grasp_handles.menu.data.normalization.detwin = uimenu(grasp_handles.menu.data.normalization.root,'label','Window Detector Counts','tag','data_norm','userdata','detwin','callback','data_menu_callbacks(''normalization'',''detwin'');');
 grasp_handles.menu.data.normalization.param = uimenu(grasp_handles.menu.data.normalization.root,'label','Parameter: #','tag','data_norm','userdata','parameter','callback','data_menu_callbacks(''normalization'',''parameter'');');
@@ -401,7 +456,8 @@ grasp_handles.menu.data.normalization.set_detscalar = uimenu(grasp_handles.menu.
 grasp_handles.menu.data.normalization.set_detwin = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set Standard &Detector Window','callback','data_menu_callbacks(''set_std_detwin'');');
 grasp_handles.menu.data.normalization.set_param = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set Normalization Parameter #','callback','data_menu_callbacks(''set_std_param'');');
 grasp_handles.menu.data.normalization.set_count_scaler = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set Count Scaler','callback','data_menu_callbacks(''set_std_count_scaler'');');
-grasp_handles.menu.data.normalization.set_tof_dist = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set D33 TOF Distance (TOTAL)','callback','data_menu_callbacks(''set_d33_tof_dist'');');
+grasp_handles.menu.data.normalization.set_tof_dist = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set TOF Distance (m)','callback','data_menu_callbacks(''set_tof_dist'');');
+grasp_handles.menu.data.normalization.set_tof_delay = uimenu(grasp_handles.menu.data.normalization.set_root,'label','Set TOF Time-Shift (microS)','callback','data_menu_callbacks(''set_tof_delay'');');
 
 
 
@@ -424,6 +480,9 @@ uimenu(grasp_handles.menu.user_modules.root,'label','&FLL Spot Angle Average Cal
 uimenu(grasp_handles.menu.user_modules.root,'label','&FLL Beam Centre Calculator','callback','fll_beam_centre_window','enable','on');
 uimenu(grasp_handles.menu.user_modules.root,'label','&FLL Rapid Beam Centre Calculator','callback','fll_rapid_beam_centre_window','enable','on');
 uimenu(grasp_handles.menu.user_modules.root,'label','&FLL Anisotropy Calculator','callback','fll_anisotropy_calculate_window','enable','on');
+
+%Lionel's Rheo module
+uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','Rheo Anisotropy Calculator','callback','rheo_anisotropy_window','enable','on');
 
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&TOF Calculator','callback','tof_calculator_window','enable','on');
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&D33 Chopper Time-Distance Calculator','callback','d33_chopper_time_distance','enable','on');

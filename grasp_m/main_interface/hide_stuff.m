@@ -8,6 +8,19 @@ global grasp_env
 %Shows or Hides various selectors, buttons, check-boxes etc depending on
 %what is needed
 
+%Depth max min
+
+if status_flags.selector.depth_range_chk ==1; visible = 'on';
+else visible = 'off'; end
+set(grasp_handles.figure.dpth_range_chk,'value',status_flags.selector.depth_range_chk);
+set(grasp_handles.figure.depth_range_min,'visible',visible);
+set(grasp_handles.figure.depth_range_max,'visible',visible);
+   
+
+
+%Software tube calibration
+set(grasp_handles.figure.detcal_chk,'value',status_flags.calibration.soft_det_cal);
+
 %Manual Z-Scale
 if status_flags.display.manualz.check==1; status = 'on'; else status = 'off'; end
 set(grasp_handles.figure.manualz_min,'string', num2str(status_flags.display.manualz.min),'visible',status);
@@ -40,7 +53,7 @@ set(grasp_handles.figure.beamcentre_ctheta,'visible',status);
 set(grasp_handles.figure.beamcentre_ctheta_text,'visible',status);
 
 %Extra gui for D33_rawdata
-if strcmp(grasp_env.inst,'ILL_d33') && strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning');  status = 'on'; else status = 'off'; end
+if strcmp(grasp_env.inst,'ILL_d33') && (strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') ||  strcmp(grasp_env.inst_option,'D33'));  status = 'on'; else status = 'off'; end
 set(grasp_handles.figure.raw_tube_data_chk,'visible',status);
 if status_flags.fname_extension.raw_tube_data_load ==0; status = 'off'; end
 set(grasp_handles.figure.detcal_chk_text,'visible',status);

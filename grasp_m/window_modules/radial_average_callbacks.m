@@ -16,18 +16,22 @@ if nargin <1; to_do = ''; end
 
 %Radial Average Window & Parameter Callbacks
 switch to_do
-    case 'depth_frame_start'
-        temp = str2num(get(gcbo,'string'));
-        if not(isempty(temp));
-            status_flags.analysis_modules.radial_average.depth_frame_start = temp;
-        end
+    
+    case 'tof_iq'
+        status_flags.analysis_modules.radial_average.tof_iq = get(gcbo,'value');
         
-    case 'depth_frame_end'
-        temp = str2num(get(gcbo,'string'));
-        if not(isempty(temp));
-            status_flags.analysis_modules.radial_average.depth_frame_end = temp;
-        end
-        
+%     case 'depth_frame_start'
+%         temp = str2num(get(gcbo,'string'));
+%         if not(isempty(temp));
+%             status_flags.analysis_modules.radial_average.depth_frame_start = temp;
+%         end
+%         
+%     case 'depth_frame_end'
+%         temp = str2num(get(gcbo,'string'));
+%         if not(isempty(temp));
+%             status_flags.analysis_modules.radial_average.depth_frame_end = temp;
+%         end
+%         
         
     
     case 'd33_tof_combine_check'
@@ -111,24 +115,36 @@ switch to_do
         
     case 'single_radio'
         status_flags.analysis_modules.radial_average.single_depth_radio = 0;
-        set(grasp_handles.window_modules.radial_average.frame_start,'visible','off');
-        set(grasp_handles.window_modules.radial_average.frame_end,'visible','off');
-        set(grasp_handles.window_modules.radial_average.frame_startend_text,'visible','off');
         set(grasp_handles.window_modules.radial_average.depth_combine_text,'visible','off');
         set(grasp_handles.window_modules.radial_average.depth_combine_check,'visible','off');
         
     case 'depth_radio'
         status_flags.analysis_modules.radial_average.single_depth_radio = 1;
-        set(grasp_handles.window_modules.radial_average.frame_start,'visible','on');
-        set(grasp_handles.window_modules.radial_average.frame_end,'visible','on');
-        set(grasp_handles.window_modules.radial_average.frame_startend_text,'visible','on');
         set(grasp_handles.window_modules.radial_average.depth_combine_text,'visible','on');
         set(grasp_handles.window_modules.radial_average.depth_combine_check,'visible','on');
+        status_flags.selector.depth_range_chk = 1; %Switch on depth range in main display
+        hide_stuff;
+        
+        
         
     case 'direct_to_file_check'
         status_flags.analysis_modules.radial_average.direct_to_file = get(gcbo,'value');
         
     case 'averaging_control'
+        
+        %temporary stuff
+        if not(isfield(status_flags.analysis_modules.radial_average,'tof_iq'));
+           status_flags.analysis_modules.radial_average.tof_iq =0;
+        end
+        if status_flags.analysis_modules.radial_average.tof_iq == 1;
+            tof_iq
+            return
+        end
+        
+        
+
+        
+        
         
         if status_flags.analysis_modules.radial_average.single_depth_radio == 1; %i.e. do depth
             
@@ -147,19 +163,25 @@ switch to_do
             disp(['Averaging Workhseets through Depth']);
             tof_iq_store = []; %Empty array
             
-            if status_flags.analysis_modules.radial_average.depth_frame_start<= foreground_depth;
-                d_start = status_flags.analysis_modules.radial_average.depth_frame_start;
+            if status_flags.selector.depth_range_min<= foreground_depth;
+                d_start = status_flags.selector.depth_range_min;
             else
-                d_start = foreground_depth; status_flags.analysis_modules.radial_average.depth_frame_start = foreground_depth;
+                d_start = foreground_depth; status_flags.selector.depth_range_min = foreground_depth;
             end
-            if status_flags.analysis_modules.radial_average.depth_frame_end<= foreground_depth;
-                d_end = status_flags.analysis_modules.radial_average.depth_frame_end;
+            if status_flags.selector.depth_range_max<= foreground_depth;
+                d_end = status_flags.selector.depth_range_max;
             else
-                d_end = foreground_depth; status_flags.analysis_modules.radial_average.depth_frame_end = foreground_depth;
+                d_end = foreground_depth; status_flags.selector.depth_range_max = foreground_depth;
             end
             
+            if strcmp(status_flags.analysis_modules.radial_average.display_update,'on');
+                status_flags.command_window.display_params=1;
+                status_flags.display.refresh = 1;
+            else
+                status_flags.command_window.display_params=0;
+                status_flags.display.refresh = 0;
+            end
             
-            %for n = 1:foreground_depth
             for n = d_start:d_end
                 message_handle = grasp_message(['Averaging Worksheets through Depth: ' num2str(n) ' of ' num2str(foreground_depth)]);
                 status_flags.selector.fd = n+grasp_data(index).sum_allow;
@@ -169,7 +191,8 @@ switch to_do
             if ishandle(message_handle);
                 delete(message_handle);
             end
-            
+            status_flags.display.refresh = 1;
+            status_flags.command_window.display_params = 1;
             %Check for Depth (TOF) rebin
             if status_flags.analysis_modules.radial_average.single_depth_radio == 1 && status_flags.analysis_modules.radial_average.d33_tof_combine == 1;
                 disp(' ');
@@ -193,9 +216,7 @@ switch to_do
                 disp('Secondary Binning (e.g. TOF) of Data');
                 radial_average_callbacks('d33_tof_rebin');
             end
-
-            
-            
+          
         end
         
     case 'd33_tof_rebin'
@@ -302,8 +323,9 @@ switch to_do
                     plotdata = [plot_info.plot_data.xdat,plot_info.plot_data.ydat,plot_info.plot_data.edat];
                 end
                 
-                plot_info.export_data = plotdata; % replace the export data with the new math op data
                 export_data = [plot_info.plot_data.xdat,plot_info.plot_data.ydat,plot_info.plot_data.edat,plot_info.plot_data.exdat];
+
+                plot_info.export_data = export_data; % replace the export data with the new math op data
                 
                 plot_info.legend_str = [num2str(dqq(n)) '-' num2str(dqq(n+1)) ' dq/q Resolution'];
                 
@@ -428,6 +450,8 @@ case 'radial_q'
     
     %Radial and Azimuthal average takes the data directly from displayimage
     iq_data = []; %Final iq for all detectors appended together
+    iq_big_list = [];
+    
     for det = 1:inst_params.detectors
         if status_flags.display.(['axis' num2str(det) '_onoff']) ==1; %i.e. Detector is Active
             
@@ -466,6 +490,12 @@ case 'radial_q'
             iq_list(:,6) = temp4(logical(mask)); %delta_q_theta FWHM
             iq_list(:,7) = temp5(logical(mask)); %delta_q_pixel FWHM
             iq_list(:,8) = temp6(logical(mask)); %delta_q_sample_aperture FWHM
+            
+            iq_big_list = [iq_big_list; iq_list];
+        end
+        
+        iq_list = iq_big_list;    
+            
             
             %Generate Bin_Edges
             x_min = min(iq_list(:,1)); x_max = max(iq_list(:,1));
@@ -530,13 +560,24 @@ case 'radial_q'
                 %iq_data(:,7) = delta_q Detector Pixels
                 %iq_data(:,8) = delta_q Sample Aperture
                 
-                %iq_data(:,9) = delta_q Binning - always next to last
+                %iq_data(:,9) = delta_q Binning (FWHM Square) - always next to last
                 %iq_data(:,10) = # elements - always last
+                
+                %If enabled (ticked) add the binning resolution (FWHM) to the classic q-resolution (FWHM)
+                if status_flags.resolution_control.binning_check == 1;
+                    %convert both back to sigma before adding in quadrature
+                    sigma1 = iq_data(:,4)/2.3548; %Came as a Gaussian FWHM
+                    sigma2 = iq_data(:,9)/3.4; %Came as a Square FWHM
+                    sigma = sqrt( sigma1.^2 + sigma2.^2 ); %Gaussian Equivalent
+                    fwhm = sigma * 2.3548;
+                    iq_data(:,4) = fwhm;
+                end
+                
             end
         end
         end
         
-    end
+    %end
     
     %Check all the detector data wasn't empty
     if isempty(iq_data);
@@ -1052,6 +1093,4 @@ if isfield(grasp_handles.window_modules.radial_average,'window')
         
     end
 end
-
-
 

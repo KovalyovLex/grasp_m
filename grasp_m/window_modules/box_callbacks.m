@@ -1,6 +1,8 @@
-function box_callbacks(to_do)
+function output = box_callbacks(to_do,option)
 
+if nargin<2; option = ''; end
 if nargin<1; to_do = ''; end
+output = [];
 
 global status_flags
 global grasp_handles
@@ -12,11 +14,128 @@ global last_result
 global box_intensities
 
 switch to_do
+    
+    case 'retrieve_box_coords'
+        %Retrieves the box coords from the status_flags structure
+        %and modifies them if necessary according to q-lock - or other box
+        %moving features
 
+        %find current beam centre
+        cm = current_beam_centre;
+
+        coords = status_flags.analysis_modules.boxes.(['coords' num2str(option)]); %where option is the box number
+        %Rebuild Masks if necessary (i.e. for Q-lock with wavelength)
+        if status_flags.analysis_modules.boxes.q_lock_chk  == 1;
+            %Modify coordinates according to wavelength and reference wavelength
+            lambda_ref = status_flags.analysis_modules.boxes.q_lock_wav_ref;
+            lambda_now = displayimage.params1(inst_params.vectors.wav);
+            
+            
+            if status_flags.analysis_modules.boxes.q_lock_box_size_chk  == 0;
+                %Simple box movement - box gets larger as it goes out
+                %R1 = (coords(1) * lambda_now/lambda_ref); %new outer radius
+                %R2 = (coords(2) * lambda_now/lambda_ref); %new inner radius
+                if coords(1) ~=0;
+                    delta_x1 = (coords(1)-cm.det1.cm_pixels(1)) * lambda_now/lambda_ref;
+                    coords(1) = delta_x1 + cm.det1.cm_pixels(1);
+                end
+                if coords(2) ~=0;
+                    delta_x2 = (coords(2)-cm.det1.cm_pixels(1)) * lambda_now/lambda_ref;
+                    coords(2) = delta_x2 + cm.det1.cm_pixels(1);
+                end
+                if coords(3) ~=0;
+                    delta_y1 = (coords(3)-cm.det1.cm_pixels(2)) * lambda_now/lambda_ref;
+                    coords(3) = delta_y1 + cm.det1.cm_pixels(2);
+                end
+                if coords(4) ~=0;
+                    delta_y2 = (coords(4)-cm.det1.cm_pixels(2)) * lambda_now/lambda_ref;
+                    coords(4) = delta_y2 + cm.det1.cm_pixels(2);
+                end
+                
+                
+            elseif status_flags.analysis_modules.boxes.q_lock_box_size_chk == 1;
+                %'Constant' box size 
+                x_width = coords(2)-coords(1); y_width = coords(4)-coords(3);
+                delta_mean_x = (((coords(1)+coords(2))/2) - cm.det1.cm_pixels(1)) * lambda_now/lambda_ref;
+                delta_mean_y = (((coords(4)+coords(3))/2) - cm.det1.cm_pixels(2)) * lambda_now/lambda_ref;
+                if coords(1) ~=0;
+                    coords(1) = delta_mean_x + cm.det1.cm_pixels(1) - x_width/2;
+                end
+                if coords(2) ~=0;
+                    coords(2) = delta_mean_x + cm.det1.cm_pixels(1) + x_width/2;
+                end
+                if coords(3) ~=0;
+                    coords(3) = delta_mean_y + cm.det1.cm_pixels(2) - y_width/2;
+                end
+                if coords(4) ~=0;
+                    coords(4) = delta_mean_y + cm.det1.cm_pixels(2) + y_width/2;
+                end
+            end
+        end
+        
+        if status_flags.analysis_modules.boxes.t2t_lock_chk ==1 ;
+            
+            %Modify coordinates according to san angle and reference san angle
+            angle_ref = status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(option)]);
+            angle_now = displayimage.params1(inst_params.vectors.san);
+            delta_2theta = 2*(angle_now - angle_ref); %This is the required angular shift of the box
+            
+            if coords(1) ~=0 && coords(2) ~=0;
+                if coords(1) < cm.det1.cm_pixels(1);
+                    
+                else
+                    delta_2theta = -delta_2theta;
+                end
+                
+                x1_angle = displayimage.qmatrix1(1,round(coords(1)),7);
+                x1_angle = x1_angle + delta_2theta;
+                %Find the cloeset pixel this corresponds to on the detector
+                temp = find(displayimage.qmatrix1(1,:,7)>=x1_angle);
+                x1 = displayimage.qmatrix1(1,temp(1),1);
+                
+                x2_angle = displayimage.qmatrix1(1,round(coords(2)),7);
+                x2_angle = x2_angle + delta_2theta;
+                %Find the cloeset pixel this corresponds to on the detector
+                temp = find(displayimage.qmatrix1(1,:,7)>=x2_angle);
+                x2 = displayimage.qmatrix1(1,temp(1),1);
+                
+                
+                %if status_flags.analysis_modules.boxes.t2t_lock_box_size_chk == 1; %Scale sector opening with box position
+                %    coords(4) = coords(4) * mean(coords(1),coords(2))/mean(R1,R2);
+                %    
+                %end
+                coords(1) = x1;
+                coords(2) = x2;
+            end
+            
+        end
+        output = round(coords);
+        return
+        
+       
+    case 'q_lock_box_size_chk'
+        status_flags.analysis_modules.boxes.q_lock_box_size_chk = get(gcbo,'value');
+        box_callbacks;
+        
+    case 'q_lock_chk'
+        status_flags.analysis_modules.boxes.q_lock_chk = get(gcbo,'value');
+        status_flags.analysis_modules.boxes.t2t_lock_chk = 0;
+        box_callbacks;
+        
+    case 't2t_lock_box_size_chk'
+        status_flags.analysis_modules.boxes.t2t_lock_box_size_chk = get(gcbo,'value');
+        box_callbacks;
+        
+    case 't2t_lock_chk'
+        status_flags.analysis_modules.boxes.t2t_lock_chk = get(gcbo,'value');
+        status_flags.analysis_modules.boxes.q_lock_chk = 0;
+        box_callbacks;
+       
+        
     case 'scan_box_check'
         box = get(gcbo,'userdata');
         status_flags.analysis_modules.boxes.scan_boxes_check(box) = get(gcbo,'value');
-
+        
     case 'x1'
         box = get(gcbo,'userdata');
         temp = str2num(get(gcbo,'string'));
@@ -25,7 +144,9 @@ switch to_do
             coords(1) = temp;
             status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
         end
-
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
+        
     case 'x2'
         box = get(gcbo,'userdata');
         temp = str2num(get(gcbo,'string'));
@@ -34,8 +155,9 @@ switch to_do
             coords(2) = temp;
             status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
         end
-
-
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
+        
     case 'y1'
         box = get(gcbo,'userdata');
         temp = str2num(get(gcbo,'string'));
@@ -44,8 +166,9 @@ switch to_do
             coords(3) = temp;
             status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
         end
-
-
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
+        
     case 'y2'
         box = get(gcbo,'userdata');
         temp = str2num(get(gcbo,'string'));
@@ -54,18 +177,23 @@ switch to_do
             coords(4) = temp;
             status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
         end
-
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
 
     case 'clear_box'
         box = get(gcbo,'userdata');
-        coords = [1,1,1,1,1]; %Empty box coordinates.  5th coordinate is the detector number
+        coords =[0,0,0,0,1]; %Empty box coordinates.  5th coordinate is the detector number
         status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
 
     case 'clear_all'
         for box = 1:6
-            coords = [1,1,1,1,1]; %Empty box coordinates
+            coords = [0,0,0,0,1]; %Empty box coordinates
             status_flags.analysis_modules.boxes = setfield(status_flags.analysis_modules.boxes,['coords' num2str(box)],coords);
         end
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
 
     case 'parameter'
         temp = str2num(get(grasp_handles.window_modules.box.parameter,'string'));
@@ -90,7 +218,10 @@ switch to_do
         
         %Keep a record of the scan-box reference SAN angle
         status_flags.analysis_modules.boxes.scan_boxes_angle0(box) = displayimage.(['params' num2str(det)])(inst_params.vectors.san);
+        status_flags.analysis_modules.boxes.q_lock_wav_ref = displayimage.params1(inst_params.vectors.wav);
+        status_flags.analysis_modules.boxes.(['t2t_lock_angle_ref' num2str(box)]) = displayimage.params1(inst_params.vectors.san);
 
+        
     case 'close'
         %Delete old boxes
         temp = find(ishandle(grasp_handles.window_modules.box.sketch_handles));
@@ -102,28 +233,25 @@ switch to_do
 
     case 'sum_box_chk'
         status_flags.analysis_modules.boxes.sum_box_chk = not(status_flags.analysis_modules.boxes.sum_box_chk);
-
+        
     case 'box_nrm_chk'
         status_flags.analysis_modules.boxes.box_nrm_chk = not(status_flags.analysis_modules.boxes.box_nrm_chk);
-
-    case 'box_it'
-
-        %Turn off updating
-        remember_display_params_status = status_flags.command_window.display_params; %Turn off command window parameter update for the boxing
-        status_flags.command_window.display_params= 0;
-        status_flags.display.refresh = 0; %Turn off the 2D display for speed
-
+        
+    case 'build_the_masks'
+        
         box_masks = []; box_number = []; active_boxes = [];
         %Make empty sum_masks for all detectors
         for det = 1:inst_params.detectors
             sum_mask.(['det' num2str(det)]) = zeros(inst_params.(['detector' num2str(det)]).pixels(2),inst_params.(['detector' num2str(det)]).pixels(1));
         end
-
+        
         box_history = ['Box Coordinates:  x1 x2 y1 y2'];
         %Make logical box masks only for valid boxes
         for box = 1:6
-            coords = status_flags.analysis_modules.boxes.(['coords' num2str(box)]);
-            disp(['Box ' num2str(box) ' coordinates ' num2str(coords(1:4)) ' on detector ' num2str(coords(5))]);
+            %            coords = status_flags.analysis_modules.boxes.(['coords' num2str(box)]);
+            coords = box_callbacks('retrieve_box_coords',box);
+            
+            %disp(['Box ' num2str(box) ' coordinates ' num2str(coords(1:4)) ' on detector ' num2str(coords(5))]);
             det = coords(5); %Detector number we are dealing with
             box_masks.(['box' num2str(box)]) = zeros(inst_params.(['detector' num2str(det)]).pixels(2),inst_params.(['detector' num2str(det)]).pixels(1));
             box_area = (coords(2)-coords(1))*(coords(4)-coords(3));
@@ -137,20 +265,67 @@ switch to_do
         for det = 1:inst_params.detectors
             sum_mask.(['det' num2str(det)]) = double(sum_mask.(['det' num2str(det)])); %Otherwise it comes out as a logical
         end
-        disp(['Active Boxes are:  ' num2str(active_boxes)]);
+        %disp(['Active Boxes are:  ' num2str(active_boxes)]);
+        
+        output.box_mask =  box_masks;
+        output.active_boxes = active_boxes;
+        output.sum_mask = sum_mask;
+        output.box_history = box_history;
+        
+        
+        
+    case 'box_it'
+
+        %Turn off updating
+        remember_display_params_status = status_flags.command_window.display_params; %Turn off command window parameter update for the boxing
+        if strcmp(status_flags.analysis_modules.boxes.display_refresh,'on');
+            status_flags.command_window.display_params=1;
+            status_flags.display.refresh = 1;
+        else
+            status_flags.command_window.display_params=0;
+            status_flags.display.refresh = 0;
+        end
+        
+        masks = box_callbacks('build_the_masks');
+        box_masks = masks.box_mask;
+        active_boxes = masks.active_boxes;
+        sum_mask = masks.sum_mask;
+        box_history = masks.box_history;
 
         %Churn through the depth and extract box-sums
         index = data_index(status_flags.selector.fw);
         foreground_depth = status_flags.selector.fdpth_max - grasp_data(index).sum_allow;
         depth_start = status_flags.selector.fd; %remember the initial foreground depth
-
+        
+        %Check if using depth max min
+        if status_flags.selector.depth_range_chk == 1;
+            dstart = status_flags.selector.depth_range_min;
+            if status_flags.selector.depth_range_max > foreground_depth;
+                dend = foreground_depth;
+            else
+                dend = status_flags.selector.depth_range_max;
+            end
+        else
+            dstart = 1; dend = foreground_depth;
+        end
+       
+        
         disp(['Extracting Box intensities through depth']);
         box_intensities = [];
-        for n = 1:foreground_depth
+        for n = dstart:dend
             message_handle = grasp_message(['Extracting Box intensities Depth: ' num2str(n) ' of ' num2str(foreground_depth)]);
             status_flags.selector.fd = n+grasp_data(index).sum_allow;
             main_callbacks('depth_scroll'); %Scroll all linked depths and update
-
+            
+            %Rebuild Masks if necessary (i.e. for Q-lock with wavelength)
+            if status_flags.analysis_modules.sector_boxes.q_lock_chk  == 1 || status_flags.analysis_modules.sector_boxes.t2t_lock_chk ==1;
+                masks = box_callbacks('build_the_masks');
+                box_masks = masks.box_mask;
+                active_boxes = masks.active_boxes;
+                sum_mask = masks.sum_mask;
+                box_history = masks.box_history;
+            end
+            
             %Get the box intensities
             if status_flags.analysis_modules.boxes.sum_box_chk == 1;  %Summed Boxes
                 %Loop though the detectors each with their sum mask
@@ -208,7 +383,7 @@ switch to_do
                     box_param_name = box_param_name{1};
                 end
             end
-            box_intensities(n,:) = [n, parameter, box_sum_list];
+            box_intensities = [box_intensities; [n, parameter, box_sum_list]];
         end
         
         status_flags.selector.fd = depth_start;
@@ -271,11 +446,29 @@ switch to_do
 end
 
 
+%Update displayed box window option
+if status_flags.analysis_modules.boxes.q_lock_chk == 1; %q-lock
+    set(grasp_handles.window_modules.box.q_lock_box_size,'visible','on');
+    set(grasp_handles.window_modules.box.t2t_lock_box_size,'visible','off');
+else
+    set(grasp_handles.window_modules.box.q_lock_box_size,'visible','off');
+    %set(grasp_handles.window_modules.box.t2t_lock_box_size,'visible','off');
+end
+
+if status_flags.analysis_modules.boxes.t2t_lock_chk == 1; %theta-2theta lock
+    set(grasp_handles.window_modules.box.t2t_lock_box_size,'visible','off'); %NOT USED AT THE MOMENT
+    set(grasp_handles.window_modules.box.q_lock_box_size,'visible','off');
+else
+    set(grasp_handles.window_modules.box.t2t_lock_box_size,'visible','off');
+end
+set(grasp_handles.window_modules.box.q_lock,'value',status_flags.analysis_modules.boxes.q_lock_chk);
+set(grasp_handles.window_modules.box.t2t_lock,'value',status_flags.analysis_modules.boxes.t2t_lock_chk);
 
 
 %Update displayed parameters
 for box = 1:6
-    coords = getfield(status_flags.analysis_modules.boxes,['coords' num2str(box)]);
+    %coords = getfield(status_flags.analysis_modules.boxes,['coords' num2str(box)]);
+    coords = box_callbacks('retrieve_box_coords',box);
     handle = getfield(grasp_handles.window_modules.box,['coords' num2str(box)]);
     set(handle(1),'string',num2str(coords(1)));
     set(handle(2),'string',num2str(coords(2)));
@@ -300,7 +493,9 @@ if not(strcmp(box_color,'(none)'));
 
 
     for box = 1:6
-        coords = getfield(status_flags.analysis_modules.boxes,['coords' num2str(box)]);
+        %coords = getfield(status_flags.analysis_modules.boxes,['coords' num2str(box)]);
+        coords = box_callbacks('retrieve_box_coords',box);
+
         ax = grasp_handles.displayimage.(['axis' num2str(coords(5))]);
 
         %Check if using a scanning box & transform coordinates
