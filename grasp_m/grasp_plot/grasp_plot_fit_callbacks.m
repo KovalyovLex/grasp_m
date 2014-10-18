@@ -342,6 +342,7 @@ switch(to_do)
             disp('No 1D Fitting Functions File Found');
         end
         fn.fix = zeros(1,length(fn.variable_names)); %Fix parameter
+		fn.slowdown = zeros(1,length(fn.variable_names)); %Slow parameter--
         fn.group = zeros(1,length(fn.variable_names)); %Group parameter
         fn.err_values = zeros(1,length(fn.values)); %Err_Values
         fn.no_parameters = length(fn.values); %Intrinsic number of parameters BEFORE multiplexing
@@ -353,7 +354,8 @@ switch(to_do)
         %different or grouped parameters added together
         for n = 2:status_flags.fitter.number1d;
             status_flags.fitter.function_info_1d.fix = [status_flags.fitter.function_info_1d.fix, fn.fix];
-            status_flags.fitter.function_info_1d.group = [status_flags.fitter.function_info_1d.group, fn.group];
+            status_flags.fitter.function_info_1d.slowdown = [status_flags.fitter.function_info_1d.slowdown, fn.slowdown];%slowdown --
+			status_flags.fitter.function_info_1d.group = [status_flags.fitter.function_info_1d.group, fn.group];
             status_flags.fitter.function_info_1d.values = [status_flags.fitter.function_info_1d.values, fn.values];
             status_flags.fitter.function_info_1d.err_values = [status_flags.fitter.function_info_1d.err_values, fn.err_values];
             status_flags.fitter.function_info_1d.variable_names = [status_flags.fitter.function_info_1d.variable_names, fn.variable_names];
@@ -361,6 +363,9 @@ switch(to_do)
             %status_flags.fitter.function_info_1d.point_click_code = [status_flags.fitter.function_info_1d.point_click_code, fn.point_click_code];
         end
         
+		% Full functions field by variable names --
+        status_flags.fitter.function_info_1d.functions = status_flags.fitter.function_info_1d.variable_names;
+
         %Also allow output of the fit function (e.g. for Ancos2)
         output = status_flags.fitter.function_info_1d;
         
@@ -383,17 +388,41 @@ switch(to_do)
             handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.02,(0.8-(n*0.03)),0.3, 0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String',[status_flags.fitter.function_info_1d.long_names{n} ': ' status_flags.fitter.function_info_1d.variable_names{n} ' : ' ],'BackgroundColor', grasp_env.sub_figure_background_color, 'ForegroundColor', [1 1 1]);
             handles_store = [handles_store, handle];
             %Fix Check
-            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.37,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Fix ' status_flags.fitter.function_info_1d.long_names{n}],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.fix(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_fix_check'');');
+            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.33,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Fix ' status_flags.fitter.function_info_1d.long_names{n}],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.fix(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_fix_check'');');
+            handles_store = [handles_store, handle];            
+            %Slowdown Check--
+            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.40,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Slowdown ' status_flags.fitter.function_info_1d.long_names{n}],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.slowdown(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_slowdown_check'');');handles_store = [handles_store, handle];
             handles_store = [handles_store, handle];
-            
+			
             if status_flags.fitter.function_info_1d.group(n) == 1 && n > status_flags.fitter.function_info_1d.no_parameters;
                 visible = 'off';
             else
                 visible = 'on';
             end
             %Parameter Value
-            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(status_flags.fitter.function_info_1d.values(n)),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
-            handles_store = [handles_store, handle];
+            if ( strcmp(status_flags.fitter.function_info_1d.variable_names{n},status_flags.fitter.function_info_1d.functions{n}) )
+                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(status_flags.fitter.function_info_1d.values(n)),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
+                handles_store = [handles_store, handle];            
+            else
+				% this for auto fit--
+                % replace parameter for function
+                for line = 1:length(status_flags.fitter.function_info_1d.long_names)
+                    % substitude normal parameters
+                    if ( strcmp(status_flags.fitter.function_info_1d.variable_names{line},status_flags.fitter.function_info_1d.functions{line}) )
+                        eval([status_flags.fitter.function_info_1d.variable_names{line} ' = ' num2str(status_flags.fitter.function_info_1d.values(line)) ';']);
+                    end
+                end
+                for line = 1:length(status_flags.fitter.function_info_1d.long_names)
+                    if ( not ( strcmp(status_flags.fitter.function_info_1d.variable_names{line},status_flags.fitter.function_info_1d.functions{line}) ) )
+                        eval([status_flags.fitter.function_info_1d.variable_names{line} ' = ' status_flags.fitter.function_info_1d.functions{line} ';']);
+                    end
+                end
+                eval(['y = ' status_flags.fitter.function_info_1d.functions{n} ';']);
+                % save our value to global history
+                status_flags.fitter.function_info_1d.values(n) = y;
+                handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.45,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',num2str(y),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_value_enter'');');
+                handles_store = [handles_store, handle];  
+            end
             %Parameter Value Error
             handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.62,(0.8-(n*0.03)),0.15,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','text','HorizontalAlignment','left','string',num2str(status_flags.fitter.function_info_1d.err_values(n)));
             handles_store = [handles_store, handle];
@@ -402,6 +431,10 @@ switch(to_do)
                 handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.81,(0.8-(n*0.03)),0.038,0.028],'ToolTip',['Group ' status_flags.fitter.function_info_1d.long_names{n} '`s'],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','checkbox','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'value',status_flags.fitter.function_info_1d.group(n),'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_group_check'');');
                 handles_store = [handles_store, handle];
             end
+			
+			%Parameter function --
+            handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'visible',visible, 'units','normalized','Position',[0.72,(0.8-(n*0.03)),0.20,0.028],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','HorizontalAlignment','left','string',status_flags.fitter.function_info_1d.functions{n},'userdata',n,'callback','grasp_plot_fit_callbacks(''fn_function_enter'');');
+            handles_store = [handles_store, handle];
         end
         handle = uicontrol(grasp_handles.window_modules.curve_fit1d.window, 'units','normalized','Position',[0.02,0.1,0.96,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','text','HorizontalAlignment','left','backgroundcolor',grasp_env.sub_figure_background_color,'foregroundcolor','white','string',status_flags.fitter.function_info_1d.math_code);
         handles_store = [handles_store, handle];
@@ -534,7 +567,15 @@ switch(to_do)
         grasp_plot_fit_callbacks('retrieve_fn');
         grasp_plot_fit_callbacks('update_curve_fit_window');
         
-        
+    case 'fn_function_enter'
+        param_number = get(gcbo,'userdata');
+        value_str = get(gcbo,'string');
+        if not(isempty(value_str))
+            status_flags.fitter.function_info_1d.functions{param_number} = value_str;
+        end
+        status_flags.fitter.function_info_1d.fix(param_number) = not ( strcmp(status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number}) );
+        grasp_plot_fit_callbacks('draw_fn',guess_color); %update the function
+        grasp_plot_fit_callbacks('update_curve_fit_window');
         
     case 'fn_value_enter'
         param_number = get(gcbo,'userdata');
@@ -545,6 +586,10 @@ switch(to_do)
         end
         grasp_plot_fit_callbacks('draw_fn',guess_color); %update the function
         
+	case 'fn_value_slowdown_check'
+        param_number = get(gcbo,'userdata');
+        status_flags.fitter.function_info_1d.slowdown(param_number) = get(gcbo,'value');	
+	
     case 'fn_value_fix_check'
         param_number = get(gcbo,'userdata');
         status_flags.fitter.function_info_1d.fix(param_number) = get(gcbo,'value');
@@ -927,8 +972,8 @@ switch(to_do)
         if sum(vary_params)~=0;
             
             %Run the fit once
-            [fit_params, fit_params_err,chi2] = mf_lsqr_grasp(fitdata.xdat_all,fitdata.ydat_all,fitdata.edat_all,start_params,vary_params,fun_name,fitdata);
-            
+            [fit_params, fit_params_err,chi2] = mf_lsqr_grasp(fitdata.xdat_all,fitdata.ydat_all,fitdata.edat_all,start_params,vary_params,fun_name,fitdata,status_flags.fitter.function_info_1d.slowdown);
+			
             %In old Grasp I used to do a second run though the minimiser
             %holding all but one parameter constant at a time to get a
             %better co-varience checked value for the error.  After
@@ -946,7 +991,7 @@ switch(to_do)
                 temp_vary_params = zeros(size(vary_params));
                 temp_vary_params(params_to_vary(n)) = vary_params(params_to_vary(n));
                 %Recal the fitting function with the temporary vary_params
-                [temp_fit_params, temp_fit_params_err] = mf_lsqr_grasp(fitdata.xdat_all,fitdata.ydat_all,fitdata.edat_all,fit_params,temp_vary_params,fun_name,fitdata);
+                [temp_fit_params, temp_fit_params_err] = mf_lsqr_grasp(fitdata.xdat_all,fitdata.ydat_all,fitdata.edat_all,fit_params,temp_vary_params,fun_name,fitdata,status_flags.fitter.function_info_1d.slowdown);
                 fit_params_err_cov(params_to_vary(n)) = temp_fit_params_err(params_to_vary(n));
             end
             
