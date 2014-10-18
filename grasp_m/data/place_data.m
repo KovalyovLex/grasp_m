@@ -46,7 +46,6 @@ for frame = 1:numor_data.n_frames
             %Careful with parameters when appending files
             %Some parameters, e.g. monitor, need to be summed
             total_monitor = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.monitor,dpth);
-            %total_counts = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.counts,dpth);
             total_time = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.time,dpth);
             aq_time = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.aq_time,dpth);
             total_array_counts = grasp_data(index).(['params' num2str(det)]){nmbr}(inst_params.vectors.array_counts,dpth);
@@ -63,7 +62,7 @@ for frame = 1:numor_data.n_frames
         end
     end
     grasp_data(index).subtitle{nmbr}{dpth} = numor_data.subtitle;
-
+    
     %organise data info structure
     if isfield(numor_data,'info')
         %grasp_data(index).info{nmbr} = [];
@@ -83,4 +82,5 @@ for frame = 1:numor_data.n_frames
     %data(index).cm{nmbr}(dpth,:) = [inst_params.det_size(1)/2 inst_params.det_size(2)/2 0];
     
 end
+grasp_data(index).data_type{nmbr} = numor_data.file_type;
     

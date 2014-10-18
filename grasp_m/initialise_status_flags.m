@@ -9,6 +9,25 @@ if nargin < 1; to_do = ' '; end
 global status_flags
 global inst_params
 
+%Multi Beam Parameters
+status_flags.analysis_modules.multi_beam.number_beams_index = 2;
+status_flags.analysis_modules.multi_beam.number_beams = 9; %Corresponding to index above
+for n = 1:150 %Max possible number of beams    
+    %Box Coords
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).x1 = 0;
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).x2 = 0;
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).y1 = 0;
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).y2 = 0;
+    
+    %Beam Centers
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).cx = 0;
+    status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).cy = 0;
+end
+status_flags.analysis_modules.multi_beam.fit2d_checkbox = 0;
+status_flags.analysis_modules.multi_beam.auto_mask_check = 1;    
+status_flags.analysis_modules.multi_beam.auto_mask_radius = 5;
+status_flags.analysis_modules.multi_beam.beam_scale_check =1;
+
 %Rebin (complex) Parameters
 status_flags.analysis_modules.rebin.bin_spacing = 'linear';
 status_flags.analysis_modules.rebin.n_bins = 500;
@@ -29,6 +48,9 @@ status_flags.resolution_control.show_kernels_check = 0;
 status_flags.resolution_control.convolution_type = 1;
 status_flags.resolution_control.fwhmwidth = 2; %extent to which convolution kernel goes out.
 status_flags.resolution_control.finesse = 31;  %finesse (number of points) over the concolution kernel - should be ODD number
+status_flags.resolution_control.xgrid_2d = 5;  %2D finesse X (number of grid points)
+status_flags.resolution_control.ygrid_2d = 5;  %2D finesse Y (number of grid points)
+status_flags.resolution_control.sigma_extent_2d = 2;  %2D sigma extent over which to build the gaussian
 
 
 %Polarisation & Analysis Optimisation Utility
@@ -236,6 +258,12 @@ status_flags.display.axis7_onoff = 1;
 status_flags.display.axis8_onoff = 1;
 status_flags.display.axis9_onoff = 1;
 status_flags.display.axis10_onoff = 1;
+status_flags.display.active_axis_color = 'red';
+status_flags.display.inactive_axis_color = 'white';
+
+
+status_flags.display.show_minor_detectors = 'on'; %e.g. show/hide D33 side panels
+
 
 
 %Command window events
@@ -263,6 +291,7 @@ status_flags.fitter.number2d = 1; %Number of simultaneous functions
 status_flags.fitter.number1d = 1;
 status_flags.fitter.curve_number1d = 1; %Curve number to fit
 status_flags.fitter.include_res_check = 0;  %Include divergence resolution in 1D fitting
+status_flags.fitter.include_res_check_2d = 0; %Include divergence resolution in 2D fitting
 status_flags.fitter.delete_curves_check = 0;
 status_flags.fitter.res1d_option = 'on'; %Show include resolution buttons
 status_flags.fitter.flag = 1;  %This is a flag to turn on and off the resolution convolution used during the high res convolution
@@ -316,8 +345,10 @@ status_flags.analysis_modules.sectors.anisotropy_angle = 0;
 
 
 %Strips
-status_flags.analysis_modules.strips.strip_cx = [64];
-status_flags.analysis_modules.strips.strip_cy = [64];
+for det = 1:5;
+    status_flags.analysis_modules.strips.(['strip_cx' num2str(det)]) = [0];
+    status_flags.analysis_modules.strips.(['strip_cy' num2str(det)]) = [0];
+end
 status_flags.analysis_modules.strips.theta = 0;
 status_flags.analysis_modules.strips.length = [30];
 status_flags.analysis_modules.strips.width = [10];

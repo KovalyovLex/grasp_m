@@ -20,12 +20,12 @@ function P = ff_sphere(q, radius, poly_fwhm, contrast, scale, bck)
 %r = 1 + 2.*randn(100,1);
 
 
-poly_sigma = ((poly_fwhm / 100)*radius) /2.35;
+poly_sigma = ((poly_fwhm / 100)*radius) /2.354;
 radius = radius + poly_sigma.*randn(size(q));
 
 rq = (radius).* q;  %r [�] * q [�-1]  [Unitless]
 contrast = contrast *1e8*1e8; %convert [�-2] to [cm-2];
-V = (4/3)*pi*(radius*1e-8).^3; %Scatterer Volume in [cm2]
+V = (4/3)*pi*(radius*1e-8).^3; %Scatterer Volume in [cm3]
 
 P = (scale./V) .* (3*V*contrast .*  (sin(rq) - (rq).*cos(rq)) ./ (rq).^3).^2;
 P = P + bck; %P(q) / scatterer volume in [cm-1]

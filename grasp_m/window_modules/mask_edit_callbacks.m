@@ -87,21 +87,27 @@ switch to_do
             cy = str2num(get(grasp_handles.window_modules.mask_edit.cy,'string'));
             radius = str2num(get(grasp_handles.window_modules.mask_edit.radius,'string'));
             
+            %Correct for pixel anisotropy.  Pixels are measured in x-pixels
+            pixelsize_x = inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixel_size(1)/1000; %x-pixel size in m
+            pixelsize_y = inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixel_size(2)/1000; %y-pixel size in m
+            pixel_anisotropy = pixelsize_x / pixelsize_y;
+            
             if radius ~= 0
                 for y = 0:radius
                     width = sqrt((radius^2)-(y^2));
+                    yy = y*pixel_anisotropy;
                     for x = 0:fix(width)
-                        if floor(cy+y) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(2) && floor(cx+x) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(1)
-                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(floor(cy+y),floor(cx+x)) = option;
+                        if floor(cy+yy) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(2) && floor(cx+x) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(1)
+                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(floor(cy+yy),floor(cx+x)) = option;
                         end
-                        if ceil(cy-y) >= 1 && floor(cx+x) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(1)
-                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(ceil(cy-y),floor(cx+x)) = option;
+                        if ceil(cy-yy) >= 1 && floor(cx+x) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(1)
+                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(ceil(cy-yy),floor(cx+x)) = option;
                         end
-                        if floor(cy+y) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(2) && ceil(cx-x) >= 1
-                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(floor(cy+y),ceil(cx-x)) = option;
+                        if floor(cy+yy) <= inst_params.(['detector' num2str(status_flags.display.active_axis)]).pixels(2) && ceil(cx-x) >= 1
+                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(floor(cy+yy),ceil(cx-x)) = option;
                         end
-                        if ceil(cy-y) >=1 && ceil(cx-x) >=1
-                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(ceil(cy-y),ceil(cx-x)) = option;
+                        if ceil(cy-yy) >=1 && ceil(cx-x) >=1
+                            grasp_data(index).(['data' num2str(status_flags.display.active_axis)]){nmbr}(ceil(cy-yy),ceil(cx-x)) = option;
                         end
                     end
                 end

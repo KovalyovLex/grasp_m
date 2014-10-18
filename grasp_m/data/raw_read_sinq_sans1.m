@@ -29,7 +29,7 @@ while isempty(findstr(linestr,'%Counts'));
         param(128) = numor_data.numor; %Additional parameter added by chuck
     end
     
-    if findstr(linestr,'Title'); l=length(linestr); numor_data.subtitle = linestr(7:l); end
+    if findstr(linestr,'SampleName'); l=length(linestr); numor_data.subtitle = linestr(12:l); end
 
     if findstr(linestr,'Time='); a = findstr(linestr,'Time='); if a==1; l = length(linestr); param(inst_params.vectors.time) = 10*str2num(linestr(findstr(linestr,'=')+1:l)); end; end
     if findstr(linestr,'Moni1='); 

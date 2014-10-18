@@ -413,11 +413,6 @@ else %Conventional Analysis - Get foreground, background and cadmium selector da
 end
     
 
-
-
-
-
-
 %***** CALIRBATIONS ***** %***** CALIRBATIONS ***** %***** CALIRBATIONS *****
 %Only do data calibrations for certain worksheet types described by flag:  i.e. fore, back, masks etc.
 %AND check that the intensity matrix isn't empty
@@ -427,7 +422,7 @@ if ((foreimage.type >=1 && foreimage.type <=3 ) || (foreimage.type >= 11 && fore
     if status_flags.calibration.calibrate_check == 1; %i.e. Calibration is switched on
         history = [history, {[' ']}];
         history = [history, {['***** Calibrations: *****']}];
-        
+
         %Paralax Correction
         if status_flags.calibration.d22_tube_angle_check ==1;
             
@@ -445,7 +440,6 @@ if ((foreimage.type >=1 && foreimage.type <=3 ) || (foreimage.type >= 11 && fore
             end
         end
 
-        
         %***** Divide by Detector Efficiency *****
         if status_flags.calibration.det_eff_check == 1;
             %also returns a 'nan_mask' in the data structure

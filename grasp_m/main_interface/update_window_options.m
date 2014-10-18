@@ -44,7 +44,7 @@ if ishandle(grasp_handles.window_modules.rebin.window); %i.e. calibration contro
 end
 
 
-%Calibration Options Window
+%Resolution Options Window
 if ishandle(grasp_handles.window_modules.resolution_control_window.window); %i.e. calibration control window is open
     set(grasp_handles.window_modules.resolution_control_window.aperture_size,'string',num2str(status_flags.resolution_control.aperture_size*1e3));
 end
@@ -78,6 +78,7 @@ if ishandle(grasp_handles.window_modules.calibration.det_eff_nmbr);
         value = status_flags.calibration.det_eff_nmbr;
     else value = 1; %for compatibility with older graspv6 projects
     end
+  
     set(grasp_handles.window_modules.calibration.det_eff_nmbr,'string',efficiency_selector_str,'value',value,'callback','calibration_callbacks(''det_eff_selector'');');
 end
 
@@ -87,8 +88,6 @@ if ishandle(grasp_handles.window_modules.calibration.water.cal_scalar_value)
     set(grasp_handles.window_modules.calibration.water.cal_scalar_units,'string',grasp_data(index).mean_intensity_units1{status_flags.calibration.det_eff_nmbr});
     set(grasp_handles.window_modules.calibration.water.cal_xsection,'string',num2str(grasp_data(index).calibration_xsection{status_flags.calibration.det_eff_nmbr}));
 end
-
-
     
 
 
@@ -97,7 +96,15 @@ if ishandle(grasp_handles.window_modules.calibration.beam.nmbr);
 end
 
 if ishandle(grasp_handles.window_modules.calibration.beam.dpth);
-    set(grasp_handles.window_modules.calibration.beam.dpth,'string',num2str(status_flags.calibration.beam_depth));
+    index = data_index(status_flags.calibration.beam_worksheet);
+    dpth_sum_allow = grasp_data(index).sum_allow;
+    depth = status_flags.calibration.beam_depth- dpth_sum_allow;
+    if depth >0;
+        depth_str = num2str(depth);
+    else
+        depth_str = 'sum';
+    end
+    set(grasp_handles.window_modules.calibration.beam.dpth,'string',depth_str);
 end
 
 %calibration window sample thickness

@@ -142,8 +142,16 @@ switch to_do
                 smask.(['det' num2str(det)]) = or(smask.(['det' num2str(det)]),(smask1.*(smask2+smask3+smask4)));
                 smask.(['det' num2str(det)]) = +smask.(['det' num2str(det)]); %Converts from logical to integer
             end
-            % figure
-            % pcolor(smask.(['det' num2str(det)]))
+            
+            %Include Current Mask conditions in the box
+            smask.(['det' num2str(det)]) = smask.(['det' num2str(det)]).*displayimage.(['mask' num2str(det)]);
+            
+            
+            
+            
+            %figure
+            %pcolor(smask.(['det' num2str(det)]))
+           % title(num2str(det))
         end
         return
 end

@@ -14,6 +14,20 @@ button = [];
 
 switch to_do
     
+    case 'active_axis_color'
+        grasp_env.displayimage.active_axis_color = get(gcbo,'label');
+        set(grasp_handles.menu.file.preferences.active_axis_color,'checked','off');
+        set(gcbo,'checked','on');
+        main_callbacks('active_axis',status_flags.display.active_axis);
+        
+    case 'inactive_axis_color'
+        grasp_env.displayimage.inactive_axis_color = get(gcbo,'label');
+        set(grasp_handles.menu.file.preferences.inactive_axis_color,'checked','off');
+        set(gcbo,'checked','on');
+        main_callbacks('active_axis',status_flags.display.active_axis);
+        
+        
+    
     case 'sectors_color'
         
         status_flags.analysis_modules.sectors.sector_color = get(gcbo,'label');
@@ -210,6 +224,63 @@ switch to_do
                     status_flags.selector.depth_range_min = 1;
                     status_flags.selector.depth_range_max = 100;
                 end
+                
+                %Spelling error in D33_Instrument_Comissioning >> D33_Instrument_Commissioning
+                %Also Correct Data reader
+                if strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning');
+                    grasp_env.inst_option = 'D33_Instrument_Commissioning';
+                    inst_params.filename.data_loader = 'raw_read_ill_nexus_d33_commissioning';
+                end
+                
+                %Data Type
+                if not(isfield(grasp_data,'data_type'))
+                    disp('no data type field')
+                    for index = 1:length(grasp_data)
+                        for n = 1:grasp_data(index).nmbr
+                            grasp_data(index).data_type{n} = 'single frame';
+                        end
+                    end
+                end
+                
+                
+                %Multibeam
+                if not(isfield(status_flags.analysis_modules,'multi_beam'));
+                    %Multi Beam Parameters
+                    status_flags.analysis_modules.multi_beam.number_beams_index = 2;
+                    status_flags.analysis_modules.multi_beam.number_beams = 9; %Corresponding to index above
+                    for n = 1:150 %Max possible number of beams
+                        %Box Coords
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).x1 = 0;
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).x2 = 0;
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).y1 = 0;
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).y2 = 0;
+                        
+                        %Beam Centers
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).cx = 0;
+                        status_flags.analysis_modules.multi_beam.box_beam_coordinates.(['beam' num2str(n)]).cy = 0;
+                    end
+                    status_flags.analysis_modules.multi_beam.fit2d_checkbox = 0;
+                    status_flags.analysis_modules.multi_beam.auto_mask_check = 1;  
+                    status_flags.analysis_modules.multi_beam.auto_mask_radius = 5;
+                    status_flags.analysis_modules.multi_beam.beam_scale_check =1;
+
+                end
+
+                %Include 2D resolution
+                if not(isfield(status_flags.fitter,'include_res_check_2d'))
+                    status_flags.fitter.include_res_check_2d = 0;
+                    status_flags.resolution_control.xgrid_2d = 5;  %2D finesse X (number of grid points)
+                    status_flags.resolution_control.ygrid_2d = 5;  %2D finesse Y (number of grid points)
+                    status_flags.resolution_control.sigma_extent_2d = 2;  %2D sigma extent over which to build the gaussian
+                end
+                
+                %Show/Hide Minor Detectors e.g. D33 side panels
+                if not(isfield(status_flags.display,'show_minor_detectors'));
+                    status_flags.display.show_minor_detectors = 'on'; %e.g. show/hide D33 side panels
+                end
+                
+                
+                
                 
                 %Rebuild background & cadmium selector
                 selector_build
@@ -435,20 +506,17 @@ switch to_do
             end
         %end
         
-%     case 'export_displayimage'
-%         
-%         [fname, directory] = uiputfile([grasp_env.path.project_dir '000000'],'Export Display Image');
-%         
-%         if fname ~=0
-%             grasp_env.path.project_dir = directory;
-%             numor = str2num(fname);
-%             
-%             l = size(displayimage.parsub);
-%             parsub = rot90([displayimage.parsub blanks(80-l(2))],2);
-%             if isempty(numor); numor = 0; end
-%             ill_sans_data_write(displayimage.data,displayimage.params,parsub,numor,directory);
-%             ill_sans_data_write(displayimage.error,displayimage.params,parsub,numor,directory,1); %the flag '1' signifies to use the '.err' extension for error data
-%         end
+     case 'export_displayimage'
+        
+        [numor_str, directory] = uiputfile([grasp_env.path.project_dir '000000'],'Export Display Image (Numeric file name, no extension please)');
+        
+        numor = str2num(numor_str);
+        if numor_str ~=0 & not(isempty(numor))
+            grasp_env.path.project_dir = directory;
+            grasp_2d_nexus_write(directory,numor);             %Export 2d nexus
+        else
+            disp('Bad filename - should be numeric without extension')
+        end
         
     case 'export_binary'
         

@@ -7,16 +7,22 @@ for det = [1,2,3,4,5];
         %Open the tube_peak_fit file
         
         if det ==1; %rear
-            fid = fopen('d33_tube_peak_fit_det1.dat');
+            %fid = fopen('d33_tube_peak_fit_det1.dat');
+            fid = fopen('d33_tube_peak_fit_det1(July2014).dat');
+            
+            
             n_tubes = 128;
         elseif det == 4; %bottom
-            fid = fopen('d33_tube_peak_fit_det_bottom.dat');
+            %fid = fopen('d33_tube_peak_fit_det_bottom.dat');
+            fid = fopen('d33_tube_peak_fit_det_bottom(July2014).dat');
             n_tubes = 32;
         elseif det == 5; %top
             fid = fopen('d33_tube_peak_fit_det_top.dat');
+            %fid = fopen('d33_tube_peak_fit_det_top(July2014).dat');
             n_tubes = 32;
         elseif det == 2; %right
-            fid = fopen('d33_tube_peak_fit_det_right.dat');
+            %fid = fopen('d33_tube_peak_fit_det_right.dat');
+            fid = fopen('d33_tube_peak_fit_det_right(July2014).dat');
             n_tubes = 32;
         elseif det == 3; %left
             fid = fopen('d33_tube_peak_fit_det_left.dat');

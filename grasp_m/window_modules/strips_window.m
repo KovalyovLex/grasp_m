@@ -22,15 +22,9 @@ grasp_handles.window_modules.strips.window = figure(....
 handle = grasp_handles.window_modules.strips.window;
 
 %Strip Centre
-cm = current_beam_centre;
-%if isempty(status_flags.analysis_modules.strips.strip_cx);
-status_flags.analysis_modules.strips.strip_cx = cm.det1.cm_pixels(1); %end
-%if isempty(status_flags.analysis_modules.strips.strip_cy); 
-status_flags.analysis_modules.strips.strip_cy = cm.det1.cm_pixels(2); %end
-
 uicontrol(handle,'units','normalized','Position',[0.02,0.85,0.25,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','right','Style','text','String','Strip Centre:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
-grasp_handles.window_modules.strips.strip_cx = uicontrol(handle,'units','normalized','Position',[0.30,0.85,0.16,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.strips.strip_cx),'HorizontalAlignment','left','Tag','strip_centre_x','Visible','on','CallBack','strips_callbacks(''strip_cx'');');
-grasp_handles.window_modules.strips.strip_cy = uicontrol(handle,'units','normalized','Position',[0.47,0.85,0.16,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(status_flags.analysis_modules.strips.strip_cy),'HorizontalAlignment','left','Tag','strip_centre_y','Visible','on','CallBack','strips_callbacks(''strip_cy'');');
+grasp_handles.window_modules.strips.strip_cx = uicontrol(handle,'units','normalized','Position',[0.30,0.85,0.16,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',0,'HorizontalAlignment','left','Tag','strip_centre_x','Visible','on','CallBack','strips_callbacks(''strip_cx'');');
+grasp_handles.window_modules.strips.strip_cy = uicontrol(handle,'units','normalized','Position',[0.47,0.85,0.16,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',0,'HorizontalAlignment','left','Tag','strip_centre_y','Visible','on','CallBack','strips_callbacks(''strip_cy'');');
 uicontrol(handle,'units','normalized','Position',[0.7,0.85,0.25,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Grab Beam Centre','HorizontalAlignment','center','Tag','strip_grab_cm','Visible','on',...
     'CallBack','strips_callbacks(''grab_cm'');');
 
@@ -74,10 +68,20 @@ grasp_handles.window_modules.strips.plot_strip_mask = uicontrol(handle,'units','
 
 
 %********* Strip Analysis Buttons *********
-%I//L
-uicontrol(handle,'units','normalized','Position',[0.2,0.1,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I // Strip','HorizontalAlignment','center','Tag','strip_i_parallel','Visible','on','CallBack','strips_callbacks(''i_strip'');','enable','on');
+%I vs Pixel
+uicontrol(handle,'units','normalized','Position',[0.2,0.18,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I vs. Pixel','HorizontalAlignment','center','Tag','strip_i_parallel','Visible','on','CallBack','strips_callbacks(''i_strip'');');
 %Averaging, Radial and azimuthal
-uicontrol(handle,'units','normalized','Position',[0.525,0.1,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Averaging','HorizontalAlignment','center','Tag','boxfox_button','Visible','on','CallBack','strips_callbacks(''radial_average'');');
+uicontrol(handle,'units','normalized','Position',[0.525,0.18,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','Averaging','HorizontalAlignment','center','Tag','boxfox_button','Visible','on','CallBack','strips_callbacks(''radial_average'');');
+%I vs TwoTheta_x
+uicontrol(handle,'units','normalized','Position',[0.2,0.10,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I vs. 2ThX','HorizontalAlignment','center','Tag','strip_i_2thx','Visible','on','CallBack','strips_callbacks(''i_2thx'');');
+%I vs TwoTheta_y
+uicontrol(handle,'units','normalized','Position',[0.525,0.10,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I vs. 2ThY','HorizontalAlignment','center','Tag','strip_i_2thy','Visible','on','CallBack','strips_callbacks(''i_2thy'');');
+%I vs Mod TwoTheta_x
+uicontrol(handle,'units','normalized','Position',[0.2,0.02,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I vs. |2ThX|','HorizontalAlignment','center','Tag','strip_i_2thx','Visible','on','CallBack','strips_callbacks(''i_mod_2thx'');');
+%I vs Mod TwoTheta_y
+uicontrol(handle,'units','normalized','Position',[0.525,0.02,0.3,0.05],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','String','I vs. |2ThY|','HorizontalAlignment','center','Tag','strip_i_2thy','Visible','on','CallBack','strips_callbacks(''i_mod_2thy'');');
+
+
 
 strips_callbacks;
 

@@ -30,6 +30,8 @@ if strcmp(status_flags.deadtime.status,'on')
                     foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) .* dead_scale_matrix;
                     history = [history, {['Det: ' num2str(det) ' : Applying Deadtime Correction per (horizontal) Tube: 1/[1-tau/detector_rate], tau = ' num2str(det_params.dead_time(1)) ' (seconds)']}];
                     
+                    foreimage.scale_factor = foreimage.scale_factor * dead_scale(1); %keep a track on data scaling
+                    
                 else %Vertical tubes
                     tube_rate = sum(foreimage.(['data' num2str(det)]),1) / foreimage.(['params' num2str(det)])(vectors.time);
                     dead_scale = 1./ (1- det_params.dead_time .* tube_rate); %vector
@@ -37,6 +39,9 @@ if strcmp(status_flags.deadtime.status,'on')
                     foreimage.(['data' num2str(det)]) = foreimage.(['data' num2str(det)]) .* dead_scale_matrix;
                     foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) .* dead_scale_matrix;
                     history = [history, {['Det: ' num2str(det) ' : Applying Deadtime Correction per (vertical) Tube: 1/[1-tau/detector_rate], tau = ' num2str(det_params.dead_time(1)) ' (seconds)']}];
+                    
+                    foreimage.scale_factor = foreimage.scale_factor * dead_scale(1); %keep a track on data scaling
+                    
                 end
             else
                 history = [history, {['Det: ' num2str(det) ' : CANNOT Apply Deadtime Correction: Time Parameter = 0']}];
@@ -51,6 +56,9 @@ if strcmp(status_flags.deadtime.status,'on')
                 foreimage.(['data' num2str(det)]) = foreimage.(['data' num2str(det)]) .* dead_scale;
                 foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) .* dead_scale;
                 history = [history, {['Det: ' num2str(det) ' : Applying Deadtime Correction per Detector: 1/[1-tau/detector_rate], tau = ' num2str(det_params.dead_time(1)) ' (seconds)']}];
+                
+                foreimage.scale_factor = foreimage.scale_factor * dead_scale; %keep a track on data scaling
+                
             else
                 history = [history, {['Det: ' num2str(det) ' : CANNOT Apply Deadtime Correction: Time Parameter = 0']}];
             end
@@ -96,6 +104,21 @@ elseif strcmp(status_flags.normalization.status,'mon') %i.e. normalise data to s
         history = [history, {['Data Normalisation: Standard Monitor (' num2str(divider_standard) ') counts']}];
     end
     
+    
+elseif strcmp(status_flags.normalization.status,'mon2') %i.e. normalise data to standard monitor2
+    divider = foreimage.params1(vectors.monitor2); divider_standard = status_flags.normalization.standard_monitor;
+    if divider == 0;
+        if status_flags.command_window.display_params == 1;
+            disp(['Attempted divide by zero using this data normalisation scheme ''' status_flags.normalization.status '''']);
+            disp('resetting divider = 1  in normalize_data.m');
+        end
+        divider = 1;
+    else
+        foreimage.units = [foreimage.units '\\ Std mon '];
+        history = [history, {['Data Normalisation: Standard Monitor (' num2str(divider_standard) ') counts']}];
+    end
+
+    
 elseif strcmp(status_flags.normalization.status,'time') %i.e. normalisation to standard time
     divider = foreimage.params1(vectors.aq_time); divider_standard = status_flags.normalization.standard_time;
     if divider == 0;
@@ -125,8 +148,8 @@ elseif strcmp(status_flags.normalization.status,'exposure_time') %i.e. normalisa
     
     
 elseif strcmp(status_flags.normalization.status,'det') %i.e. detector counts
-    divider = foreimage.params1(vectors.counts); %This is the parameter block counts (not actual array counts)
-    %divider = foreimage.params(vectors.array_counts);  %This is the actual array counts
+    %divider = foreimage.params1(vectors.counts); %This is the parameter block counts (not actual array counts)
+    divider = foreimage.params1(vectors.array_counts);  %This is the actual array counts
     divider_standard = status_flags.normalization.standard_detector;
     if divider == 0;
         if status_flags.command_window.display_params == 1;
@@ -181,7 +204,7 @@ for det = 1:inst_params.detectors
     foreimage.(['data' num2str(det)]) = (foreimage.(['data' num2str(det)])/divider)*divider_standard;
     foreimage.(['error' num2str(det)]) = (foreimage.(['error' num2str(det)])/divider)*divider_standard;
 end
-
+foreimage.scale_factor = (foreimage.scale_factor / divider) * divider_standard; %keep a track on data scaling
 
 
 %Attenuator correction (based on parameters held params1 (first detector)
@@ -210,7 +233,7 @@ if att_status == 1 %i.e. if the attenuator is IN
     %2D - Wavelength dependent
     %3D - Wavelength and Collimation dependent
     
-        if size(inst_params.att.ratio,1) == 1;  %Single value
+    if size(inst_params.att.ratio,1) == 1;  %Single value
         %attenuator_scaler = inst_params.att.ratio((col_app*10 + att_type+1)); %+1 is because the attenuator list starts at 0
         attenuator_scaler = inst_params.att.ratio((att_type+1)); %+1 is because the attenuator list starts at 0
         
@@ -221,11 +244,13 @@ if att_status == 1 %i.e. if the attenuator is IN
         
     elseif size(inst_params.att.ratio,3) > 1; %Wavelength and Collimation dependent
         if col_app > 0; sheet_index = 10; else sheet_index = 0; end
-        att_matrix = inst_params.att.ratio(:,:,(sheet_index + att_type+1));
+        
+     att_matrix = inst_params.att.ratio(:,:,(sheet_index + att_type+1));
         temp = find(single(att_matrix(1,:)) ==single(current_col));
         att_wav = att_matrix(:,temp);
         attenuator_scaler = interp1(att_matrix(2:size(att_matrix,1),1),att_wav(2:length(att_wav)),current_wav);
-        end
+        
+    end
     
     foreimage.attenuation = attenuator_scaler;
     history = [history, {['Attenuator: ' num2str(att_type) ' is In.  Attenuation factor ' num2str(attenuator_scaler)]}];
@@ -250,7 +275,11 @@ if strcmp(status_flags.normalization.auto_atten,'on');
         foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)])*attenuator_scaler;
         history = [history, {['Attenuator: ' num2str(att_type) ' is In. Up-scaling data by ' num2str(attenuator_scaler)]}];
     end
+    
+    foreimage.scale_factor = foreimage.scale_factor * attenuator_scaler; %keep a track on data scaling
+    
 end
+
 
 
 %Attenuator 2 - D22 & D33 chopper attenuator
@@ -264,6 +293,9 @@ if isfield(inst_params.vectors,'att2')
             foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)])*att2;
             history = [history, {['Attenuator2: Up-scaling data by ' num2str(att2)]}];
         end
+        
+        foreimage.scale_factor = foreimage.scale_factor * att2; %keep a track on data scaling
+        
     else
             history = [history, {['Attenuator2: No correction applied']}];
     end
@@ -276,10 +308,13 @@ end
 %***** Count Scaler *****
 if strcmp(status_flags.normalization.count_scaler,'on');
     count_scaler = status_flags.normalization.standard_count_scaler;
-    foreimage.(['data' num2str(det)]) = (foreimage.(['data' num2str(det)]))*count_scaler;
-    foreimage.(['error' num2str(det)]) = (foreimage.(['error' num2str(det)]))*count_scaler;
+    for det = 1:inst_params.detectors
+        foreimage.(['data' num2str(det)]) = (foreimage.(['data' num2str(det)]))*count_scaler;
+        foreimage.(['error' num2str(det)]) = (foreimage.(['error' num2str(det)]))*count_scaler;
+    end
     foreimage.units = [foreimage.units '*' num2str(count_scaler) ' '];
     history = [history, {['Count Scaler :  Up-scaling data by ' num2str(count_scaler)]}];
+    foreimage.scale_factor = foreimage.scale_factor * count_scaler; %keep a track on data scaling
 end
 
 

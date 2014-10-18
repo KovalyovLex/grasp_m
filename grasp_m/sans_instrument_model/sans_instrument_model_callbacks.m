@@ -14,8 +14,6 @@ g = -9.8;
 h = 6.626076*(10^-34); %Plank's Constant
 m_n = 1.674929*(10^-27); %Neutron Rest Mass
 
-
-
 if nargin <1; todo = ['']; end
 
 %***** Callback functions ******
@@ -24,28 +22,28 @@ switch todo
     case 'change_subtitle'
         inst_model_params.subtitle = get(gcbo,'string');
         
-    
+        
     case 'export_2d_data'
-        disp('Exporting D33, D22 or D11 data')
+        disp('Exporting SANS data')
         %Find numor from lastnumor file
-        fid = fopen([grasp_env.path.project_dir filesep 'lastnumor.txt']);
+        fid = fopen([grasp_env.path.data_dir filesep 'lastnumor.txt']);
         if fid == -1; %No 'lastnumber' file exists - create a new one.
-            fid = fopen([grasp_env.path.project_dir filesep 'lastnumor.txt'],'w+')
+            fid = fopen([grasp_env.path.data_dir filesep 'lastnumor.txt'],'w+');
             fprintf(fid,'%s \n','0');
             fclose(fid); %close
-            fid = fopen([grasp_env.path.project_dir filesep 'lastnumor.txt']); % and reopen
+            fid = fopen([grasp_env.path.data_dir filesep 'lastnumor.txt']); % and reopen
         end
         text = fgetl(fid);
         lastnumor = str2num(text);
         %Pad numor out with correct number of zeros
         numor = lastnumor+1;
         fclose(fid);
-        fid = fopen([grasp_env.path.project_dir filesep 'lastnumor.txt'],'w+');
+        fid = fopen([grasp_env.path.data_dir filesep 'lastnumor.txt'],'w+');
         fprintf(fid,'%s \n',num2str(numor));
         fclose(fid);
-
+        
         set(d33_handles.numor,'visible','on','string',num2str(numor));
-       
+        
         if strcmp(inst_config.inst,'ILL_d22') || strcmp(inst_config.inst,'ILL_d11')
             
             for n = 1:length(inst_component);
@@ -75,7 +73,7 @@ switch todo
                                     params(102) = sample_config.model(sample_config.model_number).phi;
                                 end
                             end
-
+                            
                             %Detector data
                             detector_mask = pannel_struct.parameters.beam_stop_mask .* pannel_struct.parameters.shaddow_mask;
                             if (strcmp(inst_model_params.det_image,'Detector_Image'))
@@ -87,7 +85,7 @@ switch todo
                             end
                             detector_data = export_data;
                             
-                            directory = [grasp_env.path.project_dir filesep];
+                            directory = [grasp_env.path.data_dir filesep];
                             d33_ill_sans_data_write(detector_data,params,parsub,numor,directory,flag);
                         else
                         end
@@ -98,109 +96,259 @@ switch todo
             
         elseif strcmp(inst_config.inst,'ILL_d33')
             disp('Exporting D33 data')
-            det = 0; data = [];
             
-            %Could be Mono (single wavelength, single frame) or TOF (many wavelength bins, many detector frames)
-            data.n_frames = length(inst_config.tof_wavs);
+            d33_data = []; %empty export data structre
+            det_counter = 0;
             
-            %Prepare detector data and paramters for export
             for n = 1:length(inst_component);
                 if findstr(inst_component(n).name,'Detector') %Find detector component
                     for m = 1:inst_component(n).pannels %Loop though detector pannels
                         pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
-                        det = det +1;
                         
-                        %Parameters
-                        data.(['params' num2str(det)]) = zeros(128,data.n_frames);
+                        if strcmp(pannel_struct.name,'Rear'); det_number = 1; end
+                        if strcmp(pannel_struct.name,'Right'); det_number = 2; end
+                        if strcmp(pannel_struct.name,'Left'); det_number = 3; end
+                        if strcmp(pannel_struct.name,'Bottom'); det_number = 4; end
+                        if strcmp(pannel_struct.name,'Top'); det_number = 5; end
                         
-                        %Put the correct wavelength
-                        for p = 1:data.n_frames;
-                            data.(['params' num2str(det)])(53,p) = inst_config.tof_wavs(p); %wav
-                        end
-                        %Put the correct resolution for each detector
-                        if strcmp(inst_config.mono_tof,'TOF');
-                            if strcmpi(pannel_struct.name,'Rear')
-                                res = inst_config.chopper_resolution /100;
+                        if isfield(pannel_struct,'detector_data'); %check that there is some data to export
+                            det_counter = det_counter +1;
+                            
+                            if det_number ==1; %rear
+                                d33_data.det2 = inst_component(n).position;
+                                d33_data.det2_calc = inst_component(n).position;
                             else
-                                res = inst_config.chopper_resolution_front /100;
+                                d33_data.det1 = inst_component(n).position;
+                                d33_data.det1_calc = inst_component(n).position;
                             end
+                            
+                            if det_number ==2; %Right
+                                d33_data.oxr = pannel_struct.parameters.opening(1)*1000; %mm
+                            elseif det_number ==3; %Left
+                                d33_data.oxl = -pannel_struct.parameters.opening(1)*1000; %mm
+                            elseif det_number ==4; %Bottom
+                                d33_data.oyb = -pannel_struct.parameters.opening(2)*1000; %mm
+                            elseif det_number ==5; %Top
+                                d33_data.oyt = pannel_struct.parameters.opening(2)*1000; %mm
+                            end
+                            
+                            %Detector data
+                            detector_mask = pannel_struct.parameters.beam_stop_mask .* pannel_struct.parameters.shaddow_mask;
+                            if (strcmp(inst_model_params.det_image,'Detector_Image'))
+                                export_data = pannel_struct.detector_data(:,:,inst_model_params.det_image_tof_frame).*detector_mask;
+                                temp = find(isnan(detector_mask));
+                                export_data(temp) = 0;
+                            elseif strcmp(inst_model_params.det_image,'Direct_Beam');
+                                export_data = pannel_struct.detector_beam(:,:);
+                            end
+                            d33_data.(['data' num2str(det_number)]) = export_data;
                         else
-                            res = inst_config.mono_dwav/100; %delta_wav (fraction, e.g. 0.1 = 10%)
                         end
-                        data.(['params' num2str(det)])(54,:) = res; %delta_wav (fraction, e.g. 0.1 = 10%)
-
-                        data.(['params' num2str(det)])(19,:) = inst_component(n).position; %det
-                        data.(['params' num2str(det)])(18,:) = inst_component(n).position + pannel_struct.relative_position; %real pannel Det
-                        
-                        %Pannel opening parameters, ox(21), oy(22) (mm)
-                        data.(['params' num2str(det)])(21,:) = pannel_struct.parameters.opening(1)*1000; %ox - pannel opening (horz)
-                        data.(['params' num2str(det)])(22,:) = pannel_struct.parameters.opening(2)*1000 ; %oy - pannel opening (vertical)
-                        
-                        
-                        data.(['params' num2str(det)])(26,:) = inst_component(n).position; %det_calc
-                        data.(['params' num2str(det)])(58,:) = inst_config.col; %col
-                        data.(['params' num2str(det)])(3,:) = inst_model_params.measurement_time; %time seconds
-
-                        data.(['params' num2str(det)])(5,:) = inst_model_params.monitor; %beam monitor
-                        data.(['params' num2str(det)])(55,:) = pannel_struct.parameters.pixel_size(1)*1e3;
-                        data.(['params' num2str(det)])(56,:) = pannel_struct.parameters.pixel_size(2)*1e3;
-                        
-                        %Model Parameters
-                        if isfield(sample_config.model(sample_config.model_number),'san')
-                            if not(isempty(sample_config.model(sample_config.model_number).san))
-                                data.(['params' num2str(det)])(65,:) = sample_config.model(sample_config.model_number).san;
-                            else
-                                data.(['params' num2str(det)])(65,:) = 0;
-                            end
-                        end
-                        if isfield(sample_config.model(sample_config.model_number),'phi')
-                            if not(isempty(sample_config.model(sample_config.model_number).phi))
-                                data.(['params' num2str(det)])(102,:) = sample_config.model(sample_config.model_number).phi;
-                            else
-                                data.(['params' num2str(det)])(102,:) = 0;
-                            end
-                        end
-                        
-                        
-                        %Detector data
-                        pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
-                        detector_mask = pannel_struct.parameters.beam_stop_mask .* pannel_struct.parameters.shaddow_mask;
-                        export_data = [];
-                        if (strcmp(inst_model_params.det_image,'Detector_Image'))
-                            for depth = 1:size(pannel_struct.detector_data,3)
-                                export_data(:,:,depth) = pannel_struct.detector_data(:,:,depth).*detector_mask;
-                            end
-                            temp = find(isnan(export_data));
-                            export_data(temp) = 0;
-                            %Direct Beam Data
-                        elseif strcmp(inst_model_params.det_image,'Direct_Beam');
-                            for depth = 1:size(pannel_struct.detector_data,3)
-                                export_data(:,:,depth) = pannel_struct.detector_beam(:,:,depth);
-                            end
-                            temp = find(isnan(export_data));
-                            export_data(temp) = 0;
-                        end
-                        data.(['data' num2str(det)]) = export_data;
                     end
-                    
                 end
             end
             
-            %Some additional parameters
-            data.subtitle = inst_model_params.subtitle;
-            data.numor = numor;
-            data.start_date_time = datestr(now);
-            data.end_date_time = datestr(now);
-            numor_str = num2str(numor,'%.6i');
             
-            file_numor_path = [grasp_env.path.project_dir filesep numor_str];
+        elseif strcmp(inst_config.inst,'APEX')
+            disp('Exporting APEX data')
             
-            %Write D33 data structure to file
-            d33_model_data_write(file_numor_path,data);
+            d33_data = []; %empty export data structre
+            det_counter = 0;
+            
+            for n = 1:length(inst_component);
+                if findstr(inst_component(n).name,'Detector') %Find detector component
+                    for m = 1:inst_component(n).pannels %Loop though detector pannels
+                        pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
+                        
+                        if strcmp(pannel_struct.name,'Rear'); det_number = 1; end
+                        
+                        if isfield(pannel_struct,'detector_data'); %check that there is some data to export
+                            det_counter = det_counter +1;
+                            
+                               d33_data.det1 = inst_component(n).position;
+                                d33_data.det1_calc = inst_component(n).position;
+   
+                             
+                            %Detector data
+                            detector_mask = pannel_struct.parameters.beam_stop_mask .* pannel_struct.parameters.shaddow_mask;
+                            if (strcmp(inst_model_params.det_image,'Detector_Image'))
+                                export_data = pannel_struct.detector_data(:,:,inst_model_params.det_image_tof_frame).*detector_mask;
+                                temp = find(isnan(detector_mask));
+                                export_data(temp) = 0;
+                            elseif strcmp(inst_model_params.det_image,'Direct_Beam');
+                                export_data = pannel_struct.detector_beam(:,:);
+                            end
+                            d33_data.(['data' num2str(det_number)]) = export_data;
+                        else
+                        end
+                    end
+                end
+                
+                
+                
+                
+            end
+            
+            %Total number of detectors
+            d33_data.detectors = det_counter;
+%            d33_data.det1_panel_separation = inst_config.bank_separation;
+            
+            %Wavelength & wav resolution
+            d33_data.wav = inst_config.mono_wav;
+            d33_data.dwav = inst_config.mono_dwav;
+            
+            %Collimation
+            d33_data.col = inst_config.col;
+            
+            %Source Size
+            if length(inst_config.source_size) == 2;
+                d33_data.source_x = inst_config.source_size(1)*1000; %mm
+                d33_data.source_y = inst_config.source_size(2)*1000;
+            else
+                d33_data.source_x = inst_config.source_size(1)*1000; %mm
+                d33_data.source_y = 0; %i.e. circular
+            end
+            
+            
+            
+            
+            %Numor
+            d33_data.numor = numor;
+            
+            %Subtitle
+            d33_data.subtitle =  inst_model_params.subtitle;
+            
+            %Measurement time
+            d33_data.time = inst_model_params.measurement_time;
+            d33_data.monitor = inst_model_params.measurement_time;
+            
+            %San & Phi
+            d33_data.san = 0; %Default
+            if isfield(sample_config.model(sample_config.model_number),'san')
+                if not(isempty(sample_config.model(sample_config.model_number).san));
+                    d33_data.san = sample_config.model(sample_config.model_number).san;
+                end
+            end
+            d33_data.phi = 0; %Default
+            if isfield(sample_config.model(sample_config.model_number),'phi')
+                if not(isempty(sample_config.model(sample_config.model_number).phi))
+                    d33_data.phi = sample_config.model(sample_config.model_number).phi;
+                end
+            end
+            
+            %Write the D33 NEXUS file
+            directory = [grasp_env.path.data_dir];
+            ill_nexus_write_d33(directory,numor,d33_data);
+            
+            
+            
+            %Remove run number
+            pause(0.5)
+            set(d33_handles.numor,'visible','off');
+            
+            
         end
-        %Remove run number
-        pause(1)
-        set(d33_handles.numor,'visible','off');
+        
+        %             det = 0; data = [];
+        %
+        %             %Could be Mono (single wavelength, single frame) or TOF (many wavelength bins, many detector frames)
+        %             data.n_frames = length(inst_config.tof_wavs);
+        %
+        %             %Prepare detector data and paramters for export
+        %             for n = 1:length(inst_component);
+        %                 if findstr(inst_component(n).name,'Detector') %Find detector component
+        %                     for m = 1:inst_component(n).pannels %Loop though detector pannels
+        %                         pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
+        %                         det = det +1;
+        %
+        %                         %Parameters
+        %                         data.(['params' num2str(det)]) = zeros(128,data.n_frames);
+        %
+        %                         %Put the correct wavelength
+        %                         for p = 1:data.n_frames;
+        %                             data.(['params' num2str(det)])(53,p) = inst_config.tof_wavs(p); %wav
+        %                         end
+        %                         %Put the correct resolution for each detector
+        %                         if strcmp(inst_config.mono_tof,'TOF');
+        %                             if strcmpi(pannel_struct.name,'Rear')
+        %                                 res = inst_config.chopper_resolution /100;
+        %                             else
+        %                                 res = inst_config.chopper_resolution_front /100;
+        %                             end
+        %                         else
+        %                             res = inst_config.mono_dwav/100; %delta_wav (fraction, e.g. 0.1 = 10%)
+        %                         end
+        %                         data.(['params' num2str(det)])(54,:) = res; %delta_wav (fraction, e.g. 0.1 = 10%)
+        %
+        %                         data.(['params' num2str(det)])(19,:) = inst_component(n).position; %det
+        %                         data.(['params' num2str(det)])(18,:) = inst_component(n).position + pannel_struct.relative_position; %real pannel Det
+        %
+        %                         %Pannel opening parameters, ox(21), oy(22) (mm)
+        %                         data.(['params' num2str(det)])(21,:) = pannel_struct.parameters.opening(1)*1000; %ox - pannel opening (horz)
+        %                         data.(['params' num2str(det)])(22,:) = pannel_struct.parameters.opening(2)*1000 ; %oy - pannel opening (vertical)
+        %
+        %
+        %                         data.(['params' num2str(det)])(26,:) = inst_component(n).position; %det_calc
+        %                         data.(['params' num2str(det)])(58,:) = inst_config.col; %col
+        %                         data.(['params' num2str(det)])(3,:) = inst_model_params.measurement_time; %time seconds
+        %
+        %                         data.(['params' num2str(det)])(5,:) = inst_model_params.monitor; %beam monitor
+        %                         data.(['params' num2str(det)])(55,:) = pannel_struct.parameters.pixel_size(1)*1e3;
+        %                         data.(['params' num2str(det)])(56,:) = pannel_struct.parameters.pixel_size(2)*1e3;
+        %
+        %                         %Model Parameters
+        %                         if isfield(sample_config.model(sample_config.model_number),'san')
+        %                             if not(isempty(sample_config.model(sample_config.model_number).san))
+        %                                 data.(['params' num2str(det)])(65,:) = sample_config.model(sample_config.model_number).san;
+        %                             else
+        %                                 data.(['params' num2str(det)])(65,:) = 0;
+        %                             end
+        %                         end
+        %                         if isfield(sample_config.model(sample_config.model_number),'phi')
+        %                             if not(isempty(sample_config.model(sample_config.model_number).phi))
+        %                                 data.(['params' num2str(det)])(102,:) = sample_config.model(sample_config.model_number).phi;
+        %                             else
+        %                                 data.(['params' num2str(det)])(102,:) = 0;
+        %                             end
+        %                         end
+        %
+        %
+        %                         %Detector data
+        %                         pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
+        %                         detector_mask = pannel_struct.parameters.beam_stop_mask .* pannel_struct.parameters.shaddow_mask;
+        %                         export_data = [];
+        %                         if (strcmp(inst_model_params.det_image,'Detector_Image'))
+        %                             for depth = 1:size(pannel_struct.detector_data,3)
+        %                                 export_data(:,:,depth) = pannel_struct.detector_data(:,:,depth).*detector_mask;
+        %                             end
+        %                             temp = find(isnan(export_data));
+        %                             export_data(temp) = 0;
+        %                             %Direct Beam Data
+        %                         elseif strcmp(inst_model_params.det_image,'Direct_Beam');
+        %                             for depth = 1:size(pannel_struct.detector_data,3)
+        %                                 export_data(:,:,depth) = pannel_struct.detector_beam(:,:,depth);
+        %                             end
+        %                             temp = find(isnan(export_data));
+        %                             export_data(temp) = 0;
+        %                         end
+        %                         data.(['data' num2str(det)]) = export_data;
+        %                     end
+        %
+        %                 end
+        %             end
+        %
+        %             %Some additional parameters
+        %             data.subtitle = inst_model_params.subtitle;
+        %             data.numor = numor;
+        %             data.start_date_time = datestr(now);
+        %             data.end_date_time = datestr(now);
+        %             numor_str = num2str(numor,'%.6i');
+        %
+        %             file_numor_path = [grasp_env.path.project_dir filesep numor_str];
+        %
+        %             %Write D33 data structure to file
+        %             d33_model_data_write(file_numor_path,data);
+        %         end
         
         
     case 'smearing_itterations'
@@ -216,7 +364,7 @@ switch todo
         
     case 'delta_lambda_check'
         inst_model_params.delta_lambda_check = get(gcbo,'value');
-       
+        
     case 'square_tri_selector_check'
         inst_model_params.square_tri_selector_check = get(gcbo,'value');
         
@@ -243,7 +391,7 @@ switch todo
             inst_model_params.sample_area = area;
         end
         set(d33_handles.sample_area_edit,'string',num2str(inst_model_params.sample_area));
-    
+        
     case 'auto_calculate_button'
         if inst_model_params.auto_calculate ==1;
             inst_model_params.auto_calculate =0;
@@ -295,6 +443,7 @@ switch todo
         inst_component(component_number).position = new_position;
         
     case 'det_edit'
+        
         new_position = str2num(get(gcbo,'string'));
         component_number =  get(gcbo,'userdata');
         if not(isempty(new_position));
@@ -314,7 +463,11 @@ switch todo
                     end
                 end
             end
-            inst_component(component_number).position = new_position;
+            
+            %Check absolute limits in detector position
+            if new_position >= inst_component(component_number).parameters.position_min && new_position <= inst_component(component_number).parameters.position_max
+                inst_component(component_number).position = new_position;
+            end
         end
         
     case 'app_popup'
@@ -351,7 +504,7 @@ switch todo
         translation  = slider * span + pannel_struct.parameters.centre_translation_min(1);
         pannel_struct.parameters.centre_translation(1) = translation;
         inst_component(component_number) = setfield(inst_component(component_number),['pannel' num2str(pannel_number)], pannel_struct);
-
+        
         
     case 'pannel_edit'
         temp = get(gcbo,'userdata');
@@ -502,7 +655,7 @@ switch todo
             dy = dy -0.025;
         end
         return
-   
+        
     case 'build_cadmium_model'
         %Delete previous parameter input boxes (if exist);
         if not(isempty(d33_handles.cadmium_model_gui));
@@ -815,7 +968,7 @@ for n = 1:length(inst_component);
                         %redraw graphic
                         handle = pannel_struct.draw_handle_front_view;
                         graphic_position = get(handle,'position');
-                        graphic_position(1) = opening(1) - pannel_struct.parameters.pixels(1)*pannel_struct.parameters.pixel_size(1);
+                        graphic_position(1) = opening(1) - pannel_struct.parameters.pixels(1)*pannel_struct.parameters.pixel_size(1)/2;
                         set(handle,'position',graphic_position);
                     elseif findstr(pannel_struct.name,'Right');
                         %update slider & editbox
@@ -825,7 +978,7 @@ for n = 1:length(inst_component);
                         %redraw graphic
                         handle = pannel_struct.draw_handle_front_view;
                         graphic_position = get(handle,'position');
-                        graphic_position(1) = opening(1);
+                        graphic_position(1) = opening(1) - pannel_struct.parameters.pixels(1)*pannel_struct.parameters.pixel_size(1)/2;
                         set(handle,'position',graphic_position);
                     elseif findstr(pannel_struct.name,'Top');
                         %update slider & editbox
@@ -835,7 +988,7 @@ for n = 1:length(inst_component);
                         %redraw graphic
                         handle = pannel_struct.draw_handle_front_view;
                         graphic_position = get(handle,'position');
-                        graphic_position(2) = opening(2);
+                        graphic_position(2) = opening(2) - pannel_struct.parameters.pixels(2)*pannel_struct.parameters.pixel_size(2)/2;
                         set(handle,'position',graphic_position);
                     elseif findstr(pannel_struct.name,'Bottom');
                         %update slider & editbox
@@ -846,9 +999,9 @@ for n = 1:length(inst_component);
                         %redraw graphic
                         handle = pannel_struct.draw_handle_front_view;
                         graphic_position = get(handle,'position');
-                        graphic_position(2) = opening(2) - pannel_struct.parameters.pixels(2)*pannel_struct.parameters.pixel_size(2);
+                        graphic_position(2) = opening(2) - pannel_struct.parameters.pixels(2)*pannel_struct.parameters.pixel_size(2)/2;
                         set(handle,'position',graphic_position);
-                    
+                        
                     elseif findstr(pannel_struct.name,'Rear')
                         %update slider & editbox
                         slider = (pannel_struct.parameters.centre_translation(1) - pannel_struct.parameters.centre_translation_min(1)) / (pannel_struct.parameters.centre_translation_max(1) - pannel_struct.parameters.centre_translation_min(1));
@@ -1014,7 +1167,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
     two_theta_ap = atan(r/inst_config.longest_det) * (180/pi);
     inst_config.aperture_x_divergence_fwhm = two_theta_ap; %FWHM
     inst_config.aperture_y_divergence_fwhm = two_theta_ap; %FWHM
-
+    
     
     %***** Build Wavelength list to calculate scattering at depending on Mono or TOF mode *****
     if strcmp(inst_config.mono_tof,'Mono')
@@ -1053,13 +1206,13 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                     beam_stop_width_pixels = beam_patch_pixel_width * 1.5; %Multiply by 1.25 to be safe.
                     beam_stop_centre_translation_pixels = pannel_struct.parameters.centre_translation ./ pannel_struct.parameters.pixel_size;
                     beam_stop_coords = [floor(pannel_struct.parameters.centre(1)-beam_stop_width_pixels(1)/2 + beam_stop_centre_translation_pixels(1)), ceil(pannel_struct.parameters.centre(1)+beam_stop_width_pixels(1)/2 + beam_stop_centre_translation_pixels(1)), floor(pannel_struct.parameters.centre(2)-beam_stop_width_pixels(2)/2 + beam_stop_centre_translation_pixels(2)), ceil(pannel_struct.parameters.centre(2)+beam_stop_width_pixels(2)/2 + beam_stop_centre_translation_pixels(2))]; %x1, x2, y1, y2
-
                     
-%                     %Make a Gravity Drop to the effective beam stop position
-%                     lambda = tof_wavs(1);
-%                     detector_info.position = inst_component(n).position + pannel_struct.relative_position;
-%                     drop = 0.5*g*(detector_info.position^2)*(m_n^2)*((lambda*1e-10)^2)/(h^2);
-%                     beam_stop_coords(3:4) = beam_stop_coords(3:4)  + round(drop./pannel_struct.parameters.pixel_size(2));
+                    
+                    %                     %Make a Gravity Drop to the effective beam stop position
+                    %                     lambda = tof_wavs(1);
+                    %                     detector_info.position = inst_component(n).position + pannel_struct.relative_position;
+                    %                     drop = 0.5*g*(detector_info.position^2)*(m_n^2)*((lambda*1e-10)^2)/(h^2);
+                    %                     beam_stop_coords(3:4) = beam_stop_coords(3:4)  + round(drop./pannel_struct.parameters.pixel_size(2));
                     %Check beamstop coords do not go over size of detector
                     if beam_stop_coords(1) <1 ; beam_stop_coords(1) = 1; end
                     if beam_stop_coords(3) <1 ; beam_stop_coords(3) = 1; end
@@ -1082,7 +1235,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
         if findstr(inst_component(n).name,'Detector') %Find detector component
             detector_counter = detector_counter+1;
             for m = 1:inst_component(n).pannels %Loop though detector pannels
-
+                
                 pannel_struct = getfield(inst_component(n),['pannel' num2str(m)]); %pannel_struct describes the pannel geometry
                 
                 %Current Detector Pannel Parameters
@@ -1101,7 +1254,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                 
                 
                 for o = 1:length(tof_wavs); %Loop though TOF wavelengths
-                
+                    
                     %wavelength
                     if strcmp(inst_config.mono_tof,'Mono')
                         lambda = inst_config.mono_wav;
@@ -1115,13 +1268,13 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                         end
                         dlambda_lambda = res/100;
                     end
-
-%                     %Make a Gravity Drop to the effective beam centre
-%                     drop = 0.5*g*(detector_info.position^2)*(m_n^2)*((lambda*1e-10)^2)/(h^2);
-%                     detector_info.centre = detector_info.nominal_centre;
-%                     detector_info.centre(2) = detector_info.nominal_centre(2) + (drop/detector_info.pixel_size(2));
+                    
+                    %                     %Make a Gravity Drop to the effective beam centre
+                    %                     drop = 0.5*g*(detector_info.position^2)*(m_n^2)*((lambda*1e-10)^2)/(h^2);
+                    %                     detector_info.centre = detector_info.nominal_centre;
+                    %                     detector_info.centre(2) = detector_info.nominal_centre(2) + (drop/detector_info.pixel_size(2));
                     pannel_struct.qmatrix(:,:,:,o) = sans_instrument_model_build_q_matrix(detector_info,lambda);
-
+                    
                     
                     %***** Generate Scattering Data *****
                     sample_data = zeros(pannel_struct.parameters.pixels(2),pannel_struct.parameters.pixels(1));
@@ -1189,6 +1342,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                         %Calcualte the Model Scattering Intensity
                         fn_eval = sample_config.model(sample_config.model_number).fn_eval;
                         P = eval(fn_eval);
+                        
                         sample_data = sample_data + P;
                         
                         %Calculate the Model Background Intensity
@@ -1200,7 +1354,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                         fn_eval = cadmium_config.model(cadmium_config.model_number).fn_eval;
                         P = eval(fn_eval);
                         cadmium_data = cadmium_data + P;
-                       
+                        
                         
                     end
                     sample_data = sample_data/inst_model_params.smearing; %This is a pure scattering crosssection
@@ -1220,24 +1374,31 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                             res_temp = inst_config.chopper_resolution/100;
                         end
                         
-                      flux_lambda_col = d22_flux_col_wav(inst_config.col, lambda, res_temp,kernel_shape);
+                        flux_lambda_col = d22_flux_col_wav(inst_config.col, lambda, res_temp,kernel_shape);
                     elseif strcmp(inst_config.inst,'ILL_d11');
                         flux_lambda_col = d22_flux_col_wav(inst_config.col, lambda, dlambda_lambda,'selector');
                     else
                         flux_lambda_col = sans_instrument_model_flux_col_wav(inst_config.max_flux,inst_config.max_flux_col,inst_config.max_flux_wav,inst_config.col,lambda); %Flux guess for particualar lambda and collimation
                     end
                     
-                    
                     I0 = flux_lambda_col * inst_model_params.measurement_time * inst_model_params.sample_area;
                     
-                
-                    %Final Total Scattering
+                    
+                    %Scattering components: Foreground, background, cadmium
                     total_sample_scattering = sample_data .* I0 .* inst_model_params.sample_thickness .* real_q_matrix(:,:,10);
                     total_background_scattering = background_data .* I0 .* inst_model_params.sample_thickness .* real_q_matrix(:,:,10);
                     total_cadmium_scattering = cadmium_data .* I0 .* inst_model_params.sample_thickness .* real_q_matrix(:,:,10);
-                    pannel_struct.detector_data(:,:,o) = total_sample_scattering+total_background_scattering+total_cadmium_scattering;
                     
+                    %Modify Each Detector Scattered intensity by the REAL relative detector efficiency
+                    %if strcmp(pannel_struct.name,'Rear'); det_number = 1; end
+                    %if strcmp(pannel_struct.name,'Right'); det_number = 2; end
+                    %if strcmp(pannel_struct.name,'Left'); det_number = 3; end
+                    %if strcmp(pannel_struct.name,'Bottom'); det_number = 4; end
+                    %if strcmp(pannel_struct.name,'Top'); det_number = 5; end
+                    %panel_relative_efficiency = inst_params.(['detector' num2str(det_number)]).relative_efficiency
                     
+                    %Final Total Scattering
+                    pannel_struct.detector_data(:,:,o) = (total_sample_scattering+total_background_scattering+total_cadmium_scattering);
                     
                     
                     %Add poissonian noise to simulate real statistical noise
@@ -1248,7 +1409,7 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                         %Local copy of current detector data without poissonian stats
                         current_data_copy1 = pannel_struct.detector_data(:,:,o);
                         current_data_copy2 = pannel_struct.detector_data(:,:,o);
-
+                        
                         errors_magnitude = sqrt(current_data_copy1);
                         rand_matrix = rand(size(current_data_copy1)); %between 0 and 1
                         rand_matrix = (rand_matrix -0.5)*2; %between -1 and 1
@@ -1284,19 +1445,26 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                     disp(['Total Detector[' num2str(detector_counter) '] Counts (Scattering) = ' num2str(temp)]);
                     disp(['Detector[' num2str(detector_counter) '] Count Rate (Scattering) = ' num2str(temp / inst_model_params.measurement_time,'%1.6g') ' (n/s)']);
                     
-
+                    
                     warning off
                     %***** Direct Beam Data *****
                     direct_beam = zeros(size(pannel_struct.detector_data(:,:,o)));
                     if length(inst_config.source_size) ==1; %i.e. circular source
                         temp = find(pannel_struct.qmatrix(:,:,9,o)<=inst_config.divergence_x_fwhm/2);
-                        direct_beam(temp) = 1;
+                        if not(isempty(temp));
+                            direct_beam(temp) = 1;
+                        else %When direct beam is smaller than one pixel
+                            temp = pannel_struct.qmatrix(:,:,9,o)<=inst_config.divergence_x_fwhm;
+                            direct_beam(temp) = 1;
+                        end
                     else %i.e. rectangular source
                         temp = find(pannel_struct.qmatrix(:,:,7,o)<=inst_config.divergence_x_fwhm/2 & pannel_struct.qmatrix(:,:,7,o)>=-inst_config.divergence_x_fwhm/2 & pannel_struct.qmatrix(:,:,8,o)<=inst_config.divergence_y_fwhm/2 & pannel_struct.qmatrix(:,:,8,o)>=-inst_config.divergence_y_fwhm/2);
-                        direct_beam(temp) = 1;
+                        if not(isempty(temp)); direct_beam(temp) = 1; end
                     end
+                    
                     temp =sum(sum(direct_beam));
-                    direct_beam = I0* direct_beam / temp;
+                    if temp>0; direct_beam = I0* direct_beam / temp; end %avoid divide / 0 & NaN's for pannels out of the main beam
+                    
                     pannel_struct.detector_beam(:,:,o) = direct_beam;
                     
                     %Add poissonian noise to simulate real statistical noise
@@ -1310,14 +1478,14 @@ if inst_model_params.auto_calculate ==1 || strcmp(todo,'single_shot_calculate');
                         errors = errors .* rand_matrix;
                         pannel_struct.detector_beam(:,:,o) = (pannel_struct.detector_beam(:,:,o) + errors);
                     end
-
+                    
                     
                     temp = sum(sum(pannel_struct.detector_beam(:,:,o)));
                     disp(' ')
                     disp(['Total Detector[' num2str(detector_counter) '] Counts (Direct Beam) = ' num2str(temp)]);
                     disp(['Detector[' num2str(detector_counter) '] Count Rate (Direct Beam) = ' num2str(temp / inst_model_params.measurement_time,'%1.6g') ' (n/s)']);
                     disp(' ')
-                    warning on 
+                    warning on
                     
                     %Beam monitor parameter
                     inst_model_params.monitor(o) = inst_config.max_flux * 10e-6 * inst_model_params.measurement_time;

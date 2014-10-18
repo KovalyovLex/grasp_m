@@ -44,7 +44,7 @@ switch format
 
     case 'prn' %Quick Print
         disp('Printing Image to Default Printer');
-        message_handle = message('Printing Image to Default Printer');
+        message_handle = grasp_message('Printing Image to Default Printer');
         if isdeployed
             deployprint('-v','-noui');
         else
@@ -58,7 +58,7 @@ switch format
         if isempty(findstr(fname,'.bmp'));fname = [fname '.bmp'];end
         if fname ~= 0
             disp(['Exporting Bitmap Image ' directory fname]);
-            message_handle = message('Exporting Bitmap Image');
+            message_handle = grasp_message('Exporting Bitmap Image');
             print('-dbmp','-noui',[directory fname]);
             grasp_env.path.working_data_dir = directory;
         end
@@ -69,7 +69,7 @@ switch format
         if isempty(findstr(fname,'.png'));fname = [fname '.png'];end
         if fname ~= 0
             disp(['Exporting PNG Image ' directory fname]);
-            message_handle = message('Exporting PNG Image');
+            message_handle = grasp_message('Exporting PNG Image');
             print('-dpng','-noui',[directory fname]);
             grasp_env.path.working_data_dir = directory;
         end

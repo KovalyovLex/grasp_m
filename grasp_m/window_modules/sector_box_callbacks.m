@@ -261,6 +261,7 @@ switch to_do
             if (coords(1) ~= coords(2)) && (coords(4) ~=0)
                 active_boxes = [active_boxes, box];
                 box_mask.(['box' num2str(box)]) = sector_callbacks('build_sector_mask', [coords(1),coords(2),coords(3),coords(4),1,coords(5),coords(6)]);
+                
                 %Add to the sum mask
                 for det = 1:inst_params.detectors
                     sum_mask.(['det' num2str(det)]) = or(sum_mask.(['det' num2str(det)]),box_mask.(['box' num2str(box)]).(['det' num2str(det)]));
@@ -415,7 +416,6 @@ switch to_do
         status_flags.display.refresh = 1;
         disp(' ')
         
-        
         %***** Plot Box intensity vs. parameter ****
         l = size(box_intensities);
         plotdata = box_intensities(:,2:l(2));
@@ -434,6 +434,7 @@ switch to_do
             'params',displayimage.params1,....
             'parsub',displayimage.subtitle,....
             'export_data',plotdata,....
+            'export_column_format',column_format,....
             'column_labels',[box_param_name char(9) 'I' char(9) 'Err_I']);
         
         local_history = displayimage.history; %This will actually be the history of the last file
@@ -443,8 +444,6 @@ switch to_do
         
         plot_params.history = local_history;
         grasp_plot(plotdata,column_format,plot_params);
-        
-        last_result = plotdata;
 end
 
 %Update displayed sector box window option

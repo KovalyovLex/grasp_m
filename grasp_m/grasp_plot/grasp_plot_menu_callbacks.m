@@ -211,6 +211,8 @@ switch to_do
         
         
         %Loop though all the curves in the plot
+        n_curves = length(curve_handles);
+        disp(['Exporting ' num2str(n_curves) ' Curves']);
         for n = 1:length(curve_handles);
             
             %Retrieve data from plot
@@ -252,7 +254,6 @@ switch to_do
                 else fname = [fname_in(1:(temp(1)-1)) '_' num2str(n,'%6.3i') '.dat']; end
             end
             
-            
             %Open file for writing
             disp(['Exporting data: '  grasp_env.path.project_dir fname]);
             fid=fopen([grasp_env.path.project_dir fname],'wt');
@@ -290,10 +291,10 @@ switch to_do
             %Strip out any Nans
             temp = find(not(isnan(export_data(:,1))));
             export_data = export_data(temp,:);
-            size(export_data)
+            
             %Check if 4th column exists (resolution)
             temp = size(export_data);
-            if temp(2) >3; %4th column exists
+            if temp(2) > 3; %4th column exists
                 
                 disp('4th column data exists - q-resolution?')
                 %Check if to include q-reslution (4th column)

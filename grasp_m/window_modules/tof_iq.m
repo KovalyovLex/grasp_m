@@ -9,7 +9,7 @@ global displayimage
 index = data_index(status_flags.selector.fw);
 foreground_depth = status_flags.selector.fdpth_max - grasp_data(index).sum_allow;
 depth_start = status_flags.selector.fd; %remember the initial foreground depth
-            
+
 disp(['Averaging Workhseets through Depth']);
 tof_iq_store = []; %Empty array
 
@@ -32,7 +32,7 @@ else
     status_flags.display.refresh = 0;
 end
 
-    
+
 % %Check for Sector Masks
 % smask = [];
 % if status_flags.analysis_modules.radial_average.sector_mask_chk ==1;
@@ -43,7 +43,7 @@ end
 %         status_flags.analysis_modules.radial_average.sector_mask_chk =0;
 %     end
 % end
-% 
+%
 % %Check for Strip Masks
 % strip_mask = [];
 % if status_flags.analysis_modules.radial_average.strip_mask_chk ==1;
@@ -65,7 +65,7 @@ end
 % if not(isempty(strip_mask));
 %     mask = mask.*strip_mask.(['det' num2str(det)]);
 % end
-% 
+%
 
 %Radial and Azimuthal average takes the data directly from displayimage
 iq_data = []; %Final iq for all detectors and all (TOF) frames
@@ -115,7 +115,7 @@ for n = d_start:d_end
                 
             end
         end
-
+        
     end
 end
 %remove all zeros
@@ -124,7 +124,6 @@ iq_big_list = iq_big_list(temp,:);
 
 
 iq_list = iq_big_list;
-size(iq_list)
 
 status_flags.display.refresh = 1;
 status_flags.command_window.display_params = 1;
@@ -155,7 +154,7 @@ if length(bin_edges) <2;
     disp('Please check re-binning paramters');
 end
 
-            
+
 %***** Now re-bin *****
 if length(bin_edges) >=2;
     %temp = rebin([iq_list(:,1),iq_list(:,2),iq_list(:,3),iq_list(:,4)],bin_edges); %[q,I,errI,delta_q,pixel_count]
@@ -196,24 +195,24 @@ toc
 
 
 %
-    %***** Build Resolution Kernels for every q point *****
-    kernel_data.fwhmwidth = status_flags.resolution_control.fwhmwidth;
-    kernel_data.finesse = status_flags.resolution_control.finesse * status_flags.resolution_control.fwhmwidth;
-    if not(isodd(kernel_data.finesse)); kernel_data.finesse = kernel_data.finesse+1; end %Finesse should be ODD number
-    kernel_data.classic_res.fwhm = iq_data(:,4); kernel_data.classic_res.shape = 'Gaussian';
-    
-    kernel_data.lambda.fwhm = iq_data(:,5); kernel_data.lambda.shape = '';
-    kernel_data.theta.fwhm = iq_data(:,6); kernel_data.theta.shape = 'tophat';
-    kernel_data.pixel.fwhm = iq_data(:,7); kernel_data.pixel.shape = 'tophat';
-    kernel_data.binning.fwhm = iq_data(:,9); kernel_data.binning.shape = 'tophat';
-    kernel_data.aperture.fwhm = iq_data(:,8); kernel_data.aperture.shape = 'tophat';
-    
-    kernel_data.cm = displayimage.cm.(['det' num2str(det)]); %Send real beam profile in to use for resolution smearing
-    %Build the kernels
-    
-    resolution_kernels = build_resolution_kernels(iq_data(:,1), kernel_data);
-    
-    
+%***** Build Resolution Kernels for every q point *****
+kernel_data.fwhmwidth = status_flags.resolution_control.fwhmwidth;
+kernel_data.finesse = status_flags.resolution_control.finesse * status_flags.resolution_control.fwhmwidth;
+if not(isodd(kernel_data.finesse)); kernel_data.finesse = kernel_data.finesse+1; end %Finesse should be ODD number
+kernel_data.classic_res.fwhm = iq_data(:,4); kernel_data.classic_res.shape = 'Gaussian';
+
+kernel_data.lambda.fwhm = iq_data(:,5); kernel_data.lambda.shape = '';
+kernel_data.theta.fwhm = iq_data(:,6); kernel_data.theta.shape = 'tophat';
+kernel_data.pixel.fwhm = iq_data(:,7); kernel_data.pixel.shape = 'tophat';
+kernel_data.binning.fwhm = iq_data(:,9); kernel_data.binning.shape = 'tophat';
+kernel_data.aperture.fwhm = iq_data(:,8); kernel_data.aperture.shape = 'tophat';
+
+kernel_data.cm = displayimage.cm.(['det' num2str(det)]); %Send real beam profile in to use for resolution smearing
+%Build the kernels
+
+resolution_kernels = build_resolution_kernels(iq_data(:,1), kernel_data);
+
+
 %Prepare the Data to Plot, Export, or keep for D33_TOF_Rebin
 plot_data.xdat = iq_data(:,1);
 plot_data.ydat = iq_data(:,2);
@@ -233,7 +232,7 @@ export_data = iq_data(:,1:4); %[q, I, err_I, dq resolutuion(fwhm)]
 %or
 %replace by gaussian equivalent resolution
 if status_flags.resolution_control.convolution_type == 1 || status_flags.resolution_control.convolution_type == 2; %Real shape kernel & gaussian equivalent
-%    export_data(:,4) = resolution_kernels.fwhm(:,1);
+    %    export_data(:,4) = resolution_kernels.fwhm(:,1);
 end
 
 if strcmp(status_flags.subfigure.show_resolution,'on')
@@ -263,28 +262,35 @@ plot_info = struct(....
 grasp_plot(plotdata,column_format,plot_info);
 
 
+%Set depth selector back to as before
+status_flags.selector.fd = depth_start;
+grasp_update
 
+%Delete message
+if ishandle(message_handle);
+    delete(message_handle);
+end
 
 
 %         %Plot Radial Averaged Curves or Direct export to file
 %         if status_flags.analysis_modules.radial_average.direct_to_file == 0; %plot curves
-%             
+%
 %             grasp_plot(plotdata,column_format,plot_info);
-%             
+%
 %         else % Direct to file
 %             disp('Exporting Radial Average Direct to File')
-%             
+%
 %             %The code below is copied and modified from the export data
 %             %routine in grasp_plot_menu_callbacks.
-%             
+%
 %             %In the future a better single routine should be called for
 %             %exporting data
-%             
+%
 %             %Use different line terminators for PC or unix
 %             if ispc; newline = 'pc'; terminator_str = [char(13) char(10)]; %CR/LF
 %             else newline = 'unix'; terminator_str = [char(10)]; %LF
 %             end
-%             
+%
 %             %ONLY use Auto file numbering for 'direct to file'
 %             %***** Build Output file name *****
 %             numor_str = num2str(plot_info.params(128));
@@ -295,17 +301,17 @@ grasp_plot(plotdata,column_format,plot_info);
 %             elseif a==4; addzeros = '00';
 %             elseif a==5; addzeros = '0';
 %             elseif a==6; addzeros = ''; end
-%             
+%
 %             fname = [addzeros numor_str '_' num2str(options2) '.dat']; %options2 is the depth number
-%             
+%
 %             %Open file for writing
 %             disp(['Exporting data: '  grasp_env.path.project_dir fname]);
 %             fid=fopen([grasp_env.path.project_dir fname],'wt');
-%             
+%
 %             %Check if to include history header
 %             if strcmp(status_flags.subfigure.export.data_history,'on');
 %                 history = plot_info.history;
-%                 
+%
 %                 for m = 1:length(history)
 %                     textstring = history{m};
 %                     fprintf(fid,'%s \n',textstring);
@@ -313,7 +319,7 @@ grasp_plot(plotdata,column_format,plot_info);
 %                 fprintf(fid,'%s \n','');
 %                 fprintf(fid,'%s \n','');
 %             end
-%             
+%
 %             export_data = plot_info.export_data;
 %             %Check if to include column labels
 %             if strcmp(status_flags.subfigure.export.column_labels,'on')
@@ -328,11 +334,11 @@ grasp_plot(plotdata,column_format,plot_info);
 %                     fprintf(fid,'%s \n','');
 %                 end
 %             end
-%             
+%
 %             %Strip out any Nans
 %             temp = find(not(isnan(export_data(:,1))));
 %             export_data = export_data(temp,:);
-%             
+%
 %             %Check if to include q-reslution (4th column)
 %             if strcmp(status_flags.subfigure.export.include_resolution,'on')
 %                 %Check what format of q-resolution, sigma, hwhm, fwhm
@@ -341,7 +347,7 @@ grasp_plot(plotdata,column_format,plot_info);
 %                     export_data(:,4) = export_data(:,4)/2; %hwhm
 %                 elseif strcmp(status_flags.subfigure.export.resolution_format,'sigma') %Convert to sigma
 %                     export_data(:,4) = export_data(:,4)/ (2 * sqrt(2 * log(2)));%fwhm
-%                     
+%
 %                 end
 %             else
 %                 disp('help here:  radial_average_callbacks 409 & grasp_plot_menu_callbacks line 189')
@@ -350,22 +356,22 @@ grasp_plot(plotdata,column_format,plot_info);
 %             fclose(fid);
 %         end
 %     end
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-%     
-%     
-%     
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
 % end
-% 
+%
 % if ishandle(message_handle);
 %     delete(message_handle);
 % end
-% 
+%
 % toc
-end
+%end

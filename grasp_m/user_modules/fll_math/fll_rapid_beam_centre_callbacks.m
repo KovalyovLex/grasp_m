@@ -17,7 +17,8 @@ case 'take4'
     ywidth = str2num(get(i,'string'));
     
     %Auto fit all the spots
-    fit_result = fit2d_spots(spot_coords,[xwidth,ywidth],1);
+    status_flags.fitter.include_res_check_2d = 0; %Turn off resolution smearing for 2D fit
+    fit_result = fit2d_spots(spot_coords,[xwidth,ywidth],2);
     
     %***** Calcualte the new beam centre *****
     x1 = fit_result{1}.values(3); dx1 = fit_result{1}.err_values(3);

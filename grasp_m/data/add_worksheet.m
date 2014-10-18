@@ -13,6 +13,7 @@ if wks_type >=1 && wks_type <=7; %i.e. scattering data types
         disp(['Adding ' grasp_data(index).name ' Worksheet Number ' num2str(grasp_data(index).nmbr+1)]);
         initialise_data_arrays(n, grasp_data(index).nmbr+1)
     end
+   
     selector_build
     selector_build_values
     grasp_update

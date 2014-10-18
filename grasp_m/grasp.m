@@ -73,10 +73,16 @@ function grasp
 %#function raw_read_frm2_mira
 %#function raw_read_hzb_v4
 %#function raw_read_frm2_sans1
+%#function read_ansto_det_efficiency_hdf
+%#function grasp_paxy_read_wrapper
+%#function DLlirePAX
+%#function DLlireXY
+%#function raw_read_llb_tpa
 %#function raw_save
 %#function retrieve_data
 %#function update_last_saved_project
 %#function withdraw_data_depth
+%#function grasp_2d_nexus_write
 
 %**** /sans_instrument *****
 %#function d33_rawdata_calibration
@@ -278,8 +284,8 @@ global grasp_env
 global grasp_handles
 
 %***** Grasp Version Number ******
-grasp_env.grasp_version = '6.72';
-grasp_env.grasp_version_date = '18th April 2013';
+grasp_env.grasp_version = '6.94';
+grasp_env.grasp_version_date = '9th September 2014';
 grasp_env.grasp_name = 'GRASP';
 
 

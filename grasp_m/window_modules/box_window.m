@@ -23,7 +23,11 @@ grasp_handles.window_modules.box.window = figure(....
 handle = grasp_handles.window_modules.box.window;
 
 %Saved Boxes
-uicontrol(handle,'units','normalized','Position',[0.01,0.90,0.95,0.06],'FontName',grasp_env.font,'horizontalalignment','left','FontSize',grasp_env.fontsize,'Style','text','String','Box:    x1       x2       y1       y2','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+if inst_params.detectors ==1;
+    uicontrol(handle,'units','normalized','Position',[0.01,0.90,0.95,0.06],'FontName',grasp_env.font,'horizontalalignment','left','FontSize',grasp_env.fontsize,'Style','text','String','Box:    x1       x2        y1       y2','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+else %multilple detectors - show detector number
+    uicontrol(handle,'units','normalized','Position',[0.01,0.90,0.95,0.06],'FontName',grasp_env.font,'horizontalalignment','left','FontSize',grasp_env.fontsize,'Style','text','String','Box:    x1       x2        y1       y2      Det','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+end
 
 for box = 1:6
     ypos = 0.83 - ((box-1)*0.07);
@@ -34,8 +38,10 @@ for box = 1:6
     handle2 = uicontrol(handle,'units','normalized','Position',[0.24,ypos,0.13,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(coords(2)),'HorizontalAlignment','left','Visible','on','userdata',box,'CallBack','box_callbacks(''x2'');');
     handle3 = uicontrol(handle,'units','normalized','Position',[0.38,ypos,0.13,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(coords(3)),'HorizontalAlignment','left','Visible','on','userdata',box,'CallBack','box_callbacks(''y1'');');
     handle4 = uicontrol(handle,'units','normalized','Position',[0.52,ypos,0.13,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','edit','String',num2str(coords(4)),'HorizontalAlignment','left','Visible','on','userdata',box,'CallBack','box_callbacks(''y2'');');
-        
-    grasp_handles.window_modules.box = setfield(grasp_handles.window_modules.box,['coords' num2str(box)],[handle1, handle2, handle3, handle4]);
+    if inst_params.detectors == 1; visible = 'off';
+    else visible = 'on';end
+    handle5 = uicontrol(handle,'units','normalized','Position',[0.66,ypos,0.13,0.06],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','text','String',num2str(coords(5)),'HorizontalAlignment','left','Visible',visible,'userdata',box);
+    grasp_handles.window_modules.box = setfield(grasp_handles.window_modules.box,['coords' num2str(box)],[handle1, handle2, handle3, handle4, handle5]);
     
     %Grab Coords
     uicontrol(handle,'units','normalized','Position',[0.02,ypos,0.06,0.06],'tooltip','Grab Box Coordinates','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','Visible','on','Value',0,'string',num2str(box),'CallBack','box_callbacks(''grab_coords'');','userdata',box,'buttondownfcn','box_callbacks(''clear_box'');');

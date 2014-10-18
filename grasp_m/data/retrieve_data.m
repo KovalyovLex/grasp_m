@@ -17,11 +17,9 @@ function output = retrieve_data(selector)
 % 8 = I0 Beam Intensity
 % 99 = detector efficiency map
 
-
 global status_flags
 global grasp_data
 global inst_params
-global grasp_env
 
 %Data Worksheets index
 if strcmp(selector,'fore');
@@ -113,17 +111,26 @@ for det = 1:inst_params.detectors
         output.(['data' num2str(det)]) = sum(grasp_data(index).(['data' num2str(det)]){nmbr},3);
         output.(['error' num2str(det)]) = sqrt(sum(grasp_data(index).(['error' num2str(det)]){nmbr}.^2,3));
         output.(['params' num2str(det)]) = grasp_data(index).(['params' num2str(det)]){nmbr}(:,1); %Params are taken from the first one in the depth
+        output.(['raw_counts' num2str(det)]) = sum(grasp_data(index).(['data' num2str(det)]){nmbr},3);
         
         %Update Summed Parameters, eg, Total Det, Total Monitor etc.
         param_sum = sum(grasp_data(index).(['params' num2str(det)]){nmbr},2);
         output.(['params' num2str(det)])(inst_params.vectors.monitor) = param_sum(inst_params.vectors.monitor);
         output.(['params' num2str(det)])(inst_params.vectors.time) = param_sum(inst_params.vectors.time);
-        output.(['params' num2str(det)])(inst_params.vectors.aq_time) = param_sum(inst_params.vectors.aq_time);
+        
+        if isfield(grasp_data(index),'data_type');
+            if not(isempty(grasp_data(index).data_type));
+                if strcmp(grasp_data(index).data_type{nmbr},'single frame'); %Acumulate total time for many single frame files in the depth:  not for kinetic or tof
+                    output.(['params' num2str(det)])(inst_params.vectors.aq_time) = param_sum(inst_params.vectors.aq_time);
+                end
+            end
+        end
         output.(['params' num2str(det)])(inst_params.vectors.array_counts) = param_sum(inst_params.vectors.array_counts);
     else
         output.(['data' num2str(det)]) = grasp_data(index).(['data' num2str(det)]){nmbr}(:,:,real_dpth);
         output.(['error' num2str(det)]) = grasp_data(index).(['error' num2str(det)]){nmbr}(:,:,real_dpth);
         output.(['params' num2str(det)]) = grasp_data(index).(['params' num2str(det)]){nmbr}(:,real_dpth);
+        output.(['raw_counts' num2str(det)]) = grasp_data(index).(['data' num2str(det)]){nmbr}(:,:,real_dpth);
     end
     
     %Get instrument mask for detector
@@ -150,16 +157,5 @@ if status_flags.data.patch_check ==1; %Patch some parameters
     end
 end
 
+output.scale_factor = 1;  %This is the combined multiplication and division factors that happens to the foreground data though all the normalizations and processing
 
-
-% 
-% %***** Soft Detector Position Correction - Tube detectors like D22 & d33 *****
-% if status_flags.calibration.soft_det_cal ~= 0
-%     if strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning') || strcmp(grasp_env.inst_option,'D33')
-%     %&& sum(sum(output.data1)) ~=0
-%     
-%    if output.type ~= 7 && output.type ~=99; %Not Masks or detector efficiency
-%         output = d33_rawdata_calibration(output);
-%    end
-%     end
-% end

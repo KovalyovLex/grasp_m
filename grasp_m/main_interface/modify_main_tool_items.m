@@ -8,12 +8,49 @@ set(0,'showhiddenhandles','on'); %Turn on hidden handles
 
 
 %Delete the buttons we don't want.
+%     'figToolAxis'
+%     'Plottools.PlottoolsOn'
+%     'Plottools.PlottoolsOff'
+%     'Annotation.InsertLegend'
+%     'DataManager.Linking'
+%     'Exploration.Brushing'
+%     'Exploration.DataCursor'
+%     'Standard.NewFigure'
+%     'figToolTitle'
+%     'Annotation.InsertColorbar'
+%     'figToolRender'
+%     'figToolQaxes'
+%     'figToolxylim'
+%     'Exploration.Pan'
+%     'Exploration.Rotate'
+%     'figToolRescale'
+%     'Exploration.ZoomOut'
+%     'Exploration.ZoomIn'
+%     'Standard.EditPlot'
+%     'Standard.PrintFigure'
+%     'Standard.SaveFigure'
+%     'Standard.FileOpen'
+
+% i = findobj(figure_handle,'tag','figToolAxis');delete(i);
 i = findobj(figure_handle,'tag','Plottools.PlottoolsOn');delete(i);
 i = findobj(figure_handle,'tag','Plottools.PlottoolsOff');delete(i);
-i = findobj(figure_handle,'tag','Standard.NewFigure');delete(i);
-i = findobj(figure_handle,'tag','Standard.EditPlot');delete(i);
-i = findobj(figure_handle,'tag','Exploration.DataCursor');delete(i);
 i = findobj(figure_handle,'tag','Annotation.InsertLegend');delete(i);
+i = findobj(figure_handle,'tag','DataManager.Linking');delete(i);
+i = findobj(figure_handle,'tag','Exploration.Brushing');delete(i);
+i = findobj(figure_handle,'tag','Exploration.DataCursor');delete(i);
+i = findobj(figure_handle,'tag','Standard.NewFigure');delete(i);
+% i = findobj(figure_handle,'tag','Exploration.Pan');delete(i);
+i = findobj(figure_handle,'tag','Exploration.Rotate');delete(i);
+
+% i = findobj(figure_handle,'tag','Exploration.ZoomOut');delete(i);
+% i = findobj(figure_handle,'tag','Exploration.ZoomIn');delete(i);
+% i = findobj(figure_handle,'tag','Standard.EditPlot');delete(i);
+% i = findobj(figure_handle,'tag','Standard.PrintFigure');delete(i);
+% i = findobj(figure_handle,'tag','Standard.SaveFigure');delete(i);
+% i = findobj(figure_handle,'tag','Standard.FileOpen');delete(i);
+
+
+
 
 %Modify colorbar tool
 i = findobj(figure_handle,'tag','Annotation.InsertColorbar');

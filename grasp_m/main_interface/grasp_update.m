@@ -15,6 +15,8 @@ for det = 1:inst_params.detectors
 end
 
 
+
+
 %***** Update Grasp GUI elements *****
 %Update the selector positons
 update_selectors
@@ -45,7 +47,7 @@ set(grasp_handles.figure.data_load,'string',displayimage.load_string{1});
 %normalisation indicator
 set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normalization.status '  Dt: ' status_flags.deadtime.status ' Tc: ' status_flags.transmission.thickness_correction]);
 
-    
+
     %***** Image processing:  Flip, Smooth, Log etc *****
     %Loop though number of detectors
     for det = 1:inst_params.detectors
@@ -80,12 +82,11 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
         end
     end
     
-    
+   
     z_max_global = -inf; z_min_global = inf;
     z_max_local = []; z_min_local = [];
     %Set 2D image properties
     for det = 1:inst_params.detectors
-        
         %Check for z_max and z_min axis limits
         z_max_local.(['det' num2str(det)]) = max(max(displayimage.(['image' num2str(det)])));
         z_min_local.(['det' num2str(det)]) = min(min(displayimage.(['image' num2str(det)])));
@@ -172,11 +173,11 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
         %Set axis visibility
         if status_flags.display.axes ==1; status = 'on'; else status = 'off'; end
         set(grasp_handles.menu.display.showaxes,'checked',status);
-        for det = 1:inst_params.detectors
+        %for det = 1:inst_params.detectors
             set(grasp_handles.displayimage.(['axis' num2str(det)]),'visible',status);
-        end
+        %end
+        
     end
-    
     
     %Set the Z-Lims & Z-Limits status_flags
     for det = 1:inst_params.detectors
@@ -206,7 +207,6 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
         %Set z-scales to plots
         set(grasp_handles.displayimage.(['axis' num2str(det)]),'clim',[status_flags.display.z_min.(['det' num2str(det)]) status_flags.display.z_max.(['det' num2str(det)])]);
     end
-    
     
     %***** Contours *****
     for det = 1:inst_params.detectors
@@ -263,7 +263,6 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
             status_flags.contour.current_levels_list = c_levels;
         end
     end
-    
     
     %Set axis title (main 2d image title)
     if status_flags.display.title == 1;
@@ -409,6 +408,26 @@ set(grasp_handles.figure.norm_indicator,'string',['Nrm: ' status_flags.normaliza
     if ishandle(grasp_handles.grasp_changer.window);
         update_grasp_changer;
     end
+    
+    
+    
+    %Remove minor axes
+    if strcmp(status_flags.display.show_minor_detectors,'off') & inst_params.detectors > 1;
+        for det = 2:inst_params.detectors
+            temp = get(grasp_handles.displayimage.(['axis' num2str(det)]),'children');
+            set(temp,'visible','off');
+            set(grasp_handles.displayimage.(['axis' num2str(det)]),'visible','off');
+        end
+        set(grasp_handles.displayimage.axis1,'position',grasp_env.displayimage.det_page);
+        set(grasp_handles.displayimage.colorbar,'position',[0.7,0.43,0.015,0.5]);
+        
+    else
+        for det = 1:inst_params.detectors
+            set(grasp_handles.displayimage.(['axis' num2str(det)]),'position',grasp_env.displayimage.(['det_position' num2str(det)]));
+        end
+        set(grasp_handles.displayimage.colorbar,'position',grasp_env.displayimage.colorbar_position);
+    end
+        
     
     
     

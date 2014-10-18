@@ -38,6 +38,17 @@ uicontrol('units','normalized','Position',[0.02 0.92 0.25 0.02],'FontName',grasp
 uicontrol('units','normalized','Position',[0.28 0.92 0.1 0.02],'ToolTip','Number of Simultaneous Functions to Fit','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','popup','Tag','no_functions_selector_2d','Visible','on',....
     'String',no_fun_string,'value',status_flags.fitter.number2d,'callback','curve_fit_2d_callbacks(''number_of_fn'');');
 
+%Resolution Check-Box
+uicontrol('units','normalized','Position',[0.52 0.93 0.25 0.02],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','right','Style','text','String',['Resolution:'],'BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+uicontrol('units','normalized','Position',[0.78 0.93 0.05 0.02],'ToolTip','Resolution smear model to fit data in 2D - Warning - Makes fitting very slow!','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','checkbox','Tag','resolution_checkbox_2d','Visible','on',....
+    'ForegroundColor', [1 1 1],'BackgroundColor', grasp_env.background_color,'value',status_flags.fitter.include_res_check_2d,'callback','curve_fit_2d_callbacks(''resolution_check'');');
+
+
+%Multi Beam Check-Box
+uicontrol('units','normalized','Position',[0.52 0.91 0.25 0.02],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','right','Style','text','String',['MultiBeam:'],'BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+uicontrol('units','normalized','Position',[0.78 0.91 0.05 0.02],'ToolTip','Use MultiBeam Fitting - Take care you know what you are doing with this!','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','checkbox','Tag','multibeam_checkbox_2d','Visible','on',....
+    'ForegroundColor', [1 1 1],'BackgroundColor', grasp_env.background_color,'value',status_flags.analysis_modules.multi_beam.fit2d_checkbox,'callback','curve_fit_2d_callbacks(''multi_beam_check'');');
+
 %Parameters - mainly updated in curve_fit_window_mod
 uicontrol('units','normalized','Position',[0.02 0.87 0.3 0.03],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','right','Style','text','String',['Parameters:'],'BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 uicontrol('units','normalized','Position',[0.36 0.87 0.55 0.03],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','left','Style','text','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1],...
@@ -63,6 +74,9 @@ uicontrol('units','normalized','Position',[0.725 0.01 0.2 0.02],'ToolTip','Delet
 uicontrol('units','normalized','Position',[0.275 0.04 0.2 0.02],'ToolTip','Copy Fit Parameters to Clipboard','String','Copy to Clip','FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'Style','pushbutton','Tag','fit_clipboard','Visible','on','CallBack','curve_fit_2d_callbacks(''copy_to_clipboard'');');
 
 
+%Fitted 2D Function & Error Plot
+uicontrol('units','normalized','Position',[0.06 0.32 0.4 0.015],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','left','Style','text','String',['Fitted Function:'],'BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
+uicontrol('units','normalized','Position',[0.53 0.32 0.4 0.015],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'FontWeight','bold','HorizontalAlignment','left','Style','text','String',['Residual: (Data-Fit) / Err_Data'],'BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 
 %Update the curve fit window
 curve_fit_2d_callbacks('build_fn_list');

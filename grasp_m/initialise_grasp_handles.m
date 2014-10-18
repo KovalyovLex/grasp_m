@@ -40,7 +40,7 @@ grasp_handles.window_modules.ancos2.window = [];
 grasp_handles.window_modules.pa_tools.optimise_window = [];
 grasp_handles.window_modules.pa_tools.efficiencies_window = [];
 grasp_handles.window_modules.parameter_patch_window = [];
-
+grasp_handles.window_modules.multi_beam.window = [];
 
 grasp_handles.window_modules.calibration.beam.wks = [];
 grasp_handles.window_modules.calibration.beam.nmbr = [];

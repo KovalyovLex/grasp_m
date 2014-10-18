@@ -9,7 +9,20 @@ if nargin <4; delta_theta_y = 0; end
 if nargin <3; delta_theta_x = 0; end
 
 
-%Output: matrix of : pixel_x, pixel_y, qx, qy, mod q, q angle, 2theta_x, 2theta_y, mod_2theta, solid_angle, qz, delta_theta_x, delta_theta_y
+%Output: matrix of :
+%(1) pixel_x
+%(2) pixel_y
+%(3) qx
+%(4) qy
+%(5) mod q
+%(6) q angle
+%(7) 2theta_x
+%(8) 2theta_y
+%(9) mod_2theta
+%(10) solid_angle
+%(11) qz
+%(12) delta_theta_x
+%(13) delta_theta_y
 
 %Make empty q-matrix
 qmatrix = zeros(detector.pixels(2),detector.pixels(1),13);
@@ -95,4 +108,7 @@ pixel_distance_x = sqrt(R.^2 + S.^2);
 pixel_distance(:,:,3) = sqrt(pixel_distance_x.^2 + (pixel_distance(:,:,2).^2));
 %Finally calculate solid angle subtended by each pixel
 qmatrix(:,:,10) = effective_pixel_area./(pixel_distance(:,:,3).^2); %matrix - to account for distortions of flat detector against scattering sphere at short distances.
+
+
+
 

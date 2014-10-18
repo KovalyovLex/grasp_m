@@ -1,4 +1,5 @@
 function hh = ploterr(x, y, xerr, yerr, varargin)
+
 %PLOTERR General error bar plot.
 %
 %
@@ -124,7 +125,7 @@ function hh = ploterr(x, y, xerr, yerr, varargin)
 %          not compulsory anymore when setting logscale or handle sizes.
 %  v1.1.1, December 2008: bugfix of v1.1
 %
-%   Felix Zörgiebel
+%   Felix Zï¿½rgiebel
 %   email: felix_z -> web.de
 %   Date: 12/03/2008
 
@@ -324,7 +325,7 @@ if isempty(errmsg)
     A=A(2:end); % skip symbol for properties
 end
 n=length(A);
-A=[A '!"§$%&()=?']; % append some stupid string for the case that the last property comes without a value
+A=[A '!"ï¿½$%&()=?']; % append some stupid string for the case that the last property comes without a value
 idx=1;
 while idx <= n
     prop=A{idx};

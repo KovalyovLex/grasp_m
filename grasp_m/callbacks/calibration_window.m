@@ -86,7 +86,7 @@ grasp_handles.window_modules.calibration.beam.beamflux_chk = uicontrol(grasp_han
 grasp_handles.window_modules.calibration.beam.text4 = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.05 0.32 0.35 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','left','Style','text','String','Beam Worksheet:','BackgroundColor', grasp_env.background_color, 'ForegroundColor', [1 1 1]);
 grasp_handles.window_modules.calibration.beam.wks = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.38 0.32 0.35 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','popup','String','', 'ForegroundColor', [0 0 0]);
 grasp_handles.window_modules.calibration.beam.nmbr = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.75 0.32 0.05 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','text','String','', 'ForegroundColor', [0 0 0]);
-grasp_handles.window_modules.calibration.beam.dpth = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.85 0.32 0.05 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','text','String','', 'ForegroundColor', [0 0 0]);
+grasp_handles.window_modules.calibration.beam.dpth = uicontrol(grasp_handles.window_modules.calibration.window,'units','normalized','Position',[0.85 0.32 0.08 0.04],'FontName',grasp_env.font,'FontSize',grasp_env.fontsize,'HorizontalAlignment','center','Style','text','String','', 'ForegroundColor', [0 0 0]);
 
 
 %***** Calibration to Water parameters *****

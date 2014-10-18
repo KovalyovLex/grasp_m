@@ -239,6 +239,9 @@ switch to_do
         
     case 'build_the_masks'
         
+        
+        %NEED TO INCLUDE USER AND INSTRUMENT MASKS HERE!
+        
         box_masks = []; box_number = []; active_boxes = [];
         %Make empty sum_masks for all detectors
         for det = 1:inst_params.detectors
@@ -250,18 +253,24 @@ switch to_do
         for box = 1:6
             %            coords = status_flags.analysis_modules.boxes.(['coords' num2str(box)]);
             coords = box_callbacks('retrieve_box_coords',box);
-            
+           
             %disp(['Box ' num2str(box) ' coordinates ' num2str(coords(1:4)) ' on detector ' num2str(coords(5))]);
             det = coords(5); %Detector number we are dealing with
             box_masks.(['box' num2str(box)]) = zeros(inst_params.(['detector' num2str(det)]).pixels(2),inst_params.(['detector' num2str(det)]).pixels(1));
             box_area = (coords(2)-coords(1))*(coords(4)-coords(3));
+            
             if box_area>0;
                 active_boxes = [active_boxes, box];
                 box_masks.(['box' num2str(box)])(coords(3):coords(4),coords(1):coords(2)) = 1;
+                
+                %Include Current Mask conditions in the box
+                box_masks.(['box' num2str(box)]) = box_masks.(['box' num2str(box)]).*displayimage.(['mask' num2str(det)]);
+                
                 box_history =  [box_history, {[num2str(coords(1)) ' ' num2str(coords(2)) ' ' num2str(coords(3)) ' ' num2str(coords(4))]}];
             end
             sum_mask.(['det' num2str(det)]) = or(sum_mask.(['det' num2str(det)]),box_masks.(['box' num2str(box)]));
         end
+        
         for det = 1:inst_params.detectors
             sum_mask.(['det' num2str(det)]) = double(sum_mask.(['det' num2str(det)])); %Otherwise it comes out as a logical
         end
@@ -271,7 +280,6 @@ switch to_do
         output.active_boxes = active_boxes;
         output.sum_mask = sum_mask;
         output.box_history = box_history;
-        
         
         
     case 'box_it'
@@ -291,7 +299,7 @@ switch to_do
         active_boxes = masks.active_boxes;
         sum_mask = masks.sum_mask;
         box_history = masks.box_history;
-
+        
         %Churn through the depth and extract box-sums
         index = data_index(status_flags.selector.fw);
         foreground_depth = status_flags.selector.fdpth_max - grasp_data(index).sum_allow;
@@ -357,16 +365,6 @@ switch to_do
                         box_pixels = 1;
                     end
                     
-%                     %Check if to Scan Box
-%                     if status_flags.analysis_modules.boxes.scan_boxes_check(box) ==1;
-%                         coords = getfield(status_flags.analysis_modules.boxes,['coords' num2str(box)]);
-%                         angle_now = displayimage.params(inst_params.vectors.san);
-%                         angle0 = status_flags.analysis_modules.boxes.scan_boxes_angle0(box);
-%                         coords = dynamic_box_coords(coords,angle0, angle_now);
-%                         %Re-build moved box mask
-%                         mask = zeros(inst_params.det_size(2),inst_params.det_size(1));
-%                         mask(coords(3):coords(4),coords(1):coords(2),box) = 1;
-%                     end
                     box_sum = (sum(sum(displayimage.(['data' num2str(det)]) .* mask)))/box_pixels;
                     box_sum_error = (sqrt(sum(sum((displayimage.(['error' num2str(det)]) .* mask).^2))))/box_pixels;
                     box_sum_list = [box_sum_list, box_sum, box_sum_error];
@@ -430,6 +428,7 @@ switch to_do
             'params',displayimage.params1,....
             'parsub',displayimage.subtitle,....
             'export_data',plotdata,....
+            'export_column_format',column_format,....
             'column_labels',[box_param_name char(9) 'I' char(9) 'Err_I']);
             
         local_history = displayimage.history; %This will actually be the history of the last file
@@ -474,6 +473,8 @@ for box = 1:6
     set(handle(2),'string',num2str(coords(2)));
     set(handle(3),'string',num2str(coords(3)));
     set(handle(4),'string',num2str(coords(4)));
+    set(handle(5),'string',num2str(coords(5)));
+    
 end
 set(grasp_handles.window_modules.box.sum_box_chk,'value',status_flags.analysis_modules.boxes.sum_box_chk);
 set(grasp_handles.window_modules.box.box_nrm_chk,'value',status_flags.analysis_modules.boxes.box_nrm_chk);

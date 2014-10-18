@@ -35,10 +35,10 @@ grasp_handles.menu.file.export_image.jpgmovie = uimenu(grasp_handles.menu.file.e
 %Export Data
 enable = 'on';
 grasp_handles.menu.file.export_data.root = uimenu(grasp_handles.menu.file.root,'label','Export &Data','callback','','separator','on','tag','file_export_data','enable',enable);
-%grasp_handles.menu.file.export_data.displaydata = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Display Image:  ILL Raw SANS Format','callback','file_menu(''export_displayimage'');','enable','off'); %Fake 2D ILL Format SANS Data File
-grasp_handles.menu.file.export_data.binarydata = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Binary (real*4) Display Image','callback','file_menu(''export_binary'');');
+grasp_handles.menu.file.export_data.displaydata = uimenu(grasp_handles.menu.file.export_data.root,'label','Export 2D Display Image (HDF)','callback','file_menu(''export_displayimage'');','enable','on');
+%grasp_handles.menu.file.export_data.binarydata = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Binary (real*4) Display Image','callback','file_menu(''export_binary'');');
 grasp_handles.menu.file.export_data.detector_efficiency = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Detector Efficiency Map','callback','file_menu(''export_efficiency_map'');');
-grasp_handles.menu.file.export_data.export_depth_frames = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Depth Frames (ILL Raw Data)','callback','file_menu(''export_depth_frames'');');
+%grasp_handles.menu.file.export_data.export_depth_frames = uimenu(grasp_handles.menu.file.export_data.root,'label','Export Depth Frames (ILL Raw Data)','callback','file_menu(''export_depth_frames'');');
 
 
 %Import Data
@@ -162,6 +162,32 @@ end
 grasp_handles.menu.file.preferences.box_update = uimenu(grasp_handles.menu.file.preferences.root,'label','Box Display Update','enable','on','checked',status_flags.analysis_modules.boxes.display_refresh,'callback','main_callbacks(''boxes_display_refresh'');');
 
 
+%Axis Color
+grasp_handles.menu.file.preferences.axis_color_root = uimenu(grasp_handles.menu.file.preferences.root,'label','Axis Color','enable','on');
+grasp_handles.menu.file.preferences.axis_color_active = uimenu(grasp_handles.menu.file.preferences.axis_color_root,'label','Active Axis Color','enable','on');
+grasp_handles.menu.file.preferences.axis_color_inactive = uimenu(grasp_handles.menu.file.preferences.axis_color_root,'label','Inactive Axis Color','enable','on');
+axis_color_list_string = {'(none)','white','black','red','green','blue','cyan','magenta','yellow'};
+grasp_handles.menu.file.preferences.active_axis_color = [];
+%Active
+for n = 1:length(axis_color_list_string);
+    if strcmp(grasp_env.displayimage.active_axis_color,axis_color_list_string{n})
+         checked = 'on'; else checked = 'off';
+    end
+    temp = uimenu(grasp_handles.menu.file.preferences.axis_color_active,'label',axis_color_list_string{n},'checked',checked,'callback','file_menu(''active_axis_color'');');
+    grasp_handles.menu.file.preferences.active_axis_color = [grasp_handles.menu.file.preferences.active_axis_color, temp];
+end
+%Inactive
+grasp_handles.menu.file.preferences.inactive_axis_color = [];
+for n = 1:length(axis_color_list_string);
+    if strcmp(grasp_env.displayimage.inactive_axis_color,axis_color_list_string{n})
+         checked = 'on'; else checked = 'off';
+    end
+    temp = uimenu(grasp_handles.menu.file.preferences.axis_color_inactive,'label',axis_color_list_string{n},'checked',checked,'callback','file_menu(''inactive_axis_color'');');
+    grasp_handles.menu.file.preferences.inactive_axis_color = [grasp_handles.menu.file.preferences.inactive_axis_color, temp];
+end
+
+
+
 %Exit
 grasp_handles.menu.file.exit = uimenu(grasp_handles.menu.file.root,'label','&Exit','separator','on','callback','file_menu(''exit'');');
 
@@ -277,6 +303,11 @@ grasp_handles.menu.display.showaxes = uimenu(grasp_handles.menu.display.root,'la
 %Show / Hide Axis box
 grasp_handles.menu.display.axis_box = uimenu(grasp_handles.menu.display.root,'label','Show Axis Box','tag','show_graph_axes','accelerator','','checked','off','callback','menu_callbacks(''show_axis_box'');');
 
+%Show / Hide Minor detectors (e.g. D33 panels)
+grasp_handles.menu.display.hide_minor_detectors = uimenu(grasp_handles.menu.display.root,'label','Show Minor Detectors (e.g D33 Panels)','tag','','accelerator','','checked',status_flags.display.show_minor_detectors,'callback','menu_callbacks(''show_minor_detectors'');');
+
+
+
 %Grasp Depth Movie
 grasp_handles.menu.display.movie = uimenu(grasp_handles.menu.display.root,'label','Depth &Movie','tag','movie_menu','callback','grasp_movie','accelerator','f');
 
@@ -326,16 +357,19 @@ grasp_handles.menu.analysis.strips = uimenu(grasp_handles.menu.analysis.root,'la
 %X and Y projections
 %enable = 'off';
 %grasp_handles.menu.analysis.projections = uimenu(grasp_handles.menu.analysis.root,'label','Projections (x y)','callback','projection_window','accelerator','v','enable',enable);
-%Reflectivity Toolkit
-enable = 'off';
-grasp_handles.menu.analysis.reflectivity = uimenu(grasp_handles.menu.analysis.root,'label','Reflectivity Toolkit','callback','reflectivity_window','accelerator','r','enable',enable);
+
+%%Reflectivity Toolkit
+%enable = 'off';
+%grasp_handles.menu.analysis.reflectivity = uimenu(grasp_handles.menu.analysis.root,'label','Reflectivity Toolkit','callback','reflectivity_window','accelerator','r','enable',enable);
 
 %2D curve fitting 
 enable = 'on';
 grasp_handles.menu.analysis.fit2d = uimenu(grasp_handles.menu.analysis.root,'label','&2D Curve Fit','callback','curve_fit_window_2d','accelerator','q','enable',enable);
-%Background Shifter
-enable = 'off';
-grasp_handles.menu.analysis.backshift = uimenu(grasp_handles.menu.analysis.root,'label','Background Shifter','callback','background_shifter_window','accelerator','','enable',enable);
+
+%%Background Shifter
+%enable = 'off';
+%grasp_handles.menu.analysis.backshift = uimenu(grasp_handles.menu.analysis.root,'label','Background Shifter','callback','background_shifter_window','accelerator','','enable',enable);
+
 %Mask Editor
 grasp_handles.menu.analysis.masked = uimenu(grasp_handles.menu.analysis.root,'label','&Mask Editor','callback','mask_edit_window','accelerator','m','enable','on');
 %Calibration Options
@@ -354,6 +388,8 @@ grasp_handles.menu.analysis.pa_3he_optimise = uimenu(grasp_handles.menu.analysis
 grasp_handles.menu.analysis.pa_efficiencies = uimenu(grasp_handles.menu.analysis.pa_root,'label','PA Efficiencies Calculator','callback','pa_efficiencies_window','enable',enable);
 
 
+%Multi Beam Analysis Tools
+grasp_handles.menu.analysis.multi_beam_window = uimenu(grasp_handles.menu.analysis.root,'label','Multi-Beam Window','enable',enable,'callback','multi_beam_define_window');
 
 
 
@@ -415,6 +451,7 @@ enable = 'on';
 grasp_handles.menu.data.normalization.root = uimenu(grasp_handles.menu.data.root,'label','Data Normalization:','enable',enable);
 grasp_handles.menu.data.normalization.none = uimenu(grasp_handles.menu.data.normalization.root,'label','None: Absolute Counts','tag','data_norm','userdata','none','callback','data_menu_callbacks(''normalization'',''none'');');
 grasp_handles.menu.data.normalization.stdmon = uimenu(grasp_handles.menu.data.normalization.root,'label','Standard Monitor','tag','data_norm','userdata','mon','callback','data_menu_callbacks(''normalization'',''mon'');');
+grasp_handles.menu.data.normalization.stdmon2 = uimenu(grasp_handles.menu.data.normalization.root,'label','Standard Monitor2','tag','data_norm','userdata','mon2','callback','data_menu_callbacks(''normalization'',''mon2'');');
 grasp_handles.menu.data.normalization.stdtime = uimenu(grasp_handles.menu.data.normalization.root,'label','Acquisition Time','tag','data_norm','userdata','time','callback','data_menu_callbacks(''normalization'',''time'');');
 grasp_handles.menu.data.normalization.exptime = uimenu(grasp_handles.menu.data.normalization.root,'label','Exposure Time','tag','data_norm','userdata','exposure_time','callback','data_menu_callbacks(''normalization'',''exposure_time'');');
 grasp_handles.menu.data.normalization.totaldet = uimenu(grasp_handles.menu.data.normalization.root,'label','Total Detector Counts','tag','data_norm','userdata','det','callback','data_menu_callbacks(''normalization'',''det'');');
@@ -487,7 +524,7 @@ uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','Rheo Aniso
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&TOF Calculator','callback','tof_calculator_window','enable','on');
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&D33 Chopper Time-Distance Calculator','callback','d33_chopper_time_distance','enable','on');
 
-uimenu(grasp_handles.menu.user_modules.root,'label','&Launch auto fitting','callback','fitting_tool','enable','on');
+
 
 %***** About Grasp *****
 grasp_handles.menu.about_grasp.root = uimenu(figure_handle,'label','Help');

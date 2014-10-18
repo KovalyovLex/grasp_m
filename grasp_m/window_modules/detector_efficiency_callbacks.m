@@ -28,7 +28,8 @@ for det = 1:inst_params.detectors
 end
 
 %Update the mean intensity display in the Det Eff window
-set(grasp_handles.window_modules.detector_efficiency.cal_average_value,'string',num2str(det_mean.det1));
+
+set(grasp_handles.window_modules.detector_efficiency.cal_average_value,'string',num2str(det_mean.(['det' num2str(status_flags.display.active_axis)])));
 set(grasp_handles.window_modules.detector_efficiency.cal_average_units,'string',displayimage.units);
 
 
@@ -83,6 +84,9 @@ switch to_do
         if nmbr > grasp_data(index).nmbr;
             add_worksheet(99);
         end
+        
+        
+        det_mean.(['det' num2str(det)])
         
         %***** Store Efficeicny map in Det Eff Worksheet *****
         grasp_data(index).(['data' num2str(det)]){nmbr} = data.(['det' num2str(det)]) .* mask.(['det' num2str(det)]) ./ det_mean.(['det' num2str(det)]);  %Efficiency Map, fluctuating about 1.

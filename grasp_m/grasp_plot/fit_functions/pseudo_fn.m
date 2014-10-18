@@ -98,16 +98,10 @@ end
 %The above produces a new x-list to run through the function
 x = x_smear; %Replace variable name as all functions expect 'x'
 
-math_Code = {};
 
 %Multiplex control
 param_number = 1;
 for fn_multiplex = 1:status_flags.fitter.number1d;
-    
-    for line = 1:length(status_flags.fitter.function_info_1d.math_code)
-        math_Code{line} = status_flags.fitter.function_info_1d.math_code{line};
-    end
-    
     %Prepare the variables from the parameters
     for variable_loop = 1:status_flags.fitter.function_info_1d.no_parameters
         
@@ -116,21 +110,12 @@ for fn_multiplex = 1:status_flags.fitter.number1d;
             %parameter is grouped - copy the first copy of this parameter to this position
             parameters_in(param_number) = parameters_in(variable_loop);
         end
-        
-        % TODO Prepare function
-        if ( strcmp(status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number}) )
-            eval([status_flags.fitter.function_info_1d.variable_names{param_number} ' = ' num2str(parameters_in(param_number)) ';']);
-        else
-            % replace parameter for function
-            for line = 1:length(status_flags.fitter.function_info_1d.math_code)
-                math_Code{line} = strrep(math_Code{line},status_flags.fitter.function_info_1d.variable_names{param_number},status_flags.fitter.function_info_1d.functions{param_number});
-            end
-        end
+        eval([status_flags.fitter.function_info_1d.variable_names{param_number} ' = ' num2str(parameters_in(param_number)) ';']);
         param_number = param_number+1;
     end
-    
     for line = 1:length(status_flags.fitter.function_info_1d.math_code)
-        eval(math_Code{line});%this takes 'x' and gives a variable called 'y' as the result
+        %status_flags.fitter.function_info_1d.math_code{line}
+        eval(status_flags.fitter.function_info_1d.math_code{line});%this takes 'x' and gives a variable called 'y' as the result
     end
     
     if fn_multiplex ==1;
@@ -140,13 +125,16 @@ for fn_multiplex = 1:status_flags.fitter.number1d;
     end
 end
 
+%figure
+%plot(x,y_multiplex,'.')
+
 %The final y_multiplex value here is actually too long in the case of smearing an needs weighted averaging
 %Final Weighted average smearing
 y_out = [];
 counter = 1;
 for n =1:length(x_in);
     y_out(n) = 0;
-    x_out(n) = 0;
+%    x_out(n) = 0;
     for m = 1:finesse
         if counter > length(y_multiplex); break; end %Trying to error trap Poly Sphere model with poly = 0
         y_out(n) = y_out(n) + y_multiplex(counter)*x_weight(counter); %The smeared intensity

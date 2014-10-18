@@ -90,6 +90,9 @@ switch to_do
             %Make Compund Mask and Ring Mask (FOR ALL DETECTORS - done in one go)
             smask = sector_callbacks('build_sector_mask',[radius,radius+radius_width,0,360,1]);
 
+            figure
+            pcolor(smask.det1)
+            
             %Loop though the detectors for each ANCOS2 ring
             ancos2_sketch_handle = [];
             ring_data = []; %This is a variable that is appended to for each detector before doing the cos2 fit

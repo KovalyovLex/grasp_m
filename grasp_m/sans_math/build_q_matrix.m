@@ -1,4 +1,10 @@
-function foreimage=build_q_matrix(foreimage)
+function foreimage=build_q_matrix(foreimage,cm_multibeam)
+
+%'options' is an optional flat to instruct specific multi-beam
+%functionality - in particular to take different beam centers
+
+if nargin <2; cm_multibeam = []; end
+    
 
 warning off
 %foreimage contains all data arrays for all detectors and parameters.  cm
@@ -14,6 +20,9 @@ warning off
 %(17) delta_theta
 %(18) delta_q_pixel
 %(19) detla_q_sample_aperture
+%(20) qx/pixelx
+%(21) qy/pixely
+
 
 global inst_params
 global status_flags
@@ -25,7 +34,13 @@ for det = 1:inst_params.detectors
     %Parameters for this detector
     det_params = inst_params.(['detector' num2str(det)]);
     params = foreimage.(['params' num2str(det)]);
-    cm = foreimage.cm.(['det' num2str(det)]).cm_pixels;  %Beam centre coordinates in pixels
+    
+    %Get Beam Center - check if function is being called with a given beam center - i.e. MULTIBEAM
+    if isempty(cm_multibeam);
+        cm = foreimage.cm.(['det' num2str(det)]).cm_pixels;  %Beam centre coordinates in pixels
+    else
+        cm = cm_multibeam;
+    end
     cm_offset = foreimage.cm.(['det' num2str(det)]).cm_translation; %Detector pannel opening translation when beam centre was measured
     
     %Make empty q-matrix
@@ -53,7 +68,14 @@ for det = 1:inst_params.detectors
         
         %DET:  Check if to use Det,  DetCalc (m) or Det_Pannel
         if strcmp(grasp_env.inst,'ILL_d33');
-            sdet = params(inst_params.vectors.det); %Default, unless otherwise
+           sdet = params(inst_params.vectors.det); %Default, unless otherwise
+            if strcmp(status_flags.q.det,'detcalc');
+                if isfield(inst_params.vectors,'detcalc')
+                    if not(isempty(inst_params.vectors.detcalc));
+                        sdet = params(inst_params.vectors.detcalc);
+                    end
+                end
+            end
             if strcmp(grasp_env.inst_option,'D33_Model_Data') %Instrument model
                 if strcmp(status_flags.q.det,'detcalc');
                     if isfield(inst_params.vectors,'detcalc')
@@ -82,14 +104,15 @@ for det = 1:inst_params.detectors
             
         else  %All other cases
             
-        sdet = params(inst_params.vectors.det); %Default, unless otherwise
-        if strcmp(status_flags.q.det,'detcalc');
-            if isfield(inst_params.vectors,'detcalc')
-                if not(isempty(inst_params.vectors.detcalc));
-                    sdet = params(inst_params.vectors.detcalc);
+            sdet = params(inst_params.vectors.det); %Default, unless otherwise
+            if strcmp(status_flags.q.det,'detcalc');
+                if isfield(inst_params.vectors,'detcalc')
+                    if not(isempty(inst_params.vectors.detcalc));
+                        sdet = params(inst_params.vectors.detcalc);
+                    end
                 end
             end
-        end
+        
         if isfield(inst_params.vectors,'det_pannel');
             sdet = params(inst_params.vectors.det_pannel);
         end
@@ -129,7 +152,6 @@ for det = 1:inst_params.detectors
                     r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
                     r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y) + (params(inst_params.vectors.oyt) - cm_offset(2))/1000; %vertical distance from beam centre to pixel (m)
                 end
-                    
             elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning'); %Real D33 during comissioning (Rear Detector Only)
                 r_x = ((qmatrix(:,:,1) - cm(1))*pixelsize_x);
                 r_y = ((qmatrix(:,:,2) - cm(2))*pixelsize_y);
@@ -242,6 +264,10 @@ for det = 1:inst_params.detectors
         
         
         
+        
+        
+        
+        
         %***** Calcualte resolution components, dq, dtheta or dlambda *****
         if status_flags.command_window.display_params ==1 & det ==1;
             disp('***** Resolution Components: *****');
@@ -253,6 +279,19 @@ for det = 1:inst_params.detectors
         %Check if source aperture size is explicitly defined (e.g. NIST data)
         if isfield(inst_params.vectors,'source_ap');
             ap_geometry = params(inst_params.vectors.source_ap);
+            
+        %Check if source aperture size is exmplicity defined (e.g. ILL) as x y dimensions
+        %a zero in the y position means circular of diameter x
+        elseif isfield(inst_params.vectors,'source_ap_x');
+            ap_x = params(inst_params.vectors.source_ap_x);
+            ap_y = params(inst_params.vectors.source_ap_y);
+            
+            if ap_y ==0;
+                ap_geometry = ap_x;
+            else
+                ap_geometry = [ap_x, ap_y];
+            end
+            
         
         else %Where col and aperture position number are defined (e.g. D22, D11 etc.)
             %Find the geometric source size and geometry
@@ -264,6 +303,7 @@ for det = 1:inst_params.detectors
             end
             if isfield(inst_params.vectors,'col_app');
                 ap_geometry = col_ap{params(inst_params.vectors.col_app)+1}; %these parameters are not yet defined
+                
             else
                 if isempty(col_ap); ap_geometry = [];
                 else ap_geometry = col_ap{1};
@@ -317,7 +357,7 @@ for det = 1:inst_params.detectors
         if isfield(inst_params.vectors,'deltawav');
             d_lambda_lambda = params(inst_params.vectors.deltawav); %Fraction (e.g. 0.1 FWHM TRIANGULAR distribution for velocity selector)
             if status_flags.command_window.display_params ==1 & det ==1;
-                disp(['Wavelength resolution d_lambda / lambda:  ' num2str(d_lambda_lambda*100) ' [%]']);
+                disp(['Wavelength resolution d_lambda / lambda:  ' num2str(d_lambda_lambda*100) ' [%] FWHM']);
             end
         else
             if status_flags.command_window.display_params == 1 & det == 1;
@@ -355,7 +395,7 @@ for det = 1:inst_params.detectors
         d_q_pixel = 2*sqrt((temp1.*temp2)/pi); %Cricle of the same area FWHM TOPHAT profile
         qmatrix(:,:,18) = d_q_pixel; %FWHM TOPHAT Profile
         if status_flags.command_window.display_params ==1 & det ==1;
-            disp(['Detector pixelation:']);
+            disp(['Detector pixelation:  x: ' num2str(inst_params.(['detector' num2str(det)]).pixel_size(1)) '  y: ' num2str(inst_params.(['detector' num2str(det)]).pixel_size(2)) ' [mm]']);
         end
 
         
@@ -398,6 +438,23 @@ for det = 1:inst_params.detectors
         
         qmatrix(:,:,13) = delta_q; %FWHM - to be used in gaussian approximation after
     end
+    
+    
+    
+    
+    
+    
+    
+    %Lastly - calculate gradients in x and y for q/pixel - used, e.g. in 2D
+    %fitting resolution correction to calculate virtual pixel coordinates for
+    %the smearing matrix
+    [qmatrix(:,:,20),fy] = gradient(qmatrix(:,:,3));
+    [fx,qmatrix(:,:,21)] = gradient(qmatrix(:,:,4));
+    
+    
     foreimage.(['qmatrix' num2str(det)]) = qmatrix;
 end
 warning on
+    
+
+

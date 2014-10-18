@@ -61,7 +61,8 @@ try param(inst_params.vectors.det2) = (hdf5read(fname,strcat(entryName,'/D33/det
 try param(inst_params.vectors.detcalc2) = (hdf5read(fname,strcat(entryName,'/D33/detector/det2_calc'))); end %m
 %Alternative name for det2
 try param(inst_params.vectors.det) = (hdf5read(fname,strcat(entryName,'/D33/detector/det2_actual'))); end %m
-try param(inst_params.vectors.detcalc) = (hdf5read(fname,strcat(entryName,'/D33/detector/det2_calc'))); catch; param(inst_params.vectors.detcalc2) = param(inst_params.vectors.det2); end %m
+try param(inst_params.vectors.detcalc) = (hdf5read(fname,strcat(entryName,'/D33/detector/det2_calc')));
+catch; param(inst_params.vectors.detcalc) = param(inst_params.vectors.det); end %m
 
 
 

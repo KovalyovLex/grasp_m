@@ -1,4 +1,4 @@
-function [p, std,return_chi_square]=mf_lsqr_grasp(x,y,err,pin,dpin,func,extra,slow)
+function [p, std,return_chi_square]=mf_lsqr_grasp(x,y,err,pin,dpin,func,extra)
 %
 % Version 3.beta
 % Levenberg-Marquardt nonlinear regression of f(x,p) to y(x)
@@ -6,12 +6,18 @@ function [p, std,return_chi_square]=mf_lsqr_grasp(x,y,err,pin,dpin,func,extra,sl
 % Modified by A.Jutan (519)-679-2111
 % Modified by Ray Muzic 14-Jul-1992
 
+
+
+p = [];
 return_chi_square = [];
+std = []; 
+
 if nargin <7; extra = []; end
 
 %wt=1./(err.^2); %Andrew Wildes says the error weighting should be like
 %this.
-wt=1./err; %instead of this.
+wt = 1./err; %instead of this.
+
 dp=dpin*1e-1;
 niter=100;
 stol=10e-10;
@@ -33,12 +39,13 @@ p=pin;
 
 f=feval(func,x,p,extra); fbest=f; pbest=p;
 
-%figure
-%errorbar(x,y,err);
-%hold on
-%hfit=line(x,f,'erasemode','xor','color','r','Tag','mf_fitline');
+% figure
+% errorbar(x,y,err);
+% hold on
+% hfit=line(x,f,'erasemode','xor','color','r','Tag','mf_fitline');
 
 r=wt.*(y-f);
+
 sbest=r'*r;
 nrm=zeros(n,1);
 chgprev=Inf*ones(n,1);
@@ -83,20 +90,15 @@ for iter=1:niter,
       chg(iii)=min(chg(iii),abs(maxstep(iii)*pprev(iii)));
     end;
     
-    %this is my add
-    for(k=1:length(chg))
-       if (slow(k) == 1)
-           chg(k) = chg(k) / 100;
-       end
-    end
-    
     aprec=abs(pprec.*pbest);      
     if (any(abs(chg) > 0.1*aprec)),
-      p=chg+pprev; % cgh - is beta parameter in wiki http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
+      p=chg+pprev;
       f=feval(func,x,p,extra);
       %set(hfit,'Ydata',f);
+      
       r=wt.*(y-f);
       ss=r'*r;
+      
       if ss<sbest,
         pbest=p;
         fbest=f;
@@ -124,8 +126,11 @@ for iter=1:niter,
  end;
   %mf_upars(p,[]);
   disp(['Iteration ' num2str(iter+1) ' (max ' num2str(niter) ')']);
-  disp(sprintf('   %3d      %6.2f   %8.3f', iter, toc, ss/(length(x)-sum(1-dp))));
+  
+
+  
   return_chi_square = ss/(length(x)-sum(1-dp));
+  disp(sprintf('   %3d      %6.2f   %8.3f', iter, toc, return_chi_square));
 end;
 
 % set return values
@@ -135,6 +140,10 @@ f=fbest;
 ss=sbest;
 kvg=((sbest>sgoal)|(sbest<=eps)|kvg);
 if kvg ~= 1 , disp(' CONVERGENCE NOT ACHIEVED! '), end;
+
+disp(' ');
+disp('Covariance Checking')
+disp(' ');
 
 % CALC VARIANCE COV MATRIX AND CORRELATION MATRIX OF PARAMETERS
 % re-evaluate the Jacobian at optimal values
@@ -148,12 +157,26 @@ jac = jac(:, msk);	% use only fitted parameters
 %% diag(1/wt.^2).  
 %% cov matrix of data est. from Bard Eq. 7-5-13, and Row 1 Table 5.1 
 
-Qinv=diag(wt.*wt);
-Q=diag((0*wt+1)./(wt.^2));
+
+%*** CHUCK Replaced Sparces here also
+%Qinv=diag(wt.*wt);
+Qinv=sparse(diag(wt.*wt));
+%Q=diag((0*wt+1)./(wt.^2));
+Q=sparse(diag((0*wt+1)./(wt.^2)));
+
+
 %[nrw ncw]=size(wt);
 %Q=ones(nrw,ncw)./wt; Q=diag(Q.*Q);
 resid=y-f;                                    %un-weighted residuals
-covr=resid'*Qinv*resid*Q/(m-n);                 %covariance of residuals
+
+%CHUCK was 'ere  7/11/2013
+%Replace the original code:
+    %covr=resid'*Qinv*resid*Q/(m-n);                 %covariance of residuals
+
+%And use 'sparse' matricies instead - this massively reduces memory usage.
+covr=sparse(resid'*Qinv*resid*Q/(m-n));                 %covariance of residuals
+
+
 Vy=1/(1-n/m)*covr;  % Eq. 7-13-22, Bard         %covariance of the data 
 covr=diag(covr);                                %for compact storage
 Z=((m-n)*jac'*Qinv*jac)/(n*resid'*Qinv*resid);

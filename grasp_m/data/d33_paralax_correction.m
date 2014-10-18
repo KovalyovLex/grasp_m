@@ -9,8 +9,16 @@ global inst_params
 %det = 5 ;  Top
 
 %D33 rear detector paralax seems approximately linear with params
-gradient = 0.75;
-offset = 100;
+%gradient = 0.0081615;
+%offset = 1.0273;
+
+gradient = 0.0071926;
+offset = 1.0287;
+
+
+%gradient = 0.0067703;
+%offset = 1.0289;87 
+
 
 for det =1:inst_params.detectors
 %for det = 1;    
@@ -20,11 +28,40 @@ for det =1:inst_params.detectors
         data2theta = abs(foreimage.(['qmatrix' num2str(det)])(:,:,7)); %x_scattering angle
     end
 
-    response_function = 1+ (gradient / offset).*data2theta;
+    if det ==1; %Rear
+        gradient = 0.0081615;
+offset = 1.0273;
+        %gradient = 0.0071926;
+        %offset = 1.0287;
+    elseif det ==2; %Right
+        gradient = 0.005026;
+        offset = 0.90814;
+    elseif det ==3; %Left
+        gradient = 0.005026;
+        offset = 0.90814;
+    elseif det ==4; %Bottom
+        gradient = 0.0058296;
+        offset = 0.98876;
+    elseif det ==5; %Top
+        gradient = 0.0058296;
+        offset = 0.98876;
+        
+    end
+        
+    
+    %
+    response_function = ones(size(data2theta));
+       
+    saturation_angle = 10; %degrees
+    temp = find(data2theta<saturation_angle);
+    response_function(temp) = (1+ (gradient / offset).*data2theta(temp));
+    temp = find(data2theta>=saturation_angle);
+    response_function(temp) = (1+ (gradient / offset).*saturation_angle);
+    
+  %  response_function = (1+ (gradient / offset).*data2theta);
+    
+    
+    
     foreimage.(['data' num2str(det)]) = foreimage.(['data' num2str(det)]) ./ response_function;
     foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) ./ response_function;
-
-    %figure
-    %pcolor(response_function); colorbar; title(num2str(det))
-    
 end

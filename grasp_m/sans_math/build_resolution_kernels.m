@@ -164,7 +164,7 @@ for n = 1:length(x_in)
             end
         end
         
-        
+       
         %Convolute with previous kernel
         weight_final = conv(weight_final,weight,'same'); %Convolute
         
@@ -276,8 +276,6 @@ for n = 1:length(x_in)
         if n==1; disp('Binning Resolution Smearing: NONE'); end
         end
     end
-    
-    
     
     
     %***** Display combined resolution kernel *****

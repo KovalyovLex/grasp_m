@@ -114,6 +114,7 @@ fclose(fid);
 
 %Add extra parameter total counts actually counted from the data in the file
 numor_data.params1(127) = sum(sum(numor_data.data1)); %The total Det counts as summed from the data array
-numor_data.params1(inst_params.vectors.counts) = sum(sum(numor_data.data1)); %The total Det counts as summed from the data array
+numor_data.params1(inst_params.vectors.array_counts) = sum(sum(numor_data.data1)); %The total Det counts as summed from the data array
 numor_data.params1(128) = numor; %Additional parameter added by chuck
 
+numor_data.file_type = 'single frame';

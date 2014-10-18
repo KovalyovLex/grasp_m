@@ -419,325 +419,333 @@ switch to_do
         disp([num2str(data_count_max-data_count) ' counts thrown in the dustbin'])
 
 
-
-
-case 'radial_q'
-    
-    local_history = displayimage.history;  %Take a copy of the history to modify though this process
-    local_history = [local_history, {['***** Analysis *****']}];
-    
-    %Check for Sector Masks
-    smask = [];
-    if status_flags.analysis_modules.radial_average.sector_mask_chk ==1;
-        %Check sector window is still open
-        if ishandle(grasp_handles.window_modules.sector.window);
-            smask = sector_callbacks('build_sector_mask');
-        else
-            status_flags.analysis_modules.radial_average.sector_mask_chk =0;
-        end
-    end
-    
-    %Check for Strip Masks
-    strip_mask = [];
-    if status_flags.analysis_modules.radial_average.strip_mask_chk ==1;
-        %Check if strip window is still open
-        if ishandle(grasp_handles.window_modules.strips.window);
-            strip_mask = strips_callbacks('build_strip_mask');
-        else
-            status_flags.analysis_modules.radial_average.strip_mask_chk =0;
-        end
-    end
-    
-    %Radial and Azimuthal average takes the data directly from displayimage
-    iq_data = []; %Final iq for all detectors appended together
-    iq_big_list = [];
-    
-    for det = 1:inst_params.detectors
-        if status_flags.display.(['axis' num2str(det) '_onoff']) ==1; %i.e. Detector is Active
-            
         
-        %Check current displayimage is not empty
-        if sum(sum(displayimage.(['data' num2str(det)])))==0 && sum(displayimage.(['params' num2str(det)]))==0
-            disp(['Detector ' num2str(det) ' data and parameters are empty']);
-        else
-            
-            %Prepare any aditional masks, e.g. sector & strip masks.
-            mask = displayimage.(['mask' num2str(det)]);  %This is the combined user & instrument mask
-            %Add the Sector Mask
-            if not(isempty(smask));
-                mask = mask.*smask.(['det' num2str(det)]);
-            end
-            %Add the Strip Mask
-            if not(isempty(strip_mask));
-                mask = mask.*strip_mask.(['det' num2str(det)]);
-            end
-            
-            %***** Turn 2D detector data into list(s) for re-binning *****
-            %Turn 2D data into a list for re-binning
-            temp = displayimage.(['qmatrix' num2str(det)])(:,:,5); %mod_q
-            temp2 = displayimage.(['qmatrix' num2str(det)])(:,:,13); %delta_q (FWHM) - Classic Resolution
-            temp3 = displayimage.(['qmatrix' num2str(det)])(:,:,11); %delta_q_lambda (FWHM)
-            temp4 = displayimage.(['qmatrix' num2str(det)])(:,:,12); %delta_q_theta (FWHM)
-            temp5 = displayimage.(['qmatrix' num2str(det)])(:,:,18); %delta_q_pixel (FWHM)
-            temp6 = displayimage.(['qmatrix' num2str(det)])(:,:,19); %delta_q_sample_aperture (FWHM)
-            
-            iq_list = [];
-            iq_list(:,1) = temp(logical(mask)); %mod q
-            iq_list(:,2) = displayimage.(['data' num2str(det)])(logical(mask)); %Intensity
-            iq_list(:,3) = displayimage.(['error' num2str(det)])(logical(mask)); %err_Intensity
-            iq_list(:,4) = temp2(logical(mask)); %delta_q FWHM
-            iq_list(:,5) = temp3(logical(mask)); %delta_q_lambda FWHM
-            iq_list(:,6) = temp4(logical(mask)); %delta_q_theta FWHM
-            iq_list(:,7) = temp5(logical(mask)); %delta_q_pixel FWHM
-            iq_list(:,8) = temp6(logical(mask)); %delta_q_sample_aperture FWHM
-            
-            iq_big_list = [iq_big_list; iq_list];
-        end
         
-        iq_list = iq_big_list;    
-            
-            
-            %Generate Bin_Edges
-            x_min = min(iq_list(:,1)); x_max = max(iq_list(:,1));
-            
-            if strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'pixels')
-                bin_step = status_flags.analysis_modules.radial_average.q_bin_pixels;
-                local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_pixels) ' [Pixel(s)]']}];
-                
-                %Calculate bin edges based on pixel steps across the detector *****
-                %Calculate delta_q across 1 pixel at q=0
-                delta_q = (4*pi / displayimage.(['params' num2str(det)])(inst_params.vectors.wav)) * ((inst_params.(['detector' num2str(det)]).pixel_size(1) *1e-3 * bin_step)/displayimage.(['params' num2str(det)])(inst_params.vectors.det))/2;
-                bin_edges = x_min; bin_edge = x_min;
-                while bin_edge < x_max
-                    bin_edge = bin_edge + delta_q;
-                    bin_edges = [bin_edges, bin_edge];
-                end
-                
-            elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'absolute')
-                bin_step = status_flags.analysis_modules.radial_average.q_bin_absolute;
-                local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_absolute) ' [�-1]  '  status_flags.analysis_modules.radial_average.q_bin_absolute_scale]}];
-                
-                %Check if using linear or log bins
-                if strcmp(status_flags.analysis_modules.radial_average.q_bin_absolute_scale,'linear')
-                    %Constant bin size across data_range
-                    bin_edges = x_min:bin_step:x_max;
-                elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_absolute_scale,'log10')
-                    log_edges = floor(log10(x_min)):bin_step:ceil(log10(x_max));
-                    bin_edges = 10.^log_edges;
-                end
-                
-            elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'resolution');
-                qmin = min(iq_list(:,1)); qmax = max(iq_list(:,1));
-                if qmin==0; qmin = eps; end %this avoids an error when the beam centre has not been set and is left on 64,64
-                bin_edges = [qmin];
-                while bin_edges(length(bin_edges)) < qmax;
-                    %Find the closest data q-point to this q
-                    temp = iq_list(:,1) - bin_edges(length(bin_edges));
-                    temp = abs(temp);
-                    [temp, itemp] = min(temp);
-                    delta_q_fraction = iq_list(itemp,4) / status_flags.analysis_modules.radial_average.q_bin_resolution;
-                    bin_edges = [bin_edges, bin_edges(length(bin_edges))+delta_q_fraction];
-                    local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_resolution) ' [Fractional Resolution]  '  status_flags.analysis_modules.radial_average.q_bin_absolute_scale]}];
-                end
-            end
-            
-            if length(bin_edges) <2;
-                disp('Error generating Bin_Edges - not enough Bins')
-                disp('Please check re-binning paramters');
-            end
-            %***** Now re-bin *****
-            if length(bin_edges) >=2;
-                %temp = rebin([iq_list(:,1),iq_list(:,2),iq_list(:,3),iq_list(:,4)],bin_edges); %[q,I,errI,delta_q,pixel_count]
-                temp = rebin(iq_list,bin_edges);
-                iq_data = [iq_data; temp]; %append the iq data from the different detectors together
-                %Note: Note, output from rebin is:
-                %iq_data(:,1) = mod_q
-                %iq_data(:,2) = Intensity
-                %iq_data(:,3) = Err_Intensity
-                %iq_data(:,4) = delta_q Classic q-resolution
-                %iq_data(:,5) = delta_q Lambda
-                %iq_data(:,6) = delta_q Theta
-                %iq_data(:,7) = delta_q Detector Pixels
-                %iq_data(:,8) = delta_q Sample Aperture
-                
-                %iq_data(:,9) = delta_q Binning (FWHM Square) - always next to last
-                %iq_data(:,10) = # elements - always last
-                
-                %If enabled (ticked) add the binning resolution (FWHM) to the classic q-resolution (FWHM)
-                if status_flags.resolution_control.binning_check == 1;
-                    %convert both back to sigma before adding in quadrature
-                    sigma1 = iq_data(:,4)/2.3548; %Came as a Gaussian FWHM
-                    sigma2 = iq_data(:,9)/3.4; %Came as a Square FWHM
-                    sigma = sqrt( sigma1.^2 + sigma2.^2 ); %Gaussian Equivalent
-                    fwhm = sigma * 2.3548;
-                    iq_data(:,4) = fwhm;
-                end
-                
+    case 'radial_q'
+        
+        local_history = displayimage.history;  %Take a copy of the history to modify though this process
+        local_history = [local_history, {['***** Analysis *****']}];
+        
+        %Check for Sector Masks
+        smask = [];
+        if status_flags.analysis_modules.radial_average.sector_mask_chk ==1;
+            %Check sector window is still open
+            if ishandle(grasp_handles.window_modules.sector.window);
+                smask = sector_callbacks('build_sector_mask');
+            else
+                status_flags.analysis_modules.radial_average.sector_mask_chk =0;
             end
         end
-        end
         
-    %end
-    
-    %Check all the detector data wasn't empty
-    if isempty(iq_data);
-        disp(['All detector data was empty:  Nothing to rebin']);
-        return
-    end
-    
-    %***** Build Resolution Kernels for every q point *****
-    kernel_data.fwhmwidth = status_flags.resolution_control.fwhmwidth;
-    kernel_data.finesse = status_flags.resolution_control.finesse * status_flags.resolution_control.fwhmwidth;
-    if not(isodd(kernel_data.finesse)); kernel_data.finesse = kernel_data.finesse+1; end %Finesse should be ODD number
-    kernel_data.classic_res.fwhm = iq_data(:,4); kernel_data.classic_res.shape = 'Gaussian';
-    
-    kernel_data.lambda.fwhm = iq_data(:,5); kernel_data.lambda.shape = '';
-    kernel_data.theta.fwhm = iq_data(:,6); kernel_data.theta.shape = 'tophat';
-    kernel_data.pixel.fwhm = iq_data(:,7); kernel_data.pixel.shape = 'tophat';
-    kernel_data.binning.fwhm = iq_data(:,9); kernel_data.binning.shape = 'tophat';
-    kernel_data.aperture.fwhm = iq_data(:,8); kernel_data.aperture.shape = 'tophat';
-    
-    kernel_data.cm = displayimage.cm.(['det' num2str(det)]); %Send real beam profile in to use for resolution smearing
-    %Build the kernels
-    
-    resolution_kernels = build_resolution_kernels(iq_data(:,1), kernel_data);
-    
-    
-    %Prepare the Data to Plot, Export, or keep for D33_TOF_Rebin
-    plot_data.xdat = iq_data(:,1);
-    plot_data.ydat = iq_data(:,2);
-    plot_data.edat = iq_data(:,3);
-    plot_data.exdat = resolution_kernels.fwhm;
-    plot_data.resolution_kernels = resolution_kernels;
-    plot_data.no_elements = iq_data(:,9);
-    
-    %Check for Complext D33 TOF rebin
-    if status_flags.analysis_modules.radial_average.single_depth_radio == 1 && status_flags.analysis_modules.radial_average.d33_tof_combine == 1;
-        disp(['Depth Rebin - Building Pre-averages : Frame #' num2str(options2)])
-        tof_iq_store{options2} = plot_data;
-    else
-        
-        %***** Plot I vs Q ****
-        column_labels = ['Mod_Q   ' char(9) 'I       ' char(9) 'Err_I   ' char(9) 'FWHM_Q'];
-        
-        export_data = iq_data(:,1:4); %[q, I, err_I, dq resolutuion(fwhm)]
-        %classic resolution by default.
-        %or
-        %replace by gaussian equivalent resolution
-        if status_flags.resolution_control.convolution_type == 1 || status_flags.resolution_control.convolution_type == 2; %Real shape kernel & gaussian equivalent
-            export_data(:,4) = resolution_kernels.fwhm(:,1);
-        end
-        
-        if strcmp(status_flags.subfigure.show_resolution,'on')
-            column_format = 'xyhe'; %Show resolution
-            %Note, need to swap colums around for the ploterr fn.  Need [x,y,err_x,err_y]
-            plotdata = [iq_data(:,1:2),iq_data(:,4),iq_data(:,3)];% IvsQ, Horz Delta_q FWHM and Vert Err_I error bars
-        else
-            column_format = 'xye'; %Do not show resolution.
-            %Note, uses Matlab errorbar fn.  Need [x,y,err_y]
-            plotdata = [iq_data(:,1:3)];
-        end
-        
-        plot_info = struct(....
-            'plot_type','plot',....
-            'hold_graph',options,....
-            'plot_title',['Radial Re-grouping: |q|'],....
-            'x_label',['|q| (' char(197) '^{-1})'],....
-            'y_label',displayimage.units,....
-            'legend_str',['#' num2str(displayimage.params1(128))],....
-            'params',displayimage.params1,....
-            'parsub',displayimage.subtitle,....
-            'export_data',export_data,....
-            'plot_data',plot_data,....
-            'info',displayimage.info,....
-            'column_labels',column_labels);
-        plot_info.history = local_history;
-        %Plot Radial Averaged Curves or Direct export to file
-        if status_flags.analysis_modules.radial_average.direct_to_file == 0; %plot curves
-            
-            grasp_plot(plotdata,column_format,plot_info);
-            
-        else % Direct to file
-            disp('Exporting Radial Average Direct to File')
-            
-            %The code below is copied and modified from the export data
-            %routine in grasp_plot_menu_callbacks.
-            
-            %In the future a better single routine should be called for
-            %exporting data
-            
-            %Use different line terminators for PC or unix
-            if ispc; newline = 'pc'; terminator_str = [char(13) char(10)]; %CR/LF
-            else newline = 'unix'; terminator_str = [char(10)]; %LF
+        %Check for Strip Masks
+        strip_mask = [];
+        if status_flags.analysis_modules.radial_average.strip_mask_chk ==1;
+            %Check if strip window is still open
+            if ishandle(grasp_handles.window_modules.strips.window);
+                strip_mask = strips_callbacks('build_strip_mask');
+            else
+                status_flags.analysis_modules.radial_average.strip_mask_chk =0;
             end
+        end
+        
+        %Radial and Azimuthal average takes the data directly from displayimage
+        iq_data = []; %Final iq for all detectors appended together
+        iq_big_list = [];
+        
+        for det = 1:inst_params.detectors
             
-            %ONLY use Auto file numbering for 'direct to file'
-            %***** Build Output file name *****
-            numor_str = num2str(plot_info.params(128));
-            a = length(numor_str);
-            if a ==1; addzeros = '00000';
-            elseif a==2; addzeros = '0000';
-            elseif a==3; addzeros = '000';
-            elseif a==4; addzeros = '00';
-            elseif a==5; addzeros = '0';
-            elseif a==6; addzeros = ''; end
-            
-            fname = [addzeros numor_str '_' num2str(options2) '.dat']; %options2 is the depth number
-            
-            %Open file for writing
-            disp(['Exporting data: '  grasp_env.path.project_dir fname]);
-            fid=fopen([grasp_env.path.project_dir fname],'wt');
-            
-            %Check if to include history header
-            if strcmp(status_flags.subfigure.export.data_history,'on');
-                history = plot_info.history;
+            if status_flags.display.(['axis' num2str(det) '_onoff']) ==1; %i.e. Detector is Active
                 
-                for m = 1:length(history)
-                    textstring = history{m};
-                    fprintf(fid,'%s \n',textstring);
-                end
-                fprintf(fid,'%s \n','');
-                fprintf(fid,'%s \n','');
-            end
-            
-            export_data = plot_info.export_data;
-            %Check if to include column labels
-            if strcmp(status_flags.subfigure.export.column_labels,'on')
-                if isfield(plot_info,'column_labels');
-                    %Convert column labels to hwhm or fwhm if necessary
-                    if strcmp(status_flags.subfigure.export.resolution_format,'hwhm') %Convert to hwhm
-                        plot_info.column_labels = strrep(plot_info.column_labels,'FWHM_Q','HWHM_Q');
-                    elseif strcmp(status_flags.subfigure.export.resolution_format,'sigma') %Convert to sigma
-                        plot_info.column_labels = strrep(plot_info.column_labels,'FWHM_Q','Sigma_Q');
+                %Check current displayimage is not empty
+                if sum(sum(displayimage.(['data' num2str(det)])))==0 && sum(displayimage.(['params' num2str(det)]))==0
+                    disp(['Detector ' num2str(det) ' data and parameters are empty']);
+                else
+                    
+                    %Prepare any aditional masks, e.g. sector & strip masks.
+                    mask = displayimage.(['mask' num2str(det)]);  %This is the combined user & instrument mask
+                    %Add the Sector Mask
+                    if not(isempty(smask));
+                        mask = mask.*smask.(['det' num2str(det)]);
                     end
-                    fprintf(fid,'%s \n',[plot_info.column_labels terminator_str]);
-                    fprintf(fid,'%s \n','');
-                end
-            end
-            
-            %Strip out any Nans
-            temp = find(not(isnan(export_data(:,1))));
-            export_data = export_data(temp,:);
-            
-            %Check if to include q-reslution (4th column)
-            if strcmp(status_flags.subfigure.export.include_resolution,'on')
-                %Check what format of q-resolution, sigma, hwhm, fwhm
-                %Default coming though from Grasp is sigma
-                if strcmp(status_flags.subfigure.export.resolution_format,'hwhm') %Convert to hwhm
-                    export_data(:,4) = export_data(:,4)/2; %hwhm
-                elseif strcmp(status_flags.subfigure.export.resolution_format,'sigma') %Convert to sigma
-                    export_data(:,4) = export_data(:,4)/ (2 * sqrt(2 * log(2)));%fwhm
+                    %Add the Strip Mask
+                    if not(isempty(strip_mask));
+                        mask = mask.*strip_mask.(['det' num2str(det)]);
+                    end
+                    
+                    %***** Turn 2D detector data into list(s) for re-binning *****
+                    %Turn 2D data into a list for re-binning
+                    temp = displayimage.(['qmatrix' num2str(det)])(:,:,5); %mod_q
+                    temp2 = displayimage.(['qmatrix' num2str(det)])(:,:,13); %delta_q (FWHM) - Classic Resolution
+                    temp3 = displayimage.(['qmatrix' num2str(det)])(:,:,11); %delta_q_lambda (FWHM)
+                    temp4 = displayimage.(['qmatrix' num2str(det)])(:,:,12); %delta_q_theta (FWHM)
+                    temp5 = displayimage.(['qmatrix' num2str(det)])(:,:,18); %delta_q_pixel (FWHM)
+                    temp6 = displayimage.(['qmatrix' num2str(det)])(:,:,19); %delta_q_sample_aperture (FWHM)
+                    
+                    iq_list = [];
+                    iq_list(:,1) = temp(logical(mask)); %mod q
+                    iq_list(:,2) = displayimage.(['data' num2str(det)])(logical(mask)); %Intensity
+                    iq_list(:,3) = displayimage.(['error' num2str(det)])(logical(mask)); %err_Intensity
+                    iq_list(:,4) = temp2(logical(mask)); %delta_q FWHM
+                    iq_list(:,5) = temp3(logical(mask)); %delta_q_lambda FWHM
+                    iq_list(:,6) = temp4(logical(mask)); %delta_q_theta FWHM
+                    iq_list(:,7) = temp5(logical(mask)); %delta_q_pixel FWHM
+                    iq_list(:,8) = temp6(logical(mask)); %delta_q_sample_aperture FWHM
+                    
+                    iq_big_list = [iq_big_list; iq_list];
+                    
+                    
+                    
                     
                 end
-            else
-                disp('help here:  radial_average_callbacks 409 & grasp_plot_menu_callbacks line 189')
             end
-            dlmwrite([grasp_env.path.project_dir fname],export_data,'delimiter','\t','newline',newline,'-append','precision',6);
-            fclose(fid);
         end
-    end
-    
-    
+        
+        iq_list = iq_big_list;
+        
+        
+        %Generate Bin_Edges
+        x_min = min(iq_list(:,1)); x_max = max(iq_list(:,1));
+        
+        det =1; %So below takes parameters from main detector
+        
+        if strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'pixels')
+            bin_step = status_flags.analysis_modules.radial_average.q_bin_pixels;
+            local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_pixels) ' [Pixel(s)]']}];
+            
+            %Calculate bin edges based on pixel steps across the detector *****
+            %Calculate delta_q across 1 pixel at q=0
+            delta_q = (4*pi / displayimage.(['params' num2str(det)])(inst_params.vectors.wav)) * ((inst_params.(['detector' num2str(det)]).pixel_size(1) *1e-3 * bin_step)/displayimage.(['params' num2str(det)])(inst_params.vectors.det))/2;
+            bin_edges = x_min; bin_edge = x_min;
+            while bin_edge < x_max
+                bin_edge = bin_edge + delta_q;
+                bin_edges = [bin_edges, bin_edge];
+            end
+            
+            
+        elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'absolute')
+            bin_step = status_flags.analysis_modules.radial_average.q_bin_absolute;
+            local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_absolute) ' [�-1]  '  status_flags.analysis_modules.radial_average.q_bin_absolute_scale]}];
+            
+            %Check if using linear or log bins
+            if strcmp(status_flags.analysis_modules.radial_average.q_bin_absolute_scale,'linear')
+                %Constant bin size across data_range
+                bin_edges = x_min:bin_step:x_max;
+            elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_absolute_scale,'log10')
+                log_edges = floor(log10(x_min)):bin_step:ceil(log10(x_max));
+                bin_edges = 10.^log_edges;
+            end
+            
+        elseif strcmp(status_flags.analysis_modules.radial_average.q_bin_units,'resolution');
+            qmin = min(iq_list(:,1)); qmax = max(iq_list(:,1));
+            if qmin==0; qmin = eps; end %this avoids an error when the beam centre has not been set and is left on 64,64
+            bin_edges = [qmin];
+            while bin_edges(length(bin_edges)) < qmax;
+                %Find the closest data q-point to this q
+                temp = iq_list(:,1) - bin_edges(length(bin_edges));
+                temp = abs(temp);
+                [temp, itemp] = min(temp);
+                delta_q_fraction = iq_list(itemp,4) / status_flags.analysis_modules.radial_average.q_bin_resolution;
+                bin_edges = [bin_edges, bin_edges(length(bin_edges))+delta_q_fraction];
+                local_history = [local_history, {['Averaging I vs. Q.  Bin size:  ' num2str(status_flags.analysis_modules.radial_average.q_bin_resolution) ' [Fractional Resolution]  '  status_flags.analysis_modules.radial_average.q_bin_absolute_scale]}];
+            end
+        end
+        
+        
+        
+        if length(bin_edges) <2;
+            disp('Error generating Bin_Edges - not enough Bins')
+            disp('Please check re-binning paramters');
+        end
+        %***** Now re-bin *****
+        if length(bin_edges) >=2;
+            %temp = rebin([iq_list(:,1),iq_list(:,2),iq_list(:,3),iq_list(:,4)],bin_edges); %[q,I,errI,delta_q,pixel_count]
+            temp = rebin(iq_list,bin_edges);
+            iq_data = [iq_data; temp]; %append the iq data from the different detectors together
+            %Note: Note, output from rebin is:
+            %iq_data(:,1) = mod_q
+            %iq_data(:,2) = Intensity
+            %iq_data(:,3) = Err_Intensity
+            %iq_data(:,4) = delta_q Classic q-resolution
+            %iq_data(:,5) = delta_q Lambda
+            %iq_data(:,6) = delta_q Theta
+            %iq_data(:,7) = delta_q Detector Pixels
+            %iq_data(:,8) = delta_q Sample Aperture
+            
+            %iq_data(:,9) = delta_q Binning (FWHM Square) - always next to last
+            %iq_data(:,10) = # elements - always last
+            
+            %If enabled (ticked) add the binning resolution (FWHM) to the classic q-resolution (FWHM)
+            if status_flags.resolution_control.binning_check == 1;
+                %convert both back to sigma before adding in quadrature
+                sigma1 = iq_data(:,4)/2.3548; %Came as a Gaussian FWHM
+                sigma2 = iq_data(:,9)/3.4; %Came as a Square FWHM
+                sigma = sqrt( sigma1.^2 + sigma2.^2 ); %Gaussian Equivalent
+                fwhm = sigma * 2.3548;
+                iq_data(:,4) = fwhm;
+            end
+            
+        end
+        
+        %Check all the detector data wasn't empty
+        if isempty(iq_data);
+            disp(['All detector data was empty:  Nothing to rebin']);
+            return
+        end
+        
+        %***** Build Resolution Kernels for every q point *****
+        kernel_data.fwhmwidth = status_flags.resolution_control.fwhmwidth;
+        kernel_data.finesse = status_flags.resolution_control.finesse * status_flags.resolution_control.fwhmwidth;
+        if not(isodd(kernel_data.finesse)); kernel_data.finesse = kernel_data.finesse+1; end %Finesse should be ODD number
+        kernel_data.classic_res.fwhm = iq_data(:,4); kernel_data.classic_res.shape = 'Gaussian';
+        
+        kernel_data.lambda.fwhm = iq_data(:,5); kernel_data.lambda.shape = '';
+        kernel_data.theta.fwhm = iq_data(:,6); kernel_data.theta.shape = 'tophat';
+        kernel_data.pixel.fwhm = iq_data(:,7); kernel_data.pixel.shape = 'tophat';
+        kernel_data.binning.fwhm = iq_data(:,9); kernel_data.binning.shape = 'tophat';
+        kernel_data.aperture.fwhm = iq_data(:,8); kernel_data.aperture.shape = 'tophat';
+        
+        kernel_data.cm = displayimage.cm.(['det' num2str(det)]); %Send real beam profile in to use for resolution smearing
+        %Build the kernels
+        
+        resolution_kernels = build_resolution_kernels(iq_data(:,1), kernel_data);
+        
+        
+        %Prepare the Data to Plot, Export, or keep for D33_TOF_Rebin
+        plot_data.xdat = iq_data(:,1);
+        plot_data.ydat = iq_data(:,2);
+        plot_data.edat = iq_data(:,3);
+        plot_data.exdat = resolution_kernels.fwhm;
+        plot_data.resolution_kernels = resolution_kernels;
+        plot_data.no_elements = iq_data(:,9);
+        
+        %Check for Complext D33 TOF rebin
+        if status_flags.analysis_modules.radial_average.single_depth_radio == 1 && status_flags.analysis_modules.radial_average.d33_tof_combine == 1;
+            disp(['Depth Rebin - Building Pre-averages : Frame #' num2str(options2)])
+            tof_iq_store{options2} = plot_data;
+        else
+            
+            %***** Plot I vs Q ****
+            column_labels = ['Mod_Q   ' char(9) 'I       ' char(9) 'Err_I   ' char(9) 'FWHM_Q'];
+            
+            export_data = iq_data(:,1:4); %[q, I, err_I, dq resolutuion(fwhm)]
+            %classic resolution by default.
+            %or
+            %replace by gaussian equivalent resolution
+            if status_flags.resolution_control.convolution_type == 1 || status_flags.resolution_control.convolution_type == 2; %Real shape kernel & gaussian equivalent
+                export_data(:,4) = resolution_kernels.fwhm(:,1);
+            end
+            
+            if strcmp(status_flags.subfigure.show_resolution,'on')
+                column_format = 'xyhe'; %Show resolution
+                %Note, need to swap colums around for the ploterr fn.  Need [x,y,err_x,err_y]
+                plotdata = [iq_data(:,1:2),iq_data(:,4),iq_data(:,3)];% IvsQ, Horz Delta_q FWHM and Vert Err_I error bars
+            else
+                column_format = 'xye'; %Do not show resolution.
+                %Note, uses Matlab errorbar fn.  Need [x,y,err_y]
+                plotdata = [iq_data(:,1:3)];
+            end
+            
+            plot_info = struct(....
+                'plot_type','plot',....
+                'hold_graph',options,....
+                'plot_title',['Radial Re-grouping: |q|'],....
+                'x_label',['|q| (' char(197) '^{-1})'],....
+                'y_label',displayimage.units,....
+                'legend_str',['#' num2str(displayimage.params1(128))],....
+                'params',displayimage.params1,....
+                'parsub',displayimage.subtitle,....
+                'export_data',export_data,....
+                'export_column_format','xyhe',....
+                'plot_data',plot_data,....
+                'info',displayimage.info,....
+                'column_labels',column_labels);
+            plot_info.history = local_history;
+            %Plot Radial Averaged Curves or Direct export to file
+            if status_flags.analysis_modules.radial_average.direct_to_file == 0; %plot curves
+                
+                grasp_plot(plotdata,column_format,plot_info);
+                
+            else % Direct to file
+                disp('Exporting Radial Average Direct to File')
+                
+                %The code below is copied and modified from the export data
+                %routine in grasp_plot_menu_callbacks.
+                
+                %In the future a better single routine should be called for
+                %exporting data
+                
+                %Use different line terminators for PC or unix
+                if ispc; newline = 'pc'; terminator_str = [char(13) char(10)]; %CR/LF
+                else newline = 'unix'; terminator_str = [char(10)]; %LF
+                end
+                
+                %ONLY use Auto file numbering for 'direct to file'
+                %***** Build Output file name *****
+                numor_str = num2str(plot_info.params(128));
+                a = length(numor_str);
+                if a ==1; addzeros = '00000';
+                elseif a==2; addzeros = '0000';
+                elseif a==3; addzeros = '000';
+                elseif a==4; addzeros = '00';
+                elseif a==5; addzeros = '0';
+                elseif a==6; addzeros = ''; end
+                
+                fname = [addzeros numor_str '_' num2str(options2) '.dat']; %options2 is the depth number
+                
+                %Open file for writing
+                disp(['Exporting data: '  grasp_env.path.project_dir fname]);
+                fid=fopen([grasp_env.path.project_dir fname],'wt');
+                
+                %Check if to include history header
+                if strcmp(status_flags.subfigure.export.data_history,'on');
+                    history = plot_info.history;
+                    
+                    for m = 1:length(history)
+                        textstring = history{m};
+                        fprintf(fid,'%s \n',textstring);
+                    end
+                    fprintf(fid,'%s \n','');
+                    fprintf(fid,'%s \n','');
+                end
+                
+                export_data = plot_info.export_data;
+                %Check if to include column labels
+                if strcmp(status_flags.subfigure.export.column_labels,'on')
+                    if isfield(plot_info,'column_labels');
+                        %Convert column labels to hwhm or fwhm if necessary
+                        if strcmp(status_flags.subfigure.export.resolution_format,'hwhm') %Convert to hwhm
+                            plot_info.column_labels = strrep(plot_info.column_labels,'FWHM_Q','HWHM_Q');
+                        elseif strcmp(status_flags.subfigure.export.resolution_format,'sigma') %Convert to sigma
+                            plot_info.column_labels = strrep(plot_info.column_labels,'FWHM_Q','Sigma_Q');
+                        end
+                        fprintf(fid,'%s \n',[plot_info.column_labels terminator_str]);
+                        fprintf(fid,'%s \n','');
+                    end
+                end
+                
+                %Strip out any Nans
+                temp = find(not(isnan(export_data(:,1))));
+                export_data = export_data(temp,:);
+                
+                %Check if to include q-reslution (4th column)
+                if strcmp(status_flags.subfigure.export.include_resolution,'on')
+                    %Check what format of q-resolution, sigma, hwhm, fwhm
+                    %Default coming though from Grasp is sigma
+                    if strcmp(status_flags.subfigure.export.resolution_format,'hwhm') %Convert to hwhm
+                        export_data(:,4) = export_data(:,4)/2; %hwhm
+                    elseif strcmp(status_flags.subfigure.export.resolution_format,'sigma') %Convert to sigma
+                        export_data(:,4) = export_data(:,4)/ (2 * sqrt(2 * log(2)));%fwhm
+                        
+                    end
+                else
+                    disp('help here:  radial_average_callbacks 409 & grasp_plot_menu_callbacks line 189')
+                end
+                dlmwrite([grasp_env.path.project_dir fname],export_data,'delimiter','\t','newline',newline,'-append','precision',6);
+                fclose(fid);
+            end
+        end
+        
+        
     case 'radial_theta'
         
         local_history = displayimage.history;  %Take a copy of the history to modify though this process
@@ -768,6 +776,9 @@ case 'radial_q'
         %Radial and Azimuthal average takes the data directly from displayimage
         iq_data = []; %Final iq for all detectors appended together
         for det = 1:inst_params.detectors
+            
+                        if status_flags.display.(['axis' num2str(det) '_onoff']) ==1; %i.e. Detector is Active
+
             
             %Check current displayimage is not empty
             if sum(sum(displayimage.(['data' num2str(det)])))==0 && sum(displayimage.(['params' num2str(det)]))==0
@@ -850,6 +861,8 @@ case 'radial_q'
                     iq_data = [iq_data; temp]; %append the iq data from the different detectors together
                 end
             end
+                        end
+                        
         end
         
         

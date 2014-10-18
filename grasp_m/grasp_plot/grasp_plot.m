@@ -1,7 +1,5 @@
 function grasp_plot(plotdata,column_format,plot_info)
 
-global plotHandles;
-
 %March2010:  'grasp_plot' is Chuck's 2D plotting plotting program designed
 %to work in conjunction with Grasp and also as a stand alone plotting,
 %curve fitting and manipulation program.
@@ -297,7 +295,10 @@ if nargin >= 2; %The column_format information exists
                     linespec = [linestyle colors(curve_colour) symbols(symbol_type)]; %Plot line type specification
                     figure(grasp_plot_handles.figure);
                     set(grasp_plot_handles.axis,'nextplot','add') %Same as hold on
-                    plot_handle = ploterr(xdata,ydata,exdata,edata,linespec);
+
+                    plot_handle = ploterr(xdata,ydata,exdata,edata,linespec); 
+                    %plot_handle = ploterr(xdata,ydata,exdata,edata,linespec,'logxy'); 
+                    
                     %Store curve handle in axis userdata
                     curve_handles = get(grasp_plot_handles.axis,'userdata');
                     curve_handles{length(curve_handles)+1} = plot_handle;
@@ -324,10 +325,55 @@ if nargin >= 2; %The column_format information exists
                         plot_info_temp.legend_str = plot_info.legend_str;
                     end
                     
+                    %NEW 12/11/2013
+                    %Re-hash the exprot data so as to only set export data for this curve
+                    
+                    %Error trap for incoming plot data without 'export_column_format'
+                    if not(isfield(plot_info_temp,'export_column_format'));
+                        disp(' ')
+                        disp('WARNING:  Export data does not contain ''export_column_format'' information')
+                        disp(['Guessing column format as: ' column_format]);
+                        plot_info_temp.export_column_format = column_format;
+                    end
+                    
+                    %find indicies to y data
+                    yindex = findstr('y',plot_info_temp.export_column_format);
+                    yindex = yindex(curve_number); %Current y data index for this curve
+                    yexport_data = plot_info_temp.export_data(:,yindex); %current y export data for this curve
+                    xindex = findstr('x',plot_info_temp.export_column_format(1:yindex));
+                    xindex = xindex(length(xindex)); %Last x data index before current y data
+                    xexport_data = plot_info_temp.export_data(:,xindex); %current x export data for this curve
+                    export_column_format = ['xy']; %Gets added to below
+                    
+                    %x-errors (resolution)
+                    hindex = findstr('h',plot_info_temp.export_column_format);
+                    temp = find(hindex>=yindex);
+                    if not(isempty(temp));
+                        hindex = hindex(temp(1)); %First x error data after current y column
+                        hexport_data = plot_info_temp.export_data(:,hindex); %current h export data for this curve
+                        export_column_format = [export_column_format 'h'];
+                    else
+                        hexport_data = [];
+                    end
+                    
+                    %y-errors
+                    eindex = findstr('e',plot_info_temp.export_column_format);
+                    temp = find(eindex>=yindex);
+                    if not(isempty(temp));
+                        eindex = eindex(temp(1));
+                        eexport_data = plot_info_temp.export_data(:,eindex); %current e export data for this curve
+                        export_column_format = [export_column_format 'e'];
+                    else
+                        eexport_data = [];
+                    end
+                    
+                    
+                    plot_info_temp.export_data = [xexport_data, yexport_data, hexport_data, eexport_data,];
+                    plot_info_temp.export_column_format = export_column_format;
+                    
                     %Store the plot_info in the curve userdata
                     set(plot_handle(1),'userdata',plot_info_temp,'linewidth',linewidth,'markersize',markersize);
                     plot_info = rmfield(plot_info,'plot_data'); %Remove plot_data so next curve plotted gets new data stored in plot_data
-                    
                 end
                 
             elseif strcmp(plot_info.plot_type,'bar');

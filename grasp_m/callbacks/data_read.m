@@ -1,5 +1,6 @@
 function data_read
 
+
 global grasp_handles
 global inst_params
 global grasp_env
@@ -24,17 +25,16 @@ elseif strcmp(numors_str_in,'0');
 elseif isempty(numors_str_in); return %i.e do nothing
 end
 
-
-
-%Clear worksheet and depth
 index = data_index(1);
 
 %KEEP THE CURRENT BEAM CENTRE if loading into foreground worksheet
 for det=1:inst_params.detectors
     beam_centres.(['cm' num2str(det)]) = grasp_data(index).(['cm' num2str(det)]);
 end
+%Keep current thickness
 thickness = grasp_data(index).thickness{status_flags.selector.fn}; %KEEP THE CURRENT THICKNESSES if loading into foreground worksheet
 
+%Clear worksheet and depth
 clear_wks_nmbr(status_flags.selector.fw,status_flags.selector.fn);
 status_flags.selector.fd = 1;
 
@@ -48,8 +48,6 @@ if status_flags.selector.fw == 1; %foreground worksheet
 end
 
 
-
-
 %***** Parse the Numors String for all the avaialible data load options *****
 [numor_list, depth_list] = numor_parse(numors_str_in);
 
@@ -61,8 +59,6 @@ set(grasp_handles.figure.getit,'value',0);
 set(grasp_handles.figure.getit,'string','STOP!','foregroundcolor',[0.8 0 0],'callback','set(gcbo,''userdata'',1);');
 pause(0.1)
 
-
-
 for n = 1:length(numor_list);
     numor = numor_list(n);
     depth = depth_list(n);
@@ -72,17 +68,22 @@ for n = 1:length(numor_list);
 
     %Prepare the full file name string
     numors_str = [status_flags.fname_extension.shortname num2str(numor,['%.' num2str(inst_params.filename.numeric_length) 'i']) status_flags.fname_extension.extension];
+    
     %Full path to file
     file_name_path = fullfile(grasp_env.path.data_dir,numors_str);
     disp(['Loading file:  ' file_name_path]);
+    
     %Check for file decompression (using gzip)
     file_name_path = numor_decompress(file_name_path);
+    
     %Check for empty file_name_path
     if isempty(file_name_path);
         break
     end
     %Read the file
     fn_string = [inst_params.filename.data_loader '(file_name_path,numor)'];
+
+   
     numor_data = eval(fn_string);
     numor_data.load_string = numors_str_in;
     
@@ -96,8 +97,6 @@ if status_flags.calibration.soft_det_cal ~= 0
     end
 end
 
-    
-    
     if isfield(numor_data,'file_type');
         if strcmp(numor_data.file_type,'single frame');
             
@@ -119,11 +118,11 @@ end
             end
             
         elseif strcmp(numor_data.file_type,'tof');
-            disp('tof time here in data_read.m 111')
+           % disp('tof time here in data_read.m 111')
             
             
         elseif strcmp(numor_data.file_type,'kinetic');
-            disp('kin time here in data_read.m 115')
+           % disp('kin time here in data_read.m 115')
         end
         
     else
@@ -164,8 +163,13 @@ end
 %         end
 %     end
     
-    %Place data
     
+    %Data Type - Temporary catch for the file readers that do not spit out a 'file_type' field
+    if not(isfield(numor_data,'file_type'))
+        numor_data.file_type = 'single frame';
+    end
+    
+    %Place data
     place_data(numor_data, status_flags.selector.fw, status_flags.selector.fn, depth);
     
     if ishandle(text_handle); delete(text_handle); end
@@ -182,8 +186,6 @@ if ishandle(text_handle); delete(text_handle); end
 old_getit_callback = ['main_callbacks(''data_read'')'];
 set(grasp_handles.figure.getit,'String','Get It!','CallBack',old_getit_callback,'busyaction','cancel','userdata',0,'foregroundcolor',[0 0 0]);
 %***** Delete the Loading Message *****
-
-
 
 
 

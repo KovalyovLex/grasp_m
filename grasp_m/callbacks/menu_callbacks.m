@@ -6,6 +6,17 @@ global inst_params
 
 switch to_do
     
+    case 'show_minor_detectors'
+        if strcmp(status_flags.display.show_minor_detectors,'off');
+            status_flags.display.show_minor_detectors = 'on';
+            set(gcbo,'checked','on')
+        else
+            status_flags.display.show_minor_detectors = 'off';
+            set(gcbo,'checked','off')
+        end
+        grasp_update
+        
+    
     case 'graphic_update'
         status_flags.display.refresh = not(status_flags.display.refresh);
         update_menus;
@@ -84,9 +95,13 @@ switch to_do
 
     case 'square_zoom'
         active_axis = status_flags.display.active_axis;
+        pixel_size = inst_params.(['detector' num2str(active_axis)]).pixel_size; %[x, y]
         ax = axis(grasp_handles.displayimage.(['axis' num2str(active_axis)]));
-        width(1) = ax(2)-ax(1);width(2) = ax(4)-ax(3);wmax = max(width);
-        xdif = wmax - width(1);ydif = wmax - width(2);
+%        width(1) = ax(2)-ax(1);width(2) = ax(4)-ax(3);wmax = max(width);
+        width(1) = (ax(2)-ax(1))*pixel_size(1); %mm
+        width(2) = (ax(4)-ax(3))*pixel_size(2); %mm
+        wmax = max(width); %Take the largest mm
+        xdif = (wmax - width(1))/pixel_size(1);ydif = (wmax - width(2))/pixel_size(2);
         new_axis = ([ax(1)-(xdif/2),ax(2)+(xdif/2),ax(3)-(ydif/2),ax(4)+(ydif/2)]);
         axis(grasp_handles.displayimage.(['axis' num2str(active_axis)]),new_axis);
 

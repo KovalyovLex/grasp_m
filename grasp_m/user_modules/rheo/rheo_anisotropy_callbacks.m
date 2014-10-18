@@ -7,6 +7,7 @@ global displayimage
 global grasp_handles
 global inst_params
 global grasp_data
+global last_result
 global box_Af
 
 switch to_do
@@ -434,9 +435,13 @@ switch to_do
             
         local_history = displayimage.history; %This will actually be the history of the last file
         local_history = [local_history, {['***** Analysis *****']}];
-        local_history = [local_history, {['Af vs. Parameter ' num2str(status_flags.user_modules.rheo_anisotropy.parameter)]}];
+        local_history = [local_history, {['Af vs. Parameter ' num2str(status_flags.user_modules.rheo_anisotropy.parameter),' '  box_param_name]}];
 %        local_history = [local_history, box_history];
         
+
+            
+     
+
         plot_params.history = local_history;
         grasp_plot(plotdata,column_format,plot_params);
         
@@ -445,7 +450,7 @@ switch to_do
             
    
 
-            
+        
             
             
             
@@ -485,6 +490,8 @@ switch to_do
         
         
          fit_list = []; fit_list_error = [];q_list = [];counter = 1;
+         plot_params=[];
+         plot_data=[];
         
          %Churn through the depth and extract box-sums
         index = data_index(status_flags.selector.fw);
@@ -540,11 +547,14 @@ switch to_do
                     depth_param = [depth_param; n];
                     depth_param_name = 'Depth';
                 else
-                    depth_param = [depth; params(status_flags.user_modules.rheo_anisotropy.parameter)];
+              %      depth_param = [depth_param; n];
+              %      displayimage.params1(status_flags.user_modules.rheo_anisotropy.parameter)];
+                    depth_param = [depth_param; params(status_flags.user_modules.rheo_anisotropy.parameter)];
                     depth_param_name = inst_params.vector_names{status_flags.user_modules.rheo_anisotropy.parameter};
+                    
                 end
                     
- 
+
                 
                 
                 %***** Make Raw Intensity vs. Angle @ mod_q list for given detector pannel *****
@@ -620,6 +630,41 @@ switch to_do
             end
             
             
+            
+            
+                        %Generate azimuthal bins
+                    
+                    
+                        bin_step = status_flags.user_modules.rheo_anisotropy.binning_Af;
+                        bin_edges = 0:bin_step:360;
+                    
+                    local_history = [local_history, {['Averaging I vs. Azimuth.  Bin size:  ' num2str(status_flags.user_modules.rheo_anisotropy.binning_Af) ' [Degree(s)]']}];
+                    
+                    if length(bin_edges) <2;
+                        disp('Error generating Bin_Edges - not enough Bins')
+                        disp('Please check re-binning paramters');
+                    end
+                    
+                    %***** Now re-bin *****
+                    if length(bin_edges) >=2;
+                        temp = rebin([ring_data(:,1),ring_data(:,2),ring_data(:,3)],bin_edges); %[q,I,errI,delta_q,pixel_count]
+                        ring_data = temp; %[ring_data; temp]; %append the iq data from the different detectors together
+                    
+              
+                    
+                    end
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             %Only do the Cos^2 fit if there is enough data to fit
             if length(ring_data) > 10;
             
@@ -692,13 +737,13 @@ switch to_do
             counter = counter+1;
             
 %             %***** Debugging - show fit data and fit  *****
-%             figure
-%             plot(ring_data(:,1),ring_data(:,2),'.');
+            figure
+             plot(ring_data(:,1),ring_data(:,2),'.');
 %             %Generate the function
-%             x = 0:360;
-%             y = ancos2_pseudo_fn(x,fit_params,ancos2_fn);
-%             hold on
-%             plot(x,y,'green');
+             x = 0:360;
+             y = ancos2_pseudo_fn(x,fit_params,ancos2_fn);
+             hold on
+             plot(x,y,'green');
 %             %***** End Debug *****
             
             
@@ -722,7 +767,10 @@ switch to_do
             
             
         end
-
+        
+        
+        
+        
         
         %***** Abs Phase - That is what is fitted after all *****
         fit_list(:,2) = abs(fit_list(:,2));
@@ -732,27 +780,43 @@ switch to_do
         while find(fit_list(:,3)<-45); temp = find(fit_list(:,3)<-45); fit_list(temp,3) = fit_list(temp,3)+180; end
         
         %********** Cosine Offset:  Plot and Export Results ************
+    
+        
         plotdata(:,1) = depth_param(:);
         plotdata(:,2) = fit_list(:,1); %Cosine^2 Offset
         plotdata(:,3) = fit_list_error(:,1); %Cosine^2 Offset
         column_format = 'xye';
-        plot_params = struct(....
-            'plot_type','plot',....
-            'hold_graph','off',....
-            'plot_title',['Rheo Analysis : Cosine Offset'],....
-            'x_label',['Parameter: ' depth_param_name],....
-            'y_label',['Isotropic Scattering : ' displayimage.units],....
-            'legend_str',['Cos^2 Offset'],....
-            'params',displayimage.params1,....
-            'parsub',displayimage.subtitle,....
-            'export_data',plotdata,....
-            'info',displayimage.info,....
-            'column_labels',['Parameter   ' char(9) 'I       ' char(9) 'Err_I   ']);
+        
+       
+        plot_params = struct(...
+            'plot_type','plot',...
+            'hold_graph','off',...
+            'plot_title',['Rheo Analysis : Cosine Offset'],...
+            'x_label',([ depth_param_name ]),...
+            'y_label',['Isotropic Scattering : ' displayimage.units],...
+            'legend_str',['#' num2str(displayimage.params1(128)) ' off set' ],...
+            'params',displayimage.params1,...
+            'parsub',displayimage.subtitle,...
+            'export_data',plotdata,...
+            'info',displayimage.info,...
+            'column_labels',['Parameter   ' char(9) 'Cos offset       ' char(9) 'Err_Cos offset   ']);
+   %    'column_labels',(['Parameter(' depth_param_name ')'  'off set'  'err_off set' ]));
+              % disp(['Depth #,     Parameter(' num2str(status_flags.user_modules.rheo_anisotropy.parameter) '),     Af,     Err_Af, ']);
+ 
+ 
+        
+        local_history = displayimage.history; %This will actually be the history of the last file
+        local_history = [local_history, {['***** Analysis *****']}];
+
+        local_history = [local_history, {['***** Fit with the Iso + Amp cos^2 (angle+phase) *****']}];
+        
+%        local_history = [local_history, {['Iso Scatt vs.  '  depth_param_name]}]; 
+        
+            local_history = [local_history, 'Iso Scatt vs.  ' depth_param_name];
         
         plot_params.history = local_history;
-        grasp_plot(plotdata,column_format,plot_params);
-        
-        
+        grasp_plot(plotdata,column_format,plot_params);   
+         
         
         %********** Cosine Amplitude:  Plot and Export Results ************
         plotdata(:,1) = depth_param(:);
@@ -763,14 +827,23 @@ switch to_do
             'plot_type','plot',....
             'hold_graph','off',....
             'plot_title',['Rheo Analysis : Cosine Amplitude'],....
-            'x_label',['Parameter: ' depth_param_name],....
+            'x_label',([ depth_param_name ]),...
             'y_label',['Anisotropy Amplitude Scattering : ' displayimage.units],....
-            'legend_str',['Cos^2 Offset'],....
+            'legend_str',['#' num2str(displayimage.params1(128)) '  Cos Amp'],...
             'params',displayimage.params1,....
             'parsub',displayimage.subtitle,....
             'export_data',plotdata,....
             'info',displayimage.info,....
-            'column_labels',['Parameter   ' char(9) 'I       ' char(9) 'Err_I   ']);
+            'column_labels',['Parameter   ' char(9) 'Cos Amp       ' char(9) 'Err_Cos Amp   ']);
+        
+        
+        local_history = displayimage.history; %This will actually be the history of the last file
+        local_history = [local_history, {['***** Analysis *****']}];
+
+        local_history = [local_history, {['***** Fit with the Iso + Amp cos^2 (angle+phase) *****']}];
+        
+%        local_history = [local_history, {['Cos Amp vs. '  depth_param_name]}];
+        
         
         plot_params.history = local_history;
         grasp_plot(plotdata,column_format,plot_params);
@@ -786,14 +859,25 @@ switch to_do
                 'plot_type','plot',....
                 'hold_graph','off',....
                 'plot_title',['Rheo Analysis : Cosine Phase'],....
-                'x_label',['Parameter: ' depth_param_name],....
+                'x_label',([ depth_param_name ]),...
                 'y_label',['Cosine Phase'],....
-                'legend_str',['Cos^2 Phase'],....
+                'legend_str',['#' num2str(displayimage.params1(128)) '  Cos Phase'],...
                 'params',displayimage.params1,....
                 'parsub',displayimage.subtitle,....
                 'export_data',plotdata,....
                 'info',displayimage.info,....
-                'column_labels',['Parameter   ' char(9) 'I       ' char(9) 'Err_I   ']);
+                'column_labels',['Parameter   ' char(9) 'Cos Phase       ' char(9) 'Err_Cos Phase   ']);
+            
+            local_history = displayimage.history; %This will actually be the history of the last file
+        local_history = [local_history, {['***** Analysis *****']}];
+
+        local_history = [local_history, {['***** Fit with the Iso + Amp cos^2 (angle+phase) *****']}];
+        
+%        local_history = [local_history, {['Cos Phase vs.  '  depth_param_name]}];
+            
+            
+            
+            
         
             plot_params.history = local_history;
             grasp_plot(plotdata,column_format,plot_params);

@@ -12,364 +12,6 @@
 <Function>
 
 <FnName>
-Gaussian + Gaussian + Lorentzian
-</FnName>
-
-<Params>
-y0
-i0_G1
-xc_G1
-fwhm_G1
-i0_G2
-xc_G2
-fwhm_G2
-i0_L1
-xc_L1
-fwhm_L1
-</Params>
-
-<StartValues>
-0
-1000
-0.5
-1
-1000
-0.5
-1
-1000
-0.5
-1
-</StartValues>
-
-<ParamNames>
-Background
-G1 Integrated Intensity
-G1 Centre
-G1 FWHM
-G2 Integrated Intensity
-G2 Centre
-G2 FWHM
-L Integrated Intensity
-L Centre
-L FWHM
-</ParamNames>
-
-<FnCode>
-y = y0 + (i0_G1 / (fwhm_G1*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G1).^2) / (fwhm_G1.^2 / log(4))) + (i0_G2 / (fwhm_G2*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G2).^2) / (fwhm_G2.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2));
-</FnCode>
-
-<AutoGuessCode>
-[amp i_amp] = max(y);    %Peak Intensity
-xc_G1 = x(i_amp);         %Centre Position
-xc_G2 = xc_G1;
-y0 = min(y);         %Background
-x_diff = diff(x); %Differences between adjacent x's.
-ytemp = y(1:length(y)-1);
-i0_G1 = abs((sum((ytemp-y0).*x_diff)))/3;
-i0_G2 = i0_G1;
-sigma = i0_G1/(amp*sqrt(2*pi));
-fwhm_G1 = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
-fwhm_G2 = fwhm_G1;
-xc_L1 = x(i_amp); %Centre Position
-i0_L1 = (sum((ytemp-y0).*x_diff))/3;
-sigma_L = i0_L1/(amp*pi);
-fwhm_L1 = 2*sigma_L;
-guess_values = [y0, i0_G1, xc_G1, fwhm_G1, i0_G2, xc_G2, fwhm_G2, i0_L1, xc_L1, fwhm_L1];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
-[fwhm_G y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-fwhm_G=abs(fwhm_G-xc_G);
-amp=amp-y0;
-i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
-%Put estimated parameters into the output array.
-guess_values = [y0, i0_G, xc_G, fwhm_G];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Gaussian + Gaussian + Lorentzian + Lorentzian
-</FnName>
-
-<Params>
-y0
-i0_G1
-xc_G1
-fwhm_G1
-i0_G2
-xc_G2
-fwhm_G2
-i0_L1
-xc_L1
-fwhm_L1
-i0_L2
-xc_L2
-fwhm_L2
-</Params>
-
-<StartValues>
-0
-1000
-0.5
-1
-1000
-0.5
-1
-1000
-0.5
-1
-1000
-0.5
-1
-</StartValues>
-
-<ParamNames>
-Background
-G1 Integrated Intensity
-G1 Centre
-G1 FWHM
-G2 Integrated Intensity
-G2 Centre
-G2 FWHM
-L1 Integrated Intensity
-L1 Centre
-L1 FWHM
-L2 Integrated Intensity
-L2 Centre
-L2 FWHM
-</ParamNames>
-
-<FnCode>
-y = y0 + (i0_G1 / (fwhm_G1*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G1).^2) / (fwhm_G1.^2 / log(4))) + (i0_G2 / (fwhm_G2*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G2).^2) / (fwhm_G2.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2)) + ((2*i0_L2/pi)*fwhm_L2)./(4*((x-xc_L2).^2)+(fwhm_L2.^2));
-</FnCode>
-
-<AutoGuessCode>
-[amp i_amp] = max(y);    %Peak Intensity
-xc_G1 = x(i_amp);         %Centre Position
-xc_G2 = xc_G1;
-y0 = min(y);         %Background
-x_diff = diff(x); %Differences between adjacent x's.
-ytemp = y(1:length(y)-1);
-i0_G1 = abs((sum((ytemp-y0).*x_diff)))/4;
-i0_G2 = i0_G1;
-sigma = i0_G1/(amp*sqrt(2*pi));
-fwhm_G1 = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
-fwhm_G2 = fwhm_G1;
-xc_L1 = x(i_amp); %Centre Position
-i0_L1 = (sum((ytemp-y0).*x_diff))/4;
-sigma_L = i0_L1/(amp*pi);
-fwhm_L1 = 2*sigma_L;
-xc_L2 = xc_L1; %Centre Position
-i0_L2 = i0_L1;
-fwhm_L2 = fwhm_L1;
-guess_values = [y0, i0_G1, xc_G1, fwhm_G1, i0_G2, xc_G2, fwhm_G2, i0_L1, xc_L1, fwhm_L1, i0_L2, xc_L2, fwhm_L2];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
-[fwhm_G y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-fwhm_G=abs(fwhm_G-xc_G);
-amp=amp-y0;
-i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
-%Put estimated parameters into the output array.
-guess_values = [y0, i0_G, xc_G, fwhm_G];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Gaussian + Lorentzian + Lorentzian
-</FnName>
-
-<Params>
-y0
-i0_G
-xc_G
-fwhm_G
-i0_L1
-xc_L1
-fwhm_L1
-i0_L2
-xc_L2
-fwhm_L2
-</Params>
-
-<StartValues>
-0
-1000
-0.5
-1
-1000
-0.5
-1
-1000
-0.5
-1
-</StartValues>
-
-<ParamNames>
-Background
-G Integrated Intensity
-G Centre
-G FWHM
-L1 Integrated Intensity
-L1 Centre
-L1 FWHM
-L2 Integrated Intensity
-L2 Centre
-L2 FWHM
-</ParamNames>
-
-<FnCode>
-y = y0 + (i0_G / (fwhm_G*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G).^2) / (fwhm_G.^2 / log(4))) + ((2*i0_L1/pi)*fwhm_L1)./(4*((x-xc_L1).^2)+(fwhm_L1.^2)) + ((2*i0_L2/pi)*fwhm_L2)./(4*((x-xc_L2).^2)+(fwhm_L2.^2));
-</FnCode>
-
-<AutoGuessCode>
-[amp i_amp] = max(y);    %Peak Intensity
-xc_G = x(i_amp);         %Centre Position
-y0 = min(y);         %Background
-x_diff = diff(x); %Differences between adjacent x's.
-ytemp = y(1:length(y)-1);
-i0_G = abs((sum((ytemp-y0).*x_diff)))/3;
-sigma = i0_G/(amp*sqrt(2*pi));
-fwhm_G = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
-xc_L1 = x(i_amp); %Centre Position
-i0_L1 = (sum((ytemp-y0).*x_diff))/3;
-sigma_L = i0_L1/(amp*pi);
-fwhm_L1 = 2*sigma_L;
-xc_L2 = xc_L1; %Centre Position
-i0_L2 = i0_L1;
-xc_L2 = xc_L1;
-fwhm_L2 = fwhm_L1;
-guess_values = [y0, i0_G, xc_G, fwhm_G, i0_L1, xc_L1, fwhm_L1, i0_L2, xc_L2, fwhm_L2];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
-[fwhm_G y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-fwhm_G=abs(fwhm_G-xc_G);
-amp=amp-y0;
-i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
-%Put estimated parameters into the output array.
-guess_values = [y0, i0_G, xc_G, fwhm_G];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
-Gaussian + Lorentzian
-</FnName>
-
-<Params>
-y0
-i0_G
-xc_G
-fwhm_G
-i0_L
-xc_L
-fwhm_L
-</Params>
-
-<StartValues>
-0
-1000
-0.5
-1
-1000
-0.5
-1
-</StartValues>
-
-<ParamNames>
-Background
-G Integrated Intensity
-G Centre
-G FWHM
-L Integrated Intensity
-L Centre
-L FWHM
-</ParamNames>
-
-<FnCode>
-y = y0 + (i0_G / (fwhm_G*sqrt(pi/2) / sqrt(log(4)))) .* exp((-2*(x-xc_G).^2) / (fwhm_G.^2 / log(4))) + ((2*i0_L/pi)*fwhm_L)./(4*((x-xc_L).^2)+(fwhm_L.^2));
-</FnCode>
-
-<AutoGuessCode>
-[amp i_amp] = max(y);    %Peak Intensity
-xc_G = x(i_amp);         %Centre Position
-y0 = min(y);         %Background
-x_diff = diff(x); %Differences between adjacent x's.
-ytemp = y(1:length(y)-1);
-i0_G = abs((sum((ytemp-y0).*x_diff)))/2;
-sigma = i0_G/(amp*sqrt(2*pi));
-fwhm_G = 2*sqrt(2*log(2))*sigma; %The sqrt is because this is a 2D gaussian
-xc_L = x(i_amp); %Centre Position
-i0_L = (sum((ytemp-y0).*x_diff))/2;
-sigma_L = i0_L/(amp*pi);
-fwhm_L = 2*sigma_L;
-guess_values = [y0, i0_G, xc_G, fwhm_G, i0_L, xc_L, fwhm_L];
-</AutoGuessCode>
-
-<PointClickCode>
-text_handle = grasp_message(['Click on Background'],1,'sub'); %Grasp Message
-[x y0]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak'],1,'sub');  %Grasp Message
-[xc_G amp]=ginput(1); %Mouse input, Centre and Peak intensity
-delete(text_handle);pause(0.1);
-text_handle = grasp_message(['Click on Peak Width'],1,'sub');  %Grasp Message
-[fwhm_G y]=ginput(1); %Mouse input
-delete(text_handle);pause(0.1);
-fwhm_G=abs(fwhm_G-xc_G);
-amp=amp-y0;
-i0 = amp*fwhm*sqrt(pi)/(sqrt(2)*sqrt(2*log(2))); %Convert Peak Intensity to IntInt
-%Put estimated parameters into the output array.
-guess_values = [y0, i0_G, xc_G, fwhm_G];
-</PointClickCode>
-
-</Function>
-%********************************************************************************************************
-
-%********************************************************************************************************
-<Function>
-
-<FnName>
 Gaussian
 </FnName>
 
@@ -861,10 +503,6 @@ guess_values = [y0, m, n, i0, xc, fwhm];
 </Function>
 %********************************************************************************************************
 
-
-
-
-
 %********************************************************************************************************
 <Function>
 
@@ -928,6 +566,86 @@ guess_values = [y0, k, rg];
 %********************************************************************************************************
 
 
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Guinier-Porod
+</FnName>
+
+<Params>
+Bck
+G
+d
+Rg
+</Params>
+
+<StartValues>
+1
+10
+4
+50
+</StartValues>
+
+<ParamNames>
+Background
+G
+Porod Exponent
+Radius Gyration
+</ParamNames>
+
+
+<FnCode>
+Q1 = (1/Rg)*(3*d/2)^0.5;
+D = G* exp(-d/2) * ((3*d/2)^(d/2)) * (1/(Rg^d));
+temp = find(x<=Q1);
+y(temp) = G.*exp(-x(temp).^2 .* Rg.^2 ./ 3);
+temp = find(x>Q1);
+y(temp) = D ./ (x(temp).^d);
+y = y + Bck;
+</FnCode>
+
+<AutoGuessCode>
+[xmin, i_xmin] = min(x);
+[xmax, i_xmax] = max(x);
+y0 = y(i_xmax);
+k = y(i_xmin) - y0;
+derivative = diff(y,1);
+[temp, i_ymin] = max(derivative);
+disp(x(i_ymin))
+rg = 4.49/x(i_ymin);
+guess_values = [y0, k, rg];
+</AutoGuessCode>
+
+<PointClickCode>
+text_handle = grasp_message(['Click on Low Q, High Intensity Point'],1,'sub');  %Grasp Text Message
+[xmin ymax]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on High Q, Low Intensity Point'],1,'sub');  %Grasp Text Message
+[xmax ymin]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+text_handle = grasp_message(['Click on Radius of Gyration'],1,'sub');  %Grasp Text Message
+[qgradmax  temp]=ginput(1); %Mouse input
+delete(text_handle);pause(0.1);
+y0 = ymin;
+k = ymax - ymin;
+disp(qgradmax)
+rg = 4.49/qgradmax; %4.49 = sqrt(3/5)*2pi conversion from Sphere R to Rg
+guess_values = [y0, k, rg];
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+
+
+
+
+
 %********************************************************************************************************
 <Function>
 
@@ -959,7 +677,7 @@ Scale
 <FnCode>
 rq = (radius).* x;  %r [A] * q [A-1]  [Unitless]
 contrast = contrast *1e8*1e8; %convert [A-2] to [cm-2];
-V = (4/3)*pi*(radius*1e-8).^3; %Scatterer Volume in [cm2]
+V = (4/3)*pi*(radius*1e-8).^3; %Scatterer Volume in [cm3]
 y = y0 + (scale./V) .* (3*V*contrast .*  (sin(rq) - (rq).*cos(rq)) ./ (rq).^3).^2;
 </FnCode>
 
@@ -1029,9 +747,9 @@ Scale
 </ParamNames>
 
 <FnCode>
-fine = 25;
+fine = 100;
 low = radius-2*poly*radius/fine; high = radius+2*poly*radius/fine; step = (high-low)/fine;
-sigma = (poly*radius/100) / (2*sqrt(2*log(2)));
+sigma = (poly*radius/100)/2.354;
 contrast = contrast *1e8*1e8; %convert [A-2] to [cm-2];
 y = y0;
 for rad = low:step:high; if low==high; gauss_weight = 1; else gauss_weight = (1/(sigma * sqrt(2*pi))) * exp( -(rad-radius).^2 / (2*sigma.^2)); end; rq = (rad).* x; V = (4/3)*pi*(rad*1e-8).^3; y = y + gauss_weight*step*(scale./V) .* (3*V*contrast .*  (sin(rq) - (rq).*cos(rq)) ./ (rq).^3).^2; end
@@ -1069,6 +787,127 @@ scale = amp *contrast*1e2;
 
 </Function>
 %********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+FF_Poly_Core_Shell_Sphere
+</FnName>
+
+<Params>
+y0
+radius
+core_poly
+shell
+rho_core
+rho_shell
+rho_matrix
+scale
+</Params>
+
+<StartValues>
+0
+50
+10
+15
+6.7e-6
+7.88e-8
+5.22e-6
+1
+</StartValues>
+
+<ParamNames>
+Background [cm-1]
+Core Radius [A]
+Core Poly [%]
+Shell Thickness [A]
+Rho Core [A^-2]
+Rho Shell [A^-2]
+Rho Matrix [A^-2]
+Scale
+</ParamNames>
+
+<FnCode>
+fine = 25;
+low = radius-3*core_poly*radius/100; high = radius+3*core_poly*radius/100; step = (high-low)/fine;
+sigma = (core_poly*radius/100)/2.354;
+y = y0;
+for rad = low:step:high;   if low==high; gauss_weight = 1; else gauss_weight = (1/(sigma * sqrt(2*pi))) * exp( -(rad-radius).^2 / (2*sigma.^2)); end; F1 = 3*(sin(x.*rad)-(x.*rad).*cos(x.*rad))./(x.*rad).^3; F2 = 3*(sin(x.*(rad+shell))-(x.*(rad+shell)).*cos(x.*(rad+shell)))./(x.*(rad+shell)).^3; F1 = F1*(4/3)*pi*rad^3; F2 = F2*(4/3)*pi*(rad+shell)^3; y = y + gauss_weight*step*scale./((4/3)*pi*(rad+shell)^3*10^(-8))*(((rho_core-rho_shell).*F1 + (rho_shell-rho_matrix).*F2).^2); end
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+FF_Poly_log_Core_Shell_Sphere
+</FnName>
+
+<Params>
+y0
+radius
+core_poly
+shell
+rho_core
+rho_shell
+rho_matrix
+scale
+</Params>
+
+<StartValues>
+0
+50
+10
+15
+6.7e-6
+7.88e-8
+5.22e-6
+1
+</StartValues>
+
+<ParamNames>
+Background [cm-1]
+Core Radius [A]
+Core Poly [%]
+Shell Thickness [A]
+Rho Core [A^-2]
+Rho Shell [A^-2]
+Rho Matrix [A^-2]
+Scale
+</ParamNames>
+
+<FnCode>
+fine = 25;
+std = sqrt(exp(2*log(radius)+core_poly*core_poly*0.0001)*(exp(core_poly*core_poly*0.0001)-1));
+low = radius-3*std; high = radius+3*std; step = (high-low)/fine;
+y = y0;
+for rad = low:step:high;   if low==high; log_weight = 1; else log_weight = (1/(core_poly*0.01* rad * sqrt(2*pi))) * exp( -(log(rad/radius)).^2 / (2*(core_poly*0.01).^2)); end; F1 = 3*(sin(x.*rad)-(x.*rad).*cos(x.*rad))./(x.*rad).^3; F2 = 3*(sin(x.*(rad+shell))-(x.*(rad+shell)).*cos(x.*(rad+shell)))./(x.*(rad+shell)).^3; F1 = F1*(4/3)*pi*rad^3; F2 = F2*(4/3)*pi*(rad+shell)^3; y = y + log_weight*step*scale./((4/3)*pi*(rad+shell)^3*10^(-8))*(((rho_core-rho_shell).*F1 + (rho_shell-rho_matrix).*F2).^2); end
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
 
 
 
@@ -1858,3 +1697,104 @@ y = y*I0 + y0;
 
 </Function>
 %********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Bragg Ring
+</FnName>
+
+<Params>
+I0
+R
+q0
+delta_q_fwhm
+orders
+</Params>
+
+<StartValues>
+1
+0.1
+5e-4
+1e-4
+10
+</StartValues>
+
+<ParamNames>
+Multiplier
+Reflectivity
+q_1st_order
+delta_q
+Orders
+</ParamNames>
+
+<FnCode>
+y = zeros(size(x));
+sigma = delta_q_fwhm/2.354;
+for n = 1:orders; q = q0*n; s = sigma*n; int = (R^n)./x; i = (int/(s*sqrt(2*pi))) .*exp( -((x - q).^2)./(2*s.^2)); y = y+i; end
+y =I0.*y;
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Bragg Ring + Background
+</FnName>
+
+<Params>
+I0
+R
+q0
+delta_q_fwhm
+orders
+bck
+</Params>
+
+<StartValues>
+1
+0.1
+5e-4
+1e-4
+10
+0.1
+</StartValues>
+
+<ParamNames>
+Multiplier
+Reflectivity
+q_1st_order
+delta_q
+Orders
+Background
+</ParamNames>
+
+<FnCode>
+y = zeros(size(x));
+sigma = delta_q_fwhm/2.354;
+for n = 1:orders; q = q0*n; s = sigma*n; int = (R^n)./x; i = (int/(s*sqrt(2*pi))) .*exp( -((x - q).^2)./(2*s.^2)); y = y+i; end
+y =I0.*y+bck;
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+

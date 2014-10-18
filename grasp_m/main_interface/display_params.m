@@ -86,7 +86,7 @@ else
                 disp(['Detector: ' num2str(det) ' Parameters:']);
                 disp([det_str det_calc_str det_pannel_str det_pannel_ox_str det_pannel_oy_str]);
                 
-            elseif strcmp(grasp_env.inst_option,'D33_Instrument_Comissioning')
+            elseif strcmp(grasp_env.inst_option,'D33_Instrument_Commissioning')
                 if isfield(vectors,'det'); det_str = ['  DET: ' num2str(params(vectors.det))]; else det_str = []; end
                 if isfield(vectors,'detcalc'); det_calc_str = ['  DET_CALC: ' num2str(params(vectors.detcalc))]; else det_calc_str = []; end
                 disp(['Detector: ' num2str(det) ' : ' det_str det_calc_str]);
@@ -167,6 +167,7 @@ else
     motors_str = [];
     if isfield(vectors,'san'); motors_str = [motors_str 'SAN: ' num2str(displayimage.params1(vectors.san)) '   '];end
     if isfield(vectors,'phi'); motors_str = [motors_str 'PHI: ' num2str(displayimage.params1(vectors.phi)) '   '];end
+    if isfield(vectors,'chi'); motors_str = [motors_str 'CHI: ' num2str(displayimage.params1(vectors.chi)) '   '];end
     if isfield(vectors,'trs'); motors_str = [motors_str 'TRS: ' num2str(displayimage.params1(vectors.trs)) '   ']; end
     if isfield(vectors,'sdi'); motors_str = [motors_str 'SDI: ' num2str(displayimage.params1(vectors.sdi)) '   ']; end
     if isfield(vectors,'sdi2'); motors_str = [motors_str 'SDI2: ' num2str(displayimage.params1(vectors.sdi2)) '   ']; end
@@ -181,7 +182,11 @@ else
 
     
     disp(' ')
-    disp(['T_set = ' num2str(displayimage.params1(vectors.tset)) '; T_reg = ' num2str(displayimage.params1(vectors.treg)) '; T_sample = ' num2str(displayimage.params1(vectors.temp))]);
+    
+    if isfield(vectors,'tset'); t_set_str = num2str(displayimage.params1(vectors.tset)); else t_set_str = 'N/A'; end
+    if isfield(vectors,'treg'); t_reg_str = num2str(displayimage.params1(vectors.treg)); else t_reg_str = 'N/A'; end
+    if isfield(vectors,'temp'); t_temp_str = num2str(displayimage.params1(vectors.temp)); else t_temp_str = 'N/A'; end
+    disp(['T_set = ' t_set_str '; T_reg = ' t_reg_str '; T_sample = ' t_temp_str]);
     
     if isfield(vectors,'field'); disp(['Magnetic Field = ' num2str(displayimage.params1(vectors.field))]); end
     

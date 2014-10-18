@@ -13,17 +13,29 @@ switch to_do
 
     case 'extract_parameter'
         %Ploting column format
-        column_format = 'x';
         
         if isfield(status_flags,'parameter_survey'); 
             param_str = num2str(status_flags.parameter_survey.parameter);
         else
             param_str = '65';
         end
-        param_values = [];
-        parameter_str=inputdlg(({'Enter Parameters # ('','' separated)'}),'Enter Parameter # to Extract',[1],{param_str});
+
+        parameter_str=inputdlg(({'Enter Parameters # or ts, te, cx, cy ('','' separated). Use ''x:#'' for x-axis'}),'Enter Parameter # to Extract',[1],{param_str});
         parameter_str = parameter_str{1}; %convert cell to str
+        status_flags.parameter_survey.parameter = parameter_str;
         
+        %Find x-parameter
+        xparam = 0; %depth by default
+        temp = findstr(parameter_str,'x:');
+        if not(isempty(temp));
+            temp2 = findstr(parameter_str(temp+2:length(parameter_str)),',');
+            xparam_str = parameter_str(temp+2:temp+temp2);
+            xparam = str2num(xparam_str);
+            if isempty(xparam);
+                xparam = 0;
+            end
+            parameter_str = parameter_str(temp+temp2+2:length(parameter_str));
+        end
         
         %worksheet indicies
         depths = (status_flags.selector.fdpth_max-grasp_data(1).sum_allow);
@@ -31,7 +43,14 @@ switch to_do
         param_servey = [];
         column_format = ['x'];
         for n = 1:depths;
-            depth_params = n;
+            
+            %Xparameter
+            if xparam ==0;
+                depth_params = n;
+            else
+                index = data_index(status_flags.selector.fw);
+                depth_params = grasp_data(index).params1{status_flags.selector.fn}(xparam,n);
+            end
             
             %Parse the input string of parameter numbers or text parameters (e.g. ts, te)
             remain = parameter_str;

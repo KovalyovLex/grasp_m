@@ -15,14 +15,22 @@ if  status_flags.calibration.volume_normalize_check ==1;
     end
     foreimage.units = [foreimage.units '\\ cm3 '];
     history = [history, {['Data: Divided by Volume ' num2str(volume) ' cm3']}];
+    
+    foreimage.scale_factor = foreimage.scale_factor / volume; %keep a track on data scaling
+    
 end
 
 %***** Divide by pixel solid angle ******
 if status_flags.calibration.solid_angle_check ==1;
     for det = 1:inst_params.detectors
-        foreimage.(['data' num2str(det)]) = foreimage.(['data' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
-        foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
+        %foreimage.(['data' num2str(det)]) = foreimage.(['data' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
+        %foreimage.(['error' num2str(det)]) = foreimage.(['error' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
+        foreimage.(['data' num2str(det)]) =  foreimage.(['data' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
+        foreimage.(['error' num2str(det)]) =  foreimage.(['error' num2str(det)]) ./ foreimage.(['qmatrix' num2str(det)])(:,:,10);
     end
+    
+    foreimage.scale_factor = foreimage.scale_factor / mean(mean(foreimage.(['qmatrix' num2str(1)])(:,:,10))); %keep a track on data scaling
+
     foreimage.units = [foreimage.units '\\ \Delta\Omega '];
     history = [history, {['Solid Angle Correction:']}];
 end
@@ -87,6 +95,9 @@ if status_flags.calibration.beam_flux_check==1;
             %Divide scattering data by emptybeam
             [foreimage.(['data' num2str(det)]), foreimage.(['error' num2str(det)])] = err_divide(foreimage.(['data' num2str(det)]), foreimage.(['error' num2str(det)]),emptybeam_flux, emptybeam_flux_error);
         end
+        
+        foreimage.scale_factor = foreimage.scale_factor / emptybeam_flux; %keep a track on data scaling
+
     end
     
     foreimage.units = strrep(foreimage.units, empty_beam.units, '');

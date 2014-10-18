@@ -81,9 +81,9 @@ while feof(fid) ==0;
     if findstr(text,'FFFFF')
         text = fgetl(fid); %Read the data sizer line
         temp = str2num(text);
-        no_parameters = temp(1); lines_pnames = temp(2);
-
-        if lines_pnames >0; %Parameter names exist so read.
+        no_parameters = temp(1);
+        if length(temp) ==2;
+            lines_pnames = temp(2);
             for n = 1:lines_pnames
                 text = fgetl(fid);
                 inst_params.vector_names{((n-1)*5)+1}{1} = text(1:16);

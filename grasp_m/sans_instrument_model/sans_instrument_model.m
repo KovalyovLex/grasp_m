@@ -16,7 +16,7 @@ set(0,'defaultfigurepapertype','a4');
 colordef black; %Window bacground
 
 
-sample_config.model_number = 1; %Default Sample Model
+sample_config.model_number = 2; %Default Sample Model
 %***** Sample Scattering Models *****
 model = 0;
 
@@ -35,7 +35,22 @@ sample_config.model(model).radius = 60; %Angs
 sample_config.model(model).poly_fwhm = 10;
 sample_config.model(model).contrast = 6e-6; %A-2    6e-6 is roughly H Surfactant in D2O
 sample_config.model(model).scale = 0.01; %Concentration
-sample_config.model(model).background = 0; %D20
+sample_config.model(model).background = 0;
+
+model=model+1;
+sample_config.model(model).name = 'Core-Shell Sphere';
+sample_config.model(model).pnames = [{'Core Radius [A]:'} {'Core Poly [%FWHM]:'} {'Shell [A]'} {'rho_core [A-2]:'} {'rho_shell [A-2]:'} {'rho_matrix [A-2]:'} {'Scale:'} {'Background [cm-1]:'}];
+sample_config.model(model).structname = [{'radius'} {'poly_fwhm'} {'shell'} {'rho_core'} {'rho_shell'} {'rho_matrix'} {'scale'} {'background'}];
+sample_config.model(model).fn_eval = ['ff_core_shell_sphere(q, sample_config.model(' num2str(model) ').radius, sample_config.model(' num2str(model) ').poly_fwhm, sample_config.model(' num2str(model) ').shell, sample_config.model(' num2str(model) ').rho_core, sample_config.model(' num2str(model) ').rho_shell, sample_config.model(' num2str(model) ').rho_matrix, sample_config.model(' num2str(model) ').scale, sample_config.model(' num2str(model) ').background)'];
+sample_config.model(model).radius = 50; %Angs
+sample_config.model(model).poly_fwhm = 10;
+sample_config.model(model).shell = 15;
+sample_config.model(model).rho_core = 6.7e-6;
+sample_config.model(model).rho_shell = 7.88e-8;
+sample_config.model(model).rho_matrix = 5.22e-6;
+sample_config.model(model).scale = 1; %Concentration
+sample_config.model(model).background = 0;
+
 
 model=model+1;
 sample_config.model(model).name = 'Guinier';
@@ -209,7 +224,7 @@ inst_model_params.det_image_tof_frame = 1;
 inst_model_params.auto_calculate = 0; %1 = on, 0 = off
 inst_model_params.measurement_time = 600; %seconds
 inst_model_params.sample_thickness = 0.1; %cm
-inst_model_params.sample_area = 1*0.7; %cm^2
+inst_model_params.sample_area = 1; %cm^2
 inst_model_params.monitor = 0; %Some beam monitor fraction of the incoming beam intensity
 inst_model_params.poissonian_noise_check = 1;
 inst_model_params.divergence_check = 0;
@@ -247,10 +262,12 @@ elseif strcmp(inst,'ANSTO_quokka');
     [inst_config, inst_component] = ansto_quokka_model_component;
 elseif strcmp(inst,'ESS_SANS');
     [inst_config, inst_component] = ess_model_component;
+elseif strcmp(inst,'APEX');
+    [inst_config, inst_component] = apex_model_component;
 else %D33
     [inst_config, inst_component] = d33_model_component;
     inst = 'ILL_d33';
-    
+
 end
 inst_config.inst = inst;
 

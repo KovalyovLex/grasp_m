@@ -94,7 +94,22 @@ switch to_do
         disp(['Switching Detector ' num2str(det) ' OFF']);
         status_flags.display.(['axis' num2str(det) '_onoff']) = 0;
         grasp_update;
-    
+        
+    case 'all_panels_on'
+        for det = 2:inst_params.detectors
+            disp(['Switching Detector ' num2str(det) ' ON']);
+            status_flags.display.(['axis' num2str(det) '_onoff']) = 1;
+        end
+        grasp_update;
+        
+    case 'all_panels_off'
+        for det = 2:inst_params.detectors
+            disp(['Switching Detector ' num2str(det) ' OFF']);
+            status_flags.display.(['axis' num2str(det) '_onoff']) = 0;
+        end
+        grasp_update;
+        
+        
     case 'active_axis'
         status_flags.display.active_axis = option;
         %Set the active axis color indicator
@@ -131,7 +146,7 @@ switch to_do
         %Update anything that might change simply with a change of active axis
         %displayed beam centre
         update_beam_centre
-        
+        update_window_options
         
 
     case 'foreground_wks'
@@ -714,7 +729,12 @@ depth = 1;
         %otherwise just do single beam centre of what's displayed
         
         if displayimage.type ==4 || displayimage.type == 5 || displayimage.type == 6 || displayimage.type == 8;
-            
+            grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_q = [];
+            grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_q = [];
+            grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_x = [];
+            grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_y = [];
+            grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_weight = [];
+            grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_weight = [];
             
             %***** Scroll though depth and calculate beam centre *****
             for depth = 1:depth_max
@@ -771,10 +791,9 @@ depth = 1;
                     oy = inst_params.(['detector' num2str(status_flags.display.active_axis)]).nominal_det_translation(2);
                 end
                 
-                
                 grasp_data(index).(['cm' num2str(det)]){number}.cm_translation(depth,:) = [ox, oy];
                 disp(['Panel Translations:  Ox = ' num2str(ox) ' , Oy = ' num2str(oy)]);
-
+                
                 %Only store the cm sigma widths if it was done for a proper direct
                 %beam or transmission worksheet - that way the resolution doesn't
                 %get screwed if simply take the CM of the foreground scattering as
@@ -782,7 +801,6 @@ depth = 1;
                 %grasp_data(index).(['cm' num2str(det)]){number}.cm_sigma_pixels(depth,:) = cm.sigma_pixels;
                 
                 %Store the direct beam NORMALIZED kernel shape for resolution use after
-                
                 sdet = cm_params(inst_params.vectors.det); %Default, unless otherwise
                 if strcmp(status_flags.q.det,'detcalc');
                     if isfield(inst_params.vectors,'detcalc')
@@ -794,16 +812,17 @@ depth = 1;
                 lambda = cm_params(inst_params.vectors.wav);
                 pixelsize = 1e-3*inst_params.(['detector' num2str(det)]).pixel_size;
                 
-                two_theta_x = atan(cm.x_kernel_x .*pixelsize(1) ./sdet);
+                temp_x = find(isfinite(cm.x_kernel_x)); %Clip to only points zoomed in on
+                temp_y = find(isfinite(cm.y_kernel_y)); %Clip to only points zoomed in on
+                
+                two_theta_x = atan(cm.x_kernel_x(temp_x) .*pixelsize(1) ./sdet);
                 grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_q(depth,:) = (4*pi/lambda).*sin(two_theta_x/2);
-                
-                two_theta_y = atan(cm.y_kernel_y .*pixelsize(2) ./sdet);
+                two_theta_y = atan(cm.y_kernel_y(temp_y) .*pixelsize(2) ./sdet);
                 grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_q(depth,:) = (4*pi/lambda).*sin(two_theta_y/2);
-                
-                grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_x(depth,:) = cm.x_kernel_x;
-                grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_weight(depth,:) = cm.x_kernel_weight;
-                grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_y(depth,:) = cm.y_kernel_y;
-                grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_weight(depth,:) = cm.y_kernel_weight;
+                grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_x(depth,:) = cm.x_kernel_x(temp_x);
+                grasp_data(index).(['cm' num2str(det)]){number}.x_kernel_weight(depth,:) = cm.x_kernel_weight(temp_x);
+                grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_y(depth,:) = cm.y_kernel_y(temp_y);
+                grasp_data(index).(['cm' num2str(det)]){number}.y_kernel_weight(depth,:) = cm.y_kernel_weight(temp_y);
             end
             
         else

@@ -1,5 +1,12 @@
 function d33_chopper_time_distance
 
+
+%Use:
+%print('-depsc2','-noui','-loose',['/home/lss/dewhurst/Desktop/arse2.eps']);
+%
+%to print.
+
+
 global d33_chopper_time_distance_handles
 d33_chopper_time_distance_handles = [];
 d33_chopper_time_distance_handles.chopper_handles = [];
@@ -8,6 +15,8 @@ d33_chopper_time_distance_handles.wav_text_handle = [];
 
 global d33_chopper_time_distance_params
 d33_chopper_time_distance_params = [];
+
+global grasp_env
 
 background_color = [0.1, 0.26, 0.21];
 foreground_color = [0.95,0.95,0.95];
@@ -20,7 +29,12 @@ d33_chopper_time_distance_params.detector_distance = 10;
 d33_chopper_time_distance_handles.figure_handle = figure('units','pixels','position',[220, 50, 1200, 850],'color',background_color);
 d33_chopper_time_distance_handles.axis_handle = axis;
 set(gca,'position',[0.12, 0.10, 0.5, 0.8])
-title('D33 Chopper Time-Distance Diagram')
+a = title('D33 Chopper Time-Distance Diagram');
+get(a)
+set(a,'fontname',grasp_env.font);
+%set(a,'fontsize',20,'tag','time_distance_tag')
+
+
 xlabel('Phase Time [degrees]'); ylabel('Distance [m]')
 
 

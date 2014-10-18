@@ -20,8 +20,8 @@ grasp_env.fontsize = 9; %Windows NT/98 (1280x1024 - Small Fonts)
 %Default Display Colours
 grasp_env.background_color = [0.2 0.22 0.21]; %- Dark Grey /Green
 grasp_env.sub_figure_background_color = [0.4 0.05 0]; %- Burgundy
-grasp_env.displayimage.active_axis_color = [1 0 0]; %Red
-grasp_env.displayimage.inactive_axis_color = [1 1 1]; %White
+grasp_env.displayimage.active_axis_color = 'red'; %Red
+grasp_env.displayimage.inactive_axis_color = 'white'; %White
 
 %Set European paper type & background
 set(0,'defaultfigurepapertype','a4');

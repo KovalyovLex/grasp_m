@@ -4,7 +4,31 @@ global status_flags
 global grasp_handles
 
 switch to_do
+
     
+    case 'xgrid_2d'
+        temp = str2num(get(gcbo,'string'));
+        if not(isempty(temp));
+            if not(isodd(temp));temp = temp +1; end
+            status_flags.resolution_control.xgrid_2d = temp;
+        end
+        set(gcbo,'string',num2str(status_flags.resolution_control.xgrid_2d));
+        
+    case 'ygrid_2d'
+        temp = str2num(get(gcbo,'string'));
+        if not(isempty(temp));
+            if not(isodd(temp));temp = temp +1; end
+            status_flags.resolution_control.ygrid_2d = temp;
+        end
+        set(gcbo,'string',num2str(status_flags.resolution_control.ygrid_2d));
+        
+    case 'sigma_extent_2d'
+        temp = str2num(get(gcbo,'string'));
+        if not(isempty(temp));
+            status_flags.resolution_control.sigma_extent_2d = temp;
+        end
+        set(gcbo,'string',num2str(status_flags.resolution_control.sigma_extent_2d));
+
     case 'close_window'
         grasp_handles.window_modules.resolution_control_window.window  =[];
         return

@@ -61,7 +61,11 @@ else
     elseif strcmp(machine_type,'GLNXA64') %64bit Linux
         [status,hostname] = system('hostname');
         if findstr(hostname,'chuck-ubuntu') %Chuck's Home Linux Box 64bit
+            
             grasp_env.path.grasp_root = '~/Desktop/Dropbox/Matlab/grasp_m_develop/';
+                elseif findstr(hostname,'dewhurstport') %ILL Linux Laptop
+            grasp_env.path.grasp_root = '~/Desktop/Dropbox/Matlab/grasp_m_develop/';
+
         elseif findstr(hostname,'dewhurstlnx'); %chuck's office linux machine
             grasp_env.path.grasp_root = '~/Desktop/Dropbox/Matlab/grasp_m_develop/';
         else

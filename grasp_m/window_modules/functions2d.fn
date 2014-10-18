@@ -16,12 +16,14 @@
 %fitdata.qxmat     - matrix of all qx coordinates in zoomed display
 %fitdata.qymat     - matrix of all qy coordinates in zoomed display
 %fitdata.modqmat   - matrix of all modq coordinates in zoomed display
+%fitdata.delta_q_mat   - matrix of delta_q in zoomed display
 %
 %fitdata.qanglemat - matrix of mod_q angle from vertical (degrees)
 %
 %fitdata.qxdat     - column of qx coordinates
 %fitdata.qydat     - column of qy coordinates
 %fitdata.modqdat   - column of modq coordinates
+%fitdata.delta_q_dat   - column of delta_q in zoomed display
 %
 %fitdata.qangledat - column of modq angle from vertical (degrees)
 %
@@ -31,9 +33,19 @@
 %fitdata.cm - structure with the following fields
 %fitdata.cm.cm_pixels  - beam centre coordinates (pixels) for this detector
 %fitdata.cm.cm_translation - detector translation relative to nominal centre
+%
+%
+%2D resolution smearing pad's out data with extra points in a kernal (with weighting factor) around the original
+%fitdata.qxdat and fitdata.qydat may already have been padded out but for technical reasons the xdat and ydat pixels need to stay as the original data
+%fitdata.xdat_smear_padded  - same as .xdat but may have been padded out to include 'virtual' x points corresponding to the 2D smearing kernel 
+%fitdata.ydat_smear_padded  - same as .ydat but may have been padded out to include 'virtual' y points corresponding to the 2D smearing kernel 
 
 
-
+%********************************************************************************************************
+<Divider>
+----Peak Fitting Functions----
+</Divider>
+%********************************************************************************************************
 
 
 %********************************************************************************************************
@@ -74,8 +86,11 @@ Axis Angle
 </ParamNames>
 
 <FnCode>
-xy_new(:,1) = xy(:,1) - cx;
-xy_new(:,2) = xy(:,2) - cy;
+%xy_new(:,1) = xy(:,1) - cx;
+%xy_new(:,2) = xy(:,2) - cy;
+%Smear padded data may be bulked out to the size of the resolution smearing kernel
+xy_new(:,1) = fitdata.xdat_smear_padded - cx;
+xy_new(:,2) = fitdata.ydat_smear_padded - cy;
 [th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
 th = th - (-theta*2*pi/360);
 [xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
@@ -166,8 +181,11 @@ FWHM Azimuthal
 <FnCode>
 cart_angle = (90 - phi)*pi/180; cart_radius = rx;
 [spot_cx,spot_cy] = pol2cart(cart_angle,cart_radius);
-xy_new(:,1) = xy(:,1) - spot_cx - fitdata.cm.cm_pixels(1); 
-xy_new(:,2) = xy(:,2) - spot_cy - fitdata.cm.cm_pixels(2);
+%xy_new(:,1) = xy(:,1) - spot_cx - fitdata.cm.cm_pixels(1); 
+%xy_new(:,2) = xy(:,2) - spot_cy - fitdata.cm.cm_pixels(2);
+%Smear padded data may be bulked out to the size of the resolution smearing kernel
+xy_new(:,1) = fitdata.xdat_smear_padded - spot_cx - fitdata.cm.cm_pixels(1); 
+xy_new(:,2) = fitdata.ydat_smear_padded - spot_cy - fitdata.cm.cm_pixels(2);
 [th,r] = cart2pol(xy_new(:,1),xy_new(:,2));
 th = th - cart_angle;
 [xy_new(:,1),xy_new(:,2)] = pol2cart(th,r);
@@ -431,6 +449,348 @@ guess_values = [bg int_int qr phi radial_width angle_width];
 
 </Function>
 %********************************************************************************************************
+
+
+%********************************************************************************************************
+<Divider>
+----2D Form Factor Models----
+</Divider>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Sphere FF
+</FnName>
+
+<Params>
+z0
+radius
+contrast
+scale
+</Params>
+
+<StartValues>
+0
+100
+1e-6
+0.01
+</StartValues>
+
+<ParamNames>
+Background [cm-1]
+Radius [A]
+Contrast [A^-2]
+Scale
+</ParamNames>
+
+<FnCode>
+rq = (radius).* fitdata.modqdat;  %r [A] * q [A-1]  [Unitless]
+contrast = contrast *1e8*1e8; %convert [A-2] to [cm-2];
+V = (4/3)*pi*(radius*1e-8).^3; %Scatterer Volume in [cm2]
+z = z0 + (scale./V) .* (3*V*contrast .*  (sin(rq) - (rq).*cos(rq)) ./ (rq).^3).^2;
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+
+%********************************************************************************************************
+<Divider>
+----Numeric Arbitary Function Finder----
+</Divider>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Numeric Function 25
+</FnName>
+
+<Params>
+#for n = 1:25; fn.variable_names = [fn.variable_names, {['a(' num2str(n) ')']}]; end
+</Params>
+
+<StartValues>
+#for n = 1:25; values = [values, {'1'}]; end
+</StartValues>
+
+<ParamNames>
+a
+</ParamNames>
+
+<FnCode>
+n_q_bins = 25;
+q_max = fitdata.modq_minmax(2)+eps;
+q_min = fitdata.modq_minmax(1)-eps;
+q_step = (q_max - q_min)/(n_q_bins);
+a_index = fix(((fitdata.modqdat-q_min))/q_step)+1;
+global fit_return_data
+a_q_list = 1:n_q_bins;
+fit_return_data.a_q_list = q_min + (a_q_list-0.5)*q_step;
+%This (Slower - but can calculate delta_q resolution)
+for n = 1:n_q_bins; temp = find(fitdata.modqdat >= (q_min+((n-1)*q_step)) & fitdata.modqdat < (q_min+(n*q_step))); z(temp,1) = a(n); fit_return_data.a_dq_list(n) = mean(fitdata.delta_q_dat(temp)); end
+%Or (Does not calculate q-resolution
+%z = rot90(a(a_index),3)
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Numeric Function 50
+</FnName>
+
+<Params>
+#for n = 1:50; fn.variable_names = [fn.variable_names, {['a(' num2str(n) ')']}]; end
+</Params>
+
+<StartValues>
+#for n = 1:50; values = [values, {'1'}]; end
+</StartValues>
+
+<ParamNames>
+a
+</ParamNames>
+
+<FnCode>
+n_q_bins = 50;
+q_max = fitdata.modq_minmax(2)+eps;
+q_min = fitdata.modq_minmax(1)-eps;
+q_step = (q_max - q_min)/(n_q_bins);
+a_index = fix(((fitdata.modqdat-q_min))/q_step)+1;
+global fit_return_data
+a_q_list = 1:n_q_bins;
+fit_return_data.a_q_list = q_min + (a_q_list-0.5)*q_step;
+%This (Slower - but can calculate delta_q resolution)
+for n = 1:n_q_bins; temp = find(fitdata.modqdat >= (q_min+((n-1)*q_step)) & fitdata.modqdat < (q_min+(n*q_step))); z(temp,1) = a(n); fit_return_data.a_dq_list(n) = mean(fitdata.delta_q_dat(temp)); end
+%Or (Does not calculate q-resolution
+%z = rot90(a(a_index),3)
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Numeric Function 100
+</FnName>
+
+<Params>
+#for n = 1:100; fn.variable_names = [fn.variable_names, {['a(' num2str(n) ')']}]; end
+</Params>
+
+<StartValues>
+#for n = 1:100; values = [values, {'1'}]; end
+</StartValues>
+
+<ParamNames>
+a
+</ParamNames>
+
+<FnCode>
+n_q_bins = 100;
+q_max = fitdata.modq_minmax(2)+eps;
+q_min = fitdata.modq_minmax(1)-eps;
+q_step = (q_max - q_min)/(n_q_bins);
+a_index = fix(((fitdata.modqdat-q_min))/q_step)+1;
+global fit_return_data;
+a_q_list = 1:n_q_bins;
+fit_return_data.a_q_list = q_min + (a_q_list-0.5)*q_step;
+%This (Slower - but can calculate delta_q resolution)
+for n = 1:n_q_bins; temp = find(fitdata.modqdat >= (q_min+((n-1)*q_step)) & fitdata.modqdat < (q_min+(n*q_step))); z(temp,1) = a(n); fit_return_data.a_dq_list(n) = mean(fitdata.delta_q_dat(temp)); end
+%Or (Does not calculate q-resolution
+%z = rot90(a(a_index),3)
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Numeric Function 200
+</FnName>
+
+<Params>
+#for n = 1:200; fn.variable_names = [fn.variable_names, {['a(' num2str(n) ')']}]; end
+</Params>
+
+<StartValues>
+#for n = 1:200; values = [values, {'1'}]; end
+</StartValues>
+
+<ParamNames>
+a
+</ParamNames>
+
+<FnCode>
+n_q_bins = 200;
+q_max = fitdata.modq_minmax(2)+eps;
+q_min = fitdata.modq_minmax(1)-eps;
+q_step = (q_max - q_min)/(n_q_bins);
+a_index = fix(((fitdata.modqdat-q_min))/q_step)+1;
+global fit_return_data
+a_q_list = 1:n_q_bins;
+fit_return_data.a_q_list = q_min + (a_q_list-0.5)*q_step;
+%This (Slower - but can calculate delta_q resolution)
+for n = 1:n_q_bins; temp = find(fitdata.modqdat >= (q_min+((n-1)*q_step)) & fitdata.modqdat < (q_min+(n*q_step))); z(temp,1) = a(n); fit_return_data.a_dq_list(n) = mean(fitdata.delta_q_dat(temp)); end
+%Or (Does not calculate q-resolution
+%z = rot90(a(a_index),3)
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Numeric Function 400
+</FnName>
+
+<Params>
+#for n = 1:400; fn.variable_names = [fn.variable_names, {['a(' num2str(n) ')']}]; end
+</Params>
+
+<StartValues>
+#for n = 1:400; values = [values, {'1'}]; end
+</StartValues>
+
+<ParamNames>
+a
+</ParamNames>
+
+<FnCode>
+n_q_bins = 400;
+q_max = fitdata.modq_minmax(2)+eps;
+q_min = fitdata.modq_minmax(1)-eps;
+q_step = (q_max - q_min)/(n_q_bins);
+a_index = fix(((fitdata.modqdat-q_min))/q_step)+1;
+global fit_return_data
+a_q_list = 1:n_q_bins;
+fit_return_data.a_q_list = q_min + (a_q_list-0.5)*q_step;
+%This (Slower - but can calculate delta_q resolution)
+for n = 1:n_q_bins; temp = find(fitdata.modqdat >= (q_min+((n-1)*q_step)) & fitdata.modqdat < (q_min+(n*q_step))); z(temp,1) = a(n); fit_return_data.a_dq_list(n) = mean(fitdata.delta_q_dat(temp)); end
+%Or (Does not calculate q-resolution
+%z = rot90(a(a_index),3)
+</FnCode>
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Divider>
+----Testing----
+</Divider>
+%********************************************************************************************************
+
+
+
+%********************************************************************************************************
+<Function>
+
+<FnName>
+Bragg Ring
+</FnName>
+
+<Params>
+I0
+R
+q0
+delta_q_fwhm
+orders
+</Params>
+
+<StartValues>
+1
+0.1
+5e-4
+1e-4
+10
+</StartValues>
+
+<ParamNames>
+Multiplier
+Reflectivity
+q_1st_order
+delta_q
+Orders
+</ParamNames>
+
+
+<FnCode>
+z = zeros(size(fitdata.modqdat));
+sigma = delta_q_fwhm/2.354;
+for n = 1:orders; q = q0*n; s = sigma*n; int = (R^n)./fitdata.modqdat; i = (int/(s*sqrt(2*pi))) .*exp( -((fitdata.modqdat - q).^2)./(2*s.^2)); z = z+i; end
+z =I0.*z;
+</FnCode>
+
+
+<AutoGuessCode>
+</AutoGuessCode>
+
+<PointClickCode>
+</PointClickCode>
+
+</Function>
+%********************************************************************************************************
+
 
 
 

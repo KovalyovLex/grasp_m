@@ -56,8 +56,8 @@ while isempty(findstr(linestr,'%Counts'));
 
     if findstr(linestr,'Time='); a = findstr(linestr,'Time='); if a==1; l = length(linestr); param(inst_params.vectors.time) = str2num(linestr(findstr(linestr,'=')+1:l)); end; end
    
-    if findstr(linestr,'Moni1')==1; l = length(linestr); param(inst_params.vectors.monitor1) = str2num(linestr(findstr(linestr,'=')+1:l)); end
-    if findstr(linestr,'Moni2')==1; l = length(linestr); param(inst_params.vectors.monitor2) = str2num(linestr(findstr(linestr,'=')+1:l)); end
+    if findstr(linestr,'Moni1=')==1; l = length(linestr); param(inst_params.vectors.monitor1) = str2num(linestr(findstr(linestr,'=')+1:l)); end
+    if findstr(linestr,'Moni2=')==1; l = length(linestr); param(inst_params.vectors.monitor2) = str2num(linestr(findstr(linestr,'=')+1:l)); end
     %if findstr(linestr,'Moni3')==1; l = length(linestr); param(inst_params.vectors.moni3) = str2num(linestr(findstr(linestr,'=')+1:l)); end
     %if findstr(linestr,'Moni4')==1; l = length(linestr); param(inst_params.vectors.moni4) = str2num(linestr(findstr(linestr,'=')+1:l)); end
     
@@ -88,6 +88,7 @@ while isempty(findstr(linestr,'%Counts'));
     if findstr(linestr,'SY='); l = length(linestr); param(inst_params.vectors.dtr) = str2num(linestr(findstr(linestr,'=')+1:l)); end
     
     if findstr(linestr,'Phi=');  a = findstr(linestr,'Phi='); if a==1; l = length(linestr); param(inst_params.vectors.phi) = str2num(linestr(findstr(linestr,'=')+1:l)); end; end
+    if findstr(linestr,'Chi=');  a = findstr(linestr,'Chi='); if a==1; l = length(linestr); param(inst_params.vectors.chi) = str2num(linestr(findstr(linestr,'=')+1:l)); end; end
     if findstr(linestr,'Omega=');  a = findstr(linestr,'Omega='); if a==1; l = length(linestr); param(inst_params.vectors.san) = str2num(linestr(findstr(linestr,'=')+1:l)); end; end
 end
 data_start_line = line_counter; %Start line of data;
@@ -140,9 +141,9 @@ param(128) = numor;
 
 %For reading treated data
 %Monitor could be zero. Replace with standard monitor value.
-if param(inst_params.vectors.monitor) == 0;
-     param(inst_params.vectors.monitor) = status_flags.normalization.standard_monitor;
-end
+%if param(inst_params.vectors.monitor) == 0;
+%     param(inst_params.vectors.monitor) = status_flags.normalization.standard_monitor;
+%end
 
 %Make final output structure
 numor_data.data1 = data;
