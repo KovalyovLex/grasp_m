@@ -524,6 +524,9 @@ uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','Rheo Aniso
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&TOF Calculator','callback','tof_calculator_window','enable','on');
 uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&D33 Chopper Time-Distance Calculator','callback','d33_chopper_time_distance','enable','on');
 
+% Auto fit --
+uimenu(grasp_handles.menu.user_modules.root,'separator','on','label','&Auto Fit','callback','fitting_tool','enable','on');
+
 
 
 %***** About Grasp *****

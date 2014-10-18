@@ -99,6 +99,7 @@ addpath(fullfile(grasp_env.path.grasp_root,'window_modules'));
 addpath(fullfile(grasp_env.path.grasp_root,'user_modules'));
 addpath(fullfile(grasp_env.path.grasp_root,'user_modules','fll_math'));
 addpath(fullfile(grasp_env.path.grasp_root,'user_modules','d33'));
+addpath(fullfile(grasp_env.path.grasp_root,'user_modules','auto_fit'));
 addpath(fullfile(grasp_env.path.grasp_root,'grasp_script'));
 addpath(fullfile(grasp_env.path.grasp_root,'grasp_changer'));
 addpath(fullfile(grasp_env.path.grasp_root,'sans_instrument_model'));
